@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<document>
+    <properties>
+    	<author email="smith@puzzle.ch">Anthony Smith</author>
+        <title>Features</title>
+    </properties>
+    <body>
+        <section name="Features List">
+        	<p>
+
+Implemented features can be splitted into two categories : 
+<ul>
+<li>opendbcopy core component</li>
+<li>opendbcopy plugins</li>
+</ul>
+</p>
+<subsection name="opendbcopy core component">
+<p>
+	opendbcopy core component can be seen as an application framework providing 
+	everything required to run a plugin. Configure a database migration project
+	using the opendbcopy graphical user interface. This includes: 
+<ul>
+<li>Database Connection Details</li>
+<li>Database catalog/schema</li>
+<li>Tables to process, Table Mapping</li>
+<li>Columns to process, Column Mapping, Table specific SQL filters</li>
+<li>Global String filters (such as trim, removal of intermediate whitespaces, ...)</li>
+<li>Plugin(s) to execute</li>
+<li>Saving Project as XML</li>
+</ul>
+<p>opendbcopy tries to map tables and columns automatically given its names. 
+	To take care of referential integrity constraints let opendbcopy read this extra information.</p>
+</p>
+</subsection>
+
+<subsection name="opendbcopy plugins">
+<p>
+	opendbcopy provides a set of standard plugins. 
+	Runtime parameters are loaded from a central plugins.xml file, 
+	containing a plugin entry for each plugin with individual properties.
+	New plugins can easily be developed (see <a href="developer-manual.html">developer manual</a>). This includes: 
+<ul>
+<li>Online Migration of databases (only logging records which cannot be processed)</li>
+<li>Write dump files such as csv, tab delimited, ...</li>
+<li>Write SQL data scripts</li>
+<li>Comparing number of records for each database and write a nice report</li>
+</ul>
+</p>
+</subsection>	
+<i>For more information, please see the <a href="user-manual.html">user manual</a></i>
+		</section>
+
+    </body>
+
+</document>

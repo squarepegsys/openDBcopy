@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <author email="smith@puzzle.ch">Anthony Smith</author>
+    <title>opendbcopy - an open-source database migration utility (Java)</title>
+  </properties>
+<body>
+
+
+  <section name="Overview opendbcopy">
+	<p>
+		<b>by Anthony Smith</b>
+	</p>
+	<br/>
+	<p>
+		opendbcopy is a universal database utility to migrate data 
+		from and to any database given a JDBC driver.
+	</p>
+
+	<ul>
+		<li>Standard filters are included</li>
+		<li>Custom plugins can be added and/or developed</li>
+    	<li>Complete migration project saved as XML for easy re-use</li>
+		<li>Run with GUI or as batch process</li>
+    </ul>
+
+	<br/><br/>
+		
+	<center>
+		<img border="0px" src="images/screens/intro_column_mapping.gif"/>
+			<p>Select columns to process and map columns which were not automatically mapped</p>
+	</center>
+  </section>
+</body>
+</document>

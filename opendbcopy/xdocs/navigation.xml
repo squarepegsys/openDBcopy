@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+	
+    <properties>
+        <author email="smith@puzzle.ch">Anthony Smith</author>
+        <title>opendbcopy</title>
+    </properties>
+
+	<body>
+        <links>
+        	<item name="Squirrel-SQL" href="http://squirrel-sql.sourceforge.net/"/>
+            <item href="http://www.sourceforge.net/projects/opendbcopy" name="opendbcopy@sourceforge"/>
+        </links>
+
+		<menu name="Quick Links">
+			<item href="/index.html" name="Home"></item>
+			<item href="/news.html" name="News"></item>
+			<item href="/download.html" name="Download"></item>
+			<item href="/quickstart.html" name="Quick Start"></item>
+			<item href="/cvs-usage.html" name="Source Repository"></item>
+		</menu>
+
+		<menu name="Overview">
+			<item href="/about.html" name="About"></item>
+			<item href="/features.html" name="Features"></item>
+			<item href="/user-manual.html" name="User Manual"></item>
+			<item href="/plugins.html" name="Plugins"></item>
+			<item href="http://sourceforge.net/forum/?group_id=91406" name="Forum"></item>
+			<item href="/license.html" name="License"></item>
+		</menu>
+		
+		<menu name="Project Documentation">
+			<item href="/team-list.html" name="Project Team"></item>
+			<item href="/developer-manual.html" name="Developer Manual"></item>
+			<item href="/apidocs/index.html" name="Java Docs"></item>
+			<item href="/mail-lists.html" name="Mailing Lists"></item>
+			<item href="/issue-tracking.html" name="Issue Tracking"></item>
+			<item href="/dependencies.html" name="Dependencies"></item>
+		</menu>
+
+		<!-- footer will be placed above the (c) -->
+		<footer>
+			<p>
+				<a href="http://sourceforge.net">
+					<img src="http://sourceforge.net/sflogo.php?group_id=91406" border="0" alt="sf logo"/>
+				</a>
+			</p>
+		</footer>		
+
+		<search/>
+
+	</body>
+</project>

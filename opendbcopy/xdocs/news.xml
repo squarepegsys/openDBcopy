@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<document>
+    <properties>
+    	<author email="smith@puzzle.ch">Anthony Smith</author>
+        <title>News</title>
+    </properties>
+    <body>
+        <section name="News">
+        	<p>
+				This page informs about release news and planned features.
+				
+				<subsection name="Release News">
+					<table width="100%">
+						<tr>
+							<th>Date</th>
+							<th>Message</th>
+						</tr>
+						<tr>
+							<td>09.01.2004</td>
+							<td>First release of opendbcopy binaries, sources and documentation</td>
+						</tr>								
+					</table>
+				</subsection>
+				<subsection name="Planned Features">
+					<p>
+						Any feedback for new features or modifications are welcome.
+					</p>
+					<ul>
+						<li>Execute several plugins serially</li>
+						<li>Generate DDL using XDoclet with Hibernate tags</li>
+					</ul>
+				</subsection>
+			</p>
+		</section>
+    </body>
+</document>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<faqs title="Frequently Asked Questions">
+
+  <part id="general">
+    <title>General</title>
+   
+    <faq id="why opendbcopy">
+      <question>Why opendbcopy?</question>
+      <answer>
+      	<p>
+        	Typo at the creation of the project. Tho is not Mevenide way cooler than Mavenide ?
+        </p>
+      </answer>
+    </faq>
+  </part>
+   
+   <part id="install">
+    <title>Installing</title>
+   
+    <faq id="mevenide-doesnot-work">
+      <question>Mevenide doesnot work !!!</question>
+      <answer>
+      	<p>
+        	If you're experimenting such kind of problems, <i>please</i> provide relevant informations,
+        	f.i. by sending some log (e.g. $${workspace.dir}/.metadata/.log or looking at the error view, located under 
+        	Window/Show View/Other.../Pde Runtime). Also make sure Mevenide isnot actually loaded by looking at the Plugin Registry (same path than the error log).
+        </p>
+        <p>
+        	Tho often the root of the problem is that dependency requirements are not fullfilled, 
+        	f.i. you should have ajde installed. If it is not, you can download it at <a href="htpp://eclipse.org/ajdt">AJDT website</a>.
+        </p>
+        <p>
+	        We will in the near future provide a site.xml descriptor to make the install easier.
+	   </p>
+      </answer>
+    </faq>
+  </part>
+   
+</faqs>

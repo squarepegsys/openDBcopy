@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<document>
+    <properties>
+    	<author email="smith@puzzle.ch">Anthony Smith</author>
+        <title>About</title>
+    </properties>
+    <body>
+        <section name="About">
+        	<p>
+				opendbcopy is an open-source project by Anthony Smith, published under the terms of the GNU General Public License. 
+				<br/><br/>
+				opendbcopy core component can be seen as an application framework providing 
+				everything required to run a plugin. Configure a database migration project
+				using the opendbcopy graphical user interface.
+				<br/><br/>
+
+				<subsection name="Special Thanks to">
+					<p>
+						I would like to specially thank Mr Blatter (Swiss Department for Defence, Civil Protection, Sports) for
+						allowing me to publish opendbcopy as open-source software @sourceforge.
+					</p>
+				</subsection>
+				
+				<subsection name="Why did I develop another database migration utility?">
+					<p>
+						If there is not a need, you normally do not find any software for it. 
+						<br/><br/>
+						In summer 2003 I was 
+						asked to plan and migrate the database of the Swiss Sports Management System (National
+						Database for Youth and Sports). The source database was IBM's DB2, running on a host, OS390.
+						The destination platform was AIX5.2, Oracle 9i.
+						<br/><br/>
+						A database migration is normally required when systems are going to be changed. The former
+						system was running completely on the host, using DB2 and Websphere 3. The new system is
+						built up using Webserver and Application Server Clusters, all running on Linux. The database
+						itself on AIX5.2.
+						<br/><br/>
+						I hope you see what I want to show you. A database migration is normally not just copying tables.
+						This includes changes of the application ... and therewith changes of the database schemas.
+						<br/><br/>
+						So I was looking for a database migration utility which was able to fulfill my special requirements.
+						It became obvious that I either have to develop a lot of PL/SQL transformation scripts or develop
+						a new utility - opendbcopy.
+						<br/><br/>
+						I first tried to use Oracle's Migration Workbench, which, on the first glance, looks brilliant. But, but, but ...
+						soon I got an answer from their staff that this migration workbench does not support DB2 on OS390. I tried
+						out several other ways ... such as migrating into MS SQL first and then into Oracle ... and a lot of other nightmare
+						scenarios. However, none of these ways solved my migration requirements elegant enough.
+						<br/><br/>
+						Even if you have a migration tool that can copy data from DB2 to Oracle, you still need to modify your data 
+						according to the new requirements.
+						<br/><br/>
+						So the idea of opendbcopy began on a Saturday afternoon, when I was waiting for a tram... and 17 
+						hours later I had my first implementation of opendbcopy. No GUI, just running from a shell.
+						<br/><br/>
+						Two weeks later a front end and further features were implemented, so that I was a able to make a 
+						first successful database migration.
+						<br/><br/>
+						At the end of 2003 we made the final migration. I was quite happy that I have developed opendbcopy
+						to avoid too much repeated work. Think about how much manpower you need if you choose the 
+						conventional way ... extracting data into files, convert the files, write loading and transformation scripts.
+						<br/><br/>
+						Since then I have used opendbcopy on several other projects. Some of them were again DB2 to Oracle.
+						Others were MySQL to PostgreSQL, MySQL to MySQL, MS Access to MS Access (using jdbc:odbc bridge).
+						<br/><br/>
+						opendbcopy comes with a handful of plugins which can be configured using the plugins.xml. See the 
+						plugins section for more details.
+						<br/><br/>
+						Special requirements can easily be developed. See the developers section for more details.
+						<br/><br/>
+					</p>
+				</subsection>
+
+				<subsection name="Conventional Way versus Online Migration using Java">
+					<p>
+						By conventional way I understand dumping data from the old database, transfer, convert and prepare
+						the data for the new database and last but not least, load the new data into the new database. 
+						Taking our projects as a reference this would have involved three people to do that job.
+						<ul>
+							<li>Dumping data from DB2 requires several utilities and programs ... and a DB2 DBA</li>
+							<li>A PL/SQL Programmer to provide data loader scripts, converters and verification scripts</li>
+							<li>An Oracle DBA to load the data into the new database</li>
+							<li>Repeat above steps whenever you need a further test migration ...</li>
+						</ul>
+						<br/><br/>
+						So far I did not tell anything about generating the new database DDL. In my eyes this is something
+						which requires interaction. It would be very simple using opendbcopy or other migration utilities
+						to create the CREATE TABLE scripts plain ... but ... have you ever seen a utility, commercial or not, which
+						was able to do this for any database system without errors and optimal settings? Next to the CREATE TABLE
+						you need PRIMARY KEYS, FOREIGN KEYS, INDEXES, ... 
+						<br/><br/>
+						I hope to be able to provide soon a plugin which
+						is able to do part of this list. If you have any ideas please tell me. An idea I have is creating XDOCLET classes
+						with hibernate tags ... and then generate Hibernate mapping files automatically as well as the required DDL.
+					</p>
+				</subsection>
+
+				<subsection name="Other Database Migration Utilities">
+					<p>
+						<ul>
+							<li><a href="http://dbcopy.sourceforge.net/">dbcopy (Open Source, Eclipse Plugin)</a></li>
+							<li><a href="http://octopus.enhydra.org/index.html">Octopus (Open Source)</a></li>
+							<li><a href="http://otn.oracle.com/tech/migration/workbench/index.html">Oracle Migration Workbench</a></li>
+						</ul>
+					</p>
+				</subsection>
+			</p>
+		</section>
+    </body>
+</document>
