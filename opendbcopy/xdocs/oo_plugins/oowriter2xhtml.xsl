@@ -18,9 +18,10 @@ This XSLT Style Sheet can be used to convert OOo documents to compliant XHTML Tr
 * Open the OOo 1.1 application.
 * From the main menu bar, select "Tools" then "XML Filter Settings".
 * In the "XML Filter Settings" menu, select "New".
-* In the "General" tab, provide a filter name (e.g., "W3C XHTML 1.0"), application name (default is OpenOffice.org Writer), name of file time (e.g.,
+* In the "General" tab, provide a filter name (e.g., "W3C XHTML 1.0"), application name (default is OpenOffice.org Writer), name of file type (e.g.,
    "w3c_xhtml"), file extension (use "html"), and comments (if desired).
 * In the "Transformation" tab, for the "XSLT for export" option browse to the location of this XSLT file on your hard drive or network drive.
+* You can leave all other options on this tab blank.
 * Click "OK".
 * Close "XML Filter Settings" menu.
 * To save a file to XHTML 1.0, select "File" from the main menu - use the "Export" option.
@@ -60,13 +61,18 @@ Info 3: Sets the cell spacing for any tables used in the document.  If no values
            provided for in separate style sheet.           
 Info 4: Sets the table width for any tables used in the document.  If no values are entered, the table may not display properly, unless table width value is     
            provided for in separate style sheet.  (Note: when entering a value, enter appropriate unit as well - e.g.,  80%, 250px, etc.)
+
+If you want to change the names of these fields (by clicking on the "Info Fields" button on the "User Defined" tab) 
+to titles that are more intuitive, go ahead.  The names of these fields are not important, but their order is - the order outlined
+above can't be changed without modifying the filter itself.
+
            
 -->
 
-<xsl:variable name="css" select="//meta:user-defined[@meta:name='Info 1']"></xsl:variable>
-<xsl:variable name="cellpadding" select="//meta:user-defined[@meta:name='Info 2']"></xsl:variable>
-<xsl:variable name="cellspacing" select="//meta:user-defined[@meta:name='Info 3']"></xsl:variable>
-<xsl:variable name="width" select="//meta:user-defined[@meta:name='Info 4']"></xsl:variable>
+<xsl:variable name="css" select="//office:meta/meta:user-defined[position()=1]" />
+<xsl:variable name="cellpadding" select="//office:meta/meta:user-defined[position()=2]" />
+<xsl:variable name="cellspacing" select="//office:meta/meta:user-defined[position()=3]" />
+<xsl:variable name="width" select="//office:meta/meta:user-defined[position()=4]" />
 
 
 <xsl:output method="xml" omit-xml-declaration="no" encoding="UTF-8"/>
@@ -215,7 +221,14 @@ cellspacing: <xsl:value-of select="$cellspacing" />;
 		</h5>
 	</xsl:when>
 <xsl:otherwise>
-<p><xsl:apply-templates /></p>
+<xsl:choose>
+			<xsl:when test="string-length()=0">
+      	<xsl:apply-templates />
+			</xsl:when>
+			<xsl:otherwise>
+     		<p><xsl:apply-templates /></p>
+			</xsl:otherwise>
+	</xsl:choose>
 </xsl:otherwise>
 </xsl:choose> 
 </xsl:template>
