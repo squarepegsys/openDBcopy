@@ -1,5 +1,5 @@
 <shortcuts>
-   <programGroup defaultName="opendbcopy 0.41" location="applications/startMenu"/>
+   <programGroup defaultName="opendbcopy 0.41.1" location="applications/startMenu"/>
    <shortcut
       name="opendbcopy launcher"
       target="$INSTALL_PATH\start.bat"

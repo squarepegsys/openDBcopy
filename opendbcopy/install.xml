@@ -78,6 +78,7 @@
             <file src=".project" targetdir="$INSTALL_PATH"/>
             <file src=".classpath" targetdir="$INSTALL_PATH"/>
             <file src="jalopy_settings_opendbcopy.xml" targetdir="$INSTALL_PATH"/>
+            <file src="build.xml" targetdir="$INSTALL_PATH"/>
         </pack>
 
         <pack name="API Docs" required="no" preselected="no">
