@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- =============================================================== -->
+<!-- Ant build file                                              -->
+<!-- =============================================================== -->
+
+<project name="opendbcopy.schemageneration" default="compile" basedir=".">
+
+   	<property name="basedir" value="."/>
+   	<property name="build.compiler" value="modern"/>
+   	<property name="build.sysclasspath" value="ignore"/>
+
+   	<property name="name" value="opendbcopy.schemageneration"/>
+   	<property name="package.name" value="schemageneration"/>
+   	<property name="version" value="0.1"/>
+   	<property name="packages" value="*"/>
+
+   	<property name="sources.dir" value="${basedir}/src"/>
+   	<property name="lib.dir" value="${basedir}/lib"/>
+   	<property name="dist.dir" value="${basedir}/dist"/>
+   	<property name="build.dir" value="${basedir}/classes"/>
+   	<property name="javadoc.dir" value="${basedir}/apidocs"/>
+
+   	<!-- ============================================================= -->
+   	<!-- Classpath with libraries needed to compile this application   -->
+   	<!-- ============================================================= -->
+   	<path id="schemageneration.classpath">
+   	   	<fileset dir="${lib.dir}">
+         	<include name="**/*.zip"/>
+         	<include name="**/*.jar"/>
+      	</fileset>
+   	</path>
+
+   	<!-- ============================================================= -->
+   	<!-- Prepares the project                                          -->
+   	<!-- ============================================================= -->
+   	<target name="prepare">
+   		<mkdir dir="${lib.dir}"/>
+      	<mkdir dir="${build.dir}"/>
+      	<mkdir dir="${dist.dir}/${name}"/>
+   	</target>
+
+   	<!-- ============================================================= -->
+   	<!-- Compiles the source code                                      -->
+   	<!-- ============================================================= -->
+   	<target name="compile" depends="prepare">
+    	<javac srcdir="${sources.dir}"
+         	destdir="${build.dir}"
+         	debug="on"
+         	optimize="on">
+         	<classpath refid="schemageneration.classpath"/>
+      	</javac>
+   	</target>
+
+   	<!-- ============================================================= -->
+   	<!-- Clean up all files that are generated.                        -->
+   	<!-- ============================================================= -->
+   	<target name="clean">
+      	<delete quiet="true" dir="${build.dir}"/>
+      	<delete quiet="true" dir="${dist.dir}"/>
+   	</target>
+   	
+   	<!-- ============================================================= -->
+   	<!-- Clean and then compile the project                            -->
+   	<!-- ============================================================= -->
+   	<target name="rebuild">
+      	<antcall target="clean"/>
+      	<antcall target="compile"/>
+   	</target>
+
+   	<!-- ============================================================= -->
+   	<!-- Create the jar file                                           -->
+   	<!-- ============================================================= -->
+   	<target name="jar" depends="compile">
+      	<jar jarfile="${basedir}/${package.name}.jar">
+         	<fileset dir="${build.dir}"/>
+      	</jar>
+   	</target>
+
+	<target name="dist" depends="clean, jar, javadoc">
+	   	<copy file="plugin.xml" todir="${dist.dir}/${name}"/>
+		<copy file="workingMode.xml" todir="${dist.dir}/${name}"/>
+		<copy file="${package.name}.jar" todir="${dist.dir}/${name}"/>
+	
+	   	<copy todir="${dist.dir}/${name}/src">
+    		<fileset dir="${sources.dir}"/>
+		</copy>
+	   	<copy todir="${dist.dir}/${name}/apidocs">
+    		<fileset dir="${javadoc.dir}"/>
+		</copy>
+		<zip zipfile="${dist.dir}/${package.name}.zip" basedir="${dist.dir}"/>		
+	</target>
+	
+   	<!-- ============================================================= -->
+   	<!-- Creates the API documentation                                 -->
+   	<!-- ============================================================= -->
+   	<target name="javadoc" depends="compile">
+      	<mkdir dir="${javadoc.dir}"/>
+      	<javadoc packagenames="${packages}"
+         	sourcepath="${sources.dir}"
+         	destdir="${javadoc.dir}"
+         	author="true"
+         	version="true"
+         	windowtitle="${name} API"
+         	doctitle="${name}"
+         	bottom="Copyright &#169; 2004 by Anthony Smith, Puzzle ITC GmbH"
+        />
+   </target>
+</project>
