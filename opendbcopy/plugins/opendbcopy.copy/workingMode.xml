@@ -23,27 +23,7 @@
 =============================================================== 
 -->
 
-<working_mode identifier="schema">
-	<title value="Migrate schema given a source schema and destination db" />
-	<panels>
-		<panel title="1. Database Connections">
-			<class name="opendbcopy.gui.dual.PanelConnection" register_as_observer="true" />
-		</panel>
-		<panel title="2. Models">
-			<class name="opendbcopy.gui.dual.PanelModel" register_as_observer="true" />
-		</panel>
-		<panel title="3. Table Mapping">
-			<class name="opendbcopy.gui.dual.PanelMappingTable" register_as_observer="true" />
-		</panel>
-		<panel title="4. Column Mapping">
-			<class name="opendbcopy.gui.dual.PanelMappingColumn" register_as_observer="true" />
-		</panel>
-		<panel title="5. Global Filters">
-			<class name="opendbcopy.gui.PanelFilter" register_as_observer="true" />
-		</panel>
-		<panel title="6. Execute Plugin">
-			<class name="opendbcopy.gui.PanelExecute" />
-		</panel>
-	</panels>
+<working_mode identifier="standard_working_mode_reference">
+	<standard_working_mode identifier="dual" />
 </working_mode>
 

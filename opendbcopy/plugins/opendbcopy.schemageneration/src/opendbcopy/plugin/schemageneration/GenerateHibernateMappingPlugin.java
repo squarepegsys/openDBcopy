@@ -36,7 +36,7 @@ import opendbcopy.plugin.exception.PluginException;
  * @author  Anthony Smith
  * @version $Revision$
  */
-public class GenerateHibernateMapping extends DynamicPluginThread {
+public class GenerateHibernateMappingPlugin extends DynamicPluginThread {
     /**
      * Creates a new GenerateHibernateMapping object.
      *
@@ -45,7 +45,7 @@ public class GenerateHibernateMapping extends DynamicPluginThread {
      *
      * @throws PluginException DOCUMENT ME!
      */
-    public GenerateHibernateMapping(MainController controller,
+    public GenerateHibernateMappingPlugin(MainController controller,
                                     PluginMetadata plugin) throws PluginException {
         super(controller, plugin);
     }

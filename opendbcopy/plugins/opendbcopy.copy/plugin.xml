@@ -2,7 +2,7 @@
 
 <!-- 
 ===============================================================
- Required Working Modes to create Hibernate Mapping Files
+ Plugin to create Hibernate Mapping Files
 
  Copyright (C) 2003 Anthony Smith
 ===============================================================
@@ -23,27 +23,21 @@
 =============================================================== 
 -->
 
-<working_mode identifier="schema">
-	<title value="Migrate schema given a source schema and destination db" />
-	<panels>
-		<panel title="1. Database Connections">
-			<class name="opendbcopy.gui.dual.PanelConnection" register_as_observer="true" />
-		</panel>
-		<panel title="2. Models">
-			<class name="opendbcopy.gui.dual.PanelModel" register_as_observer="true" />
-		</panel>
-		<panel title="3. Table Mapping">
-			<class name="opendbcopy.gui.dual.PanelMappingTable" register_as_observer="true" />
-		</panel>
-		<panel title="4. Column Mapping">
-			<class name="opendbcopy.gui.dual.PanelMappingColumn" register_as_observer="true" />
-		</panel>
-		<panel title="5. Global Filters">
-			<class name="opendbcopy.gui.PanelFilter" register_as_observer="true" />
-		</panel>
-		<panel title="6. Execute Plugin">
-			<class name="opendbcopy.gui.PanelExecute" />
-		</panel>
-	</panels>
-</working_mode>
+<plugin db_mode="dual">
+	<class name="opendbcopy.plugin.copy.CopyMappingPlugin" />
+	<description value="Copy Tables according to defined Mapping" />
+	<author name="Anthony Smith" />
+	<conf>
+		<!-- path may be relative or absolute -->
+		<path value="log/" />
+		
+		<file_type value="csv" />
+		
+		<!-- for a tab delimiter enter \n as value -->
+		<delimiter value=";" />
+
+		<log_error value="true" />
+	</conf>
+</plugin>
+
 
