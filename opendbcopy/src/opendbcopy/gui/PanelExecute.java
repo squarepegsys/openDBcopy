@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,9 +27,15 @@ import opendbcopy.config.XMLTags;
 
 import opendbcopy.controller.MainController;
 
-import opendbcopy.io.Reader;
+import opendbcopy.log4j.gui.TextAreaAppender;
 
-import opendbcopy.task.TaskExecute;
+import opendbcopy.plugin.PluginManager;
+
+import opendbcopy.plugin.model.Model;
+
+import org.apache.log4j.Category;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.Priority;
 
 import org.jdom.Element;
 
@@ -42,7 +48,7 @@ import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Observable;
 
@@ -52,7 +58,7 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
-import javax.swing.JTextPane;
+import javax.swing.JTextArea;
 import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
 
@@ -64,11 +70,12 @@ import javax.swing.border.TitledBorder;
  * @version $Revision$
  */
 public class PanelExecute extends DynamicPanel {
-    private final static int TIMER_SLOT = 50;
-    private TaskExecute      taskExecute;
-    private StringBuffer     logBuffer;
+    private final static int TIMER_SLOT = 100;
+    private PluginManager    pluginManager;
+    private Model            currentModel;
+    private TextAreaAppender taa;
     private Timer            timer;
-    private Hashtable        pluginsHashtable; // contains the plugin elements, using selected index has identifier
+    private HashMap          availablePluginThreads;
     private BorderLayout     borderLayout = new BorderLayout();
     private JPanel           panelPlugin = new JPanel();
     private JPanel           panelMain = new JPanel();
@@ -76,83 +83,75 @@ public class PanelExecute extends DynamicPanel {
     private JPanel           panelProgress = new JPanel();
     private JComboBox        comboBoxPlugin = new JComboBox();
     private BorderLayout     borderLayoutMain = new BorderLayout();
-    private JTextPane        textPaneLog = new JTextPane();
+    private JTextArea        textAreaLog = null;
     private JScrollPane      scrollPane = null;
     private JProgressBar     progressBarTable = null;
     private JProgressBar     progressBarRecord = null;
     private JButton          buttonControl = null;
-    private String           currentTable = null;
 
     /**
      * Creates a new PanelExecute object.
      *
      * @param controller DOCUMENT ME!
+     * @param workingMode DOCUMENT ME!
+     * @param registerAsObserver DOCUMENT ME!
      *
      * @throws Exception DOCUMENT ME!
      */
-    public PanelExecute(MainController controller) throws Exception {
-        super(controller);
+    public PanelExecute(MainController controller,
+                        WorkingMode    workingMode,
+                        Boolean        registerAsObserver) throws Exception {
+        super(controller, workingMode, registerAsObserver);
 
-        this.logBuffer = new StringBuffer();
+        pluginManager     = pm.getPluginManager();
 
-        retrievePlugins();
+        currentModel = super.model;
+
         guiInit();
+        retrievePlugins();
+
+        // register this panel as observer of PluginManager
+        pluginManager.registerObserver(this);
     }
 
     /**
-     * DOCUMENT ME!
+     * Listens for changes on plugins executed
      *
      * @param o DOCUMENT ME!
      * @param obj DOCUMENT ME!
      */
     public final void update(Observable o,
                              Object     obj) {
-        // only if this tab is visible -> update it
-        if (parentFrame.getSelectedTabIndex() == 5) {
-            if (taskExecute.getTaskStatus() == taskExecute.started) {
-                // update status bars
-                progressBarTable.setMaximum(taskExecute.getLengthOfTaskTable());
-                progressBarRecord.setMaximum(taskExecute.getLengthOfTaskRecord());
-                progressBarTable.setValue(taskExecute.getCurrentTable());
-                progressBarTable.setString(taskExecute.getMessage());
+        if (pluginManager.isDone() || pluginManager.isInterrupted() || pluginManager.isExceptionOccured()) {
+            timer.stop();
 
-                progressBarRecord.setValue(taskExecute.getCurrentRecord());
-                progressBarRecord.setString(Integer.toString(taskExecute.getCurrentRecord()));
-            } else if (taskExecute.getTaskStatus() == taskExecute.done) {
-                progressBarTable.setValue(taskExecute.getCurrentTable());
-                progressBarTable.setString(taskExecute.getCurrentTable() + " tables processed");
+            // retrieve latest progress information
+            if (progressBarTable.getMaximum() < currentModel.getLengthProgressTable()) {
+                progressBarTable.setMaximum(currentModel.getLengthProgressTable());
+            }
 
+            if (progressBarRecord.getMaximum() < currentModel.getLengthProgressRecord()) {
+                progressBarRecord.setMaximum(currentModel.getLengthProgressRecord());
+            }
+
+            progressBarTable.setValue(currentModel.getCurrentProgressTable());
+            progressBarRecord.setValue(currentModel.getCurrentProgressRecord());
+
+            if ((currentModel.getProgressMessage() != null) && (currentModel.getProgressMessage().length() > 0)) {
+                progressBarTable.setString(currentModel.getProgressMessage());
+            }
+
+            if (pluginManager.isDone()) {
+                postMessage(rm.getString("text.execute.done"));
                 buttonControl.setText(OperationType.EXECUTE);
                 buttonControl.setActionCommand(OperationType.EXECUTE);
+
+                // disable text area appender
+                taa.setEnabled(false);
+            } else if (pluginManager.isInterrupted()) {
+                postMessage(rm.getString("text.execute.interrupted"));
             }
         }
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
-     */
-    public final void loadSelectedPlugin() throws Exception {
-        retrievePlugins();
-
-        Element selectedPlugin = pm.getProjectModel().getPlugin();
-
-        if (selectedPlugin != null) {
-            if (selectedPlugin.getChild(XMLTags.DESCRIPTION).getAttributeValue(XMLTags.VALUE) != null) {
-                comboBoxPlugin.setSelectedItem(selectedPlugin.getChild(XMLTags.DESCRIPTION).getAttributeValue(XMLTags.VALUE));
-            }
-        }
-    }
-
-    // set by ProjectModel when taskExecute is initalized
-    public final void setTaskExecute(TaskExecute taskExecute) {
-        this.taskExecute     = taskExecute;
-
-        // initialize timer for updating execution log
-        timer = new Timer(TIMER_SLOT, new TimerUpdateListener());
-
-        timer.start();
     }
 
     /**
@@ -164,8 +163,19 @@ public class PanelExecute extends DynamicPanel {
         borderLayout.setHgap(10);
         borderLayout.setVgap(10);
         this.setLayout(borderLayout);
+
+        // setup textAreaAppender and append it
+        taa = new TextAreaAppender(new PatternLayout("%5p %d %m%n"), "panelLogText");
+        taa.setThreshold(Priority.INFO);
+
+        Category cat = Category.getInstance("opendbcopy.plugin");
+        cat.addAppender(taa);
+
+        textAreaLog = taa.getTextArea();
+        textAreaLog.setText(rm.getString("text.execute.log.toolTip") + System.getProperty("line.separator"));
+
         panelPlugin.setLayout(new GridLayout(1, 1));
-        panelPlugin.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1), " Choose a plugin to execute "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        panelPlugin.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1), " " + rm.getString("text.execute.select") + " "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 
         panelMain.setLayout(borderLayoutMain);
 
@@ -174,19 +184,19 @@ public class PanelExecute extends DynamicPanel {
 
         panelControl.setPreferredSize(new Dimension(392, 50));
 
-        this.progressBarTable = new JProgressBar(0, 0);
-        this.progressBarTable.setMinimum(0);
-        this.progressBarTable.setValue(0);
-        this.progressBarTable.setStringPainted(true);
+        progressBarTable = new JProgressBar(0, 0);
+        progressBarTable.setMinimum(0);
+        progressBarTable.setValue(0);
+        progressBarTable.setStringPainted(true);
 
-        this.progressBarRecord = new JProgressBar(0, 0);
-        this.progressBarRecord.setMinimum(0);
-        this.progressBarRecord.setValue(0);
-        this.progressBarRecord.setStringPainted(true);
+        progressBarRecord = new JProgressBar(0, 0);
+        progressBarRecord.setMinimum(0);
+        progressBarRecord.setValue(0);
+        progressBarRecord.setStringPainted(true);
 
         buttonControl = new JButton();
         buttonControl.setPreferredSize(new Dimension(120, 40));
-        buttonControl.setText(OperationType.EXECUTE);
+        buttonControl.setText(rm.getString("button.execute"));
         buttonControl.setActionCommand(OperationType.EXECUTE);
 
         buttonControl.addActionListener(new PanelExecute_buttonControl_actionAdapter(this));
@@ -201,53 +211,50 @@ public class PanelExecute extends DynamicPanel {
         panelControl.add(panelProgress, BorderLayout.CENTER);
         panelControl.add(buttonControl, BorderLayout.EAST);
 
-        scrollPane = new JScrollPane(textPaneLog);
-        scrollPane.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.black, 1), " Execution Log "));
+        scrollPane = new JScrollPane(textAreaLog);
+        scrollPane.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.black, 1), " " + rm.getString("text.execute.log") + " "));
 
         panelMain.add(scrollPane, BorderLayout.CENTER);
 
         this.add(panelPlugin, BorderLayout.NORTH);
         this.add(panelMain, BorderLayout.CENTER);
         this.add(panelControl, BorderLayout.SOUTH);
-
-        textPaneLog.setText("Shows execution_log_file which is stored in the sub directory 'log'");
     }
 
     /**
      * DOCUMENT ME!
      */
     private void retrievePlugins() {
-        try {
-            Iterator itPlugins = null; // = pm.getPlugins().getRootElement().getChildren(XMLTags.PLUGIN).iterator();
+        availablePluginThreads = workingMode.getAvailablePluginThreads();
 
-            pluginsHashtable = new Hashtable();
+        Iterator itAvailablePlugins = availablePluginThreads.values().iterator();
 
-            int index = 0;
-            comboBoxPlugin.removeAllItems();
-
-            while (itPlugins.hasNext()) {
-                Element plugin = (Element) itPlugins.next();
-
-                // in single mode only show plugins that work in single or both modes
-                if (pm.getProjectModel().getDbMode() == pm.getProjectModel().SINGLE_MODE) {
-                    if ((plugin.getAttributeValue(XMLTags.DB_MODE).compareTo(XMLTags.SINGLE_DB) == 0) || (plugin.getAttributeValue(XMLTags.DB_MODE).compareTo(XMLTags.BOTH_DB) == 0)) {
-                        pluginsHashtable.put(Integer.toString(index), plugin);
-                        comboBoxPlugin.addItem(plugin.getChild(XMLTags.DESCRIPTION).getAttributeValue(XMLTags.VALUE));
-                        index++;
-                    }
-                }
-                // in single mode only show plugins that work in dual or both modes
-                else {
-                    if ((plugin.getAttributeValue(XMLTags.DB_MODE).compareTo(XMLTags.DUAL_DB) == 0) || (plugin.getAttributeValue(XMLTags.DB_MODE).compareTo(XMLTags.BOTH_DB) == 0)) {
-                        pluginsHashtable.put(Integer.toString(index), plugin);
-                        comboBoxPlugin.addItem(plugin.getChild(XMLTags.DESCRIPTION).getAttributeValue(XMLTags.VALUE));
-                        index++;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            postException(e);
+        while (itAvailablePlugins.hasNext()) {
+            String pluginDescription = (String) itAvailablePlugins.next();
+            comboBoxPlugin.addItem(pluginDescription);
         }
+    }
+
+    /**
+     * Retrieve the plugin thread class name given the description I know, a little bit complicate, maybe you find a nicer implementation
+     *
+     * @return DOCUMENT ME!
+     */
+    private String getSelectedPluginThread() {
+        String   pluginThreadDescription = (String) comboBoxPlugin.getSelectedItem();
+        String   pluginThreadClass = null;
+
+        Iterator itPluginKeys = availablePluginThreads.keySet().iterator();
+
+        while (itPluginKeys.hasNext()) {
+            pluginThreadClass = (String) itPluginKeys.next();
+
+            if (((String) availablePluginThreads.get(pluginThreadClass)).compareTo(pluginThreadDescription) == 0) {
+                return pluginThreadClass;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -262,14 +269,25 @@ public class PanelExecute extends DynamicPanel {
                 Element operation = new Element(XMLTags.OPERATION);
                 operation.setAttribute(XMLTags.NAME, OperationType.EXECUTE);
 
-                Element plugin = (Element) pluginsHashtable.get(Integer.toString(comboBoxPlugin.getSelectedIndex()));
-                Element usePlugin = (Element) plugin.clone();
-                operation.addContent(usePlugin.detach());
-
                 buttonControl.setText(OperationType.CANCEL);
                 buttonControl.setActionCommand(OperationType.CANCEL);
 
-                execute(operation, "execution started ...");
+                // initialize timer for updating execution log
+                if (timer == null) {
+                    timer = new Timer(TIMER_SLOT, new TimerUpdateListener());
+                    timer.start();
+                }
+                // if timer already exists restart it
+                else {
+                    timer.restart();
+                }
+
+                currentModel.setThreadClassName(getSelectedPluginThread());
+
+                // enable text area appender
+                taa.setEnabled(true);
+
+                pluginManager.executePlugin(currentModel);
             } catch (Exception ex) {
                 postException(ex);
             }
@@ -283,7 +301,7 @@ public class PanelExecute extends DynamicPanel {
                 buttonControl.setText(OperationType.EXECUTE);
                 buttonControl.setActionCommand(OperationType.EXECUTE);
 
-                execute(operation, "execution cancelled ...");
+                execute(operation, rm.getString("text.execute.interrupted"));
             } catch (Exception ex) {
                 postException(ex);
             }
@@ -303,24 +321,29 @@ public class PanelExecute extends DynamicPanel {
          * @param evt DOCUMENT ME!
          */
         public void actionPerformed(ActionEvent evt) {
-            if (taskExecute.getTaskStatus() == taskExecute.started) {
-                // read log file and show in log pane
-                try {
-                    textPaneLog.setText(Reader.read("log/opendbcopy_execution_log_file.log").toString());
-                } catch (Exception e) {
-                    // do nothing as it is possible that user deleted log or whatever ...
-                }
-            } else if ((taskExecute.getTaskStatus() == taskExecute.interrupted) || (taskExecute.getTaskStatus() == taskExecute.done)) {
-                // read log file a last time
-                try {
-                    textPaneLog.setText(Reader.read("log/opendbcopy_execution_log_file.log").toString());
-                } catch (Exception e) {
-                    // do nothing as it is possible that user deleted log or whatever ...
+            // update status bars if possible and if changed
+            if (currentModel != null) {
+                // set table max value
+                if (currentModel.getLengthProgressTable() != progressBarTable.getMaximum()) {
+                    progressBarTable.setMaximum(currentModel.getLengthProgressTable());
                 }
 
-                timer.stop();
-            } else {
-                timer.stop(); // just in case this state is currently active
+                // set record max value
+                if (currentModel.getLengthProgressRecord() != progressBarRecord.getMaximum()) {
+                    progressBarRecord.setMaximum(currentModel.getLengthProgressRecord());
+                }
+
+                if (currentModel.getCurrentProgressTable() != progressBarTable.getValue()) {
+                    progressBarTable.setValue(currentModel.getCurrentProgressTable());
+
+                    if ((currentModel.getProgressMessage() != null) && (currentModel.getProgressMessage().length() > 0)) {
+                        progressBarTable.setString(currentModel.getProgressMessage());
+                    }
+                }
+
+                if (currentModel.getCurrentProgressRecord() != progressBarRecord.getValue()) {
+                    progressBarRecord.setValue(currentModel.getCurrentProgressRecord());
+                }
             }
         }
     }

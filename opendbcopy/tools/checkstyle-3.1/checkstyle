@@ -1,0 +1,83 @@
+Hello,
+
+First, yes, you can use opendbcopy to migrate data from your db2 to Oracle
+- in general. That is what I first developed opendbcopy for. In the
+meantime new features have been added.
+
+A new version 0.50 is under development which will fix some bugs and
+provide the ability to migrate schemas too! Including constraints and
+indexes.
+
+May I ask what JDK you are using on the two machines?
+
+The one with the sax error you can fix by downloading sax library from the
+internet and place it inside opendbcopy/lib. It is strange. You are not
+the first one facing this problem. I never had this so I cannot debug.
+However, if you place sax.jar into the lib directory you should be able to
+launch it.
+
+Maybe you will be facing an error when opendbcopy tries to retrieve first
+metadata of DB2. If so, I can send you a hotfix if you send me the error.
+The new version will not run into this problem anymore.
+
+May I ask what the complexities are in your migration project?
+
+cheers,
+Anthony
+> Dear Mr Smith,
+>
+> I have downloaded and successfully installed the opendbcopy.
+>
+> We want to migrate from IBM OS/390 DB2UDB V5R1 to Oracle 9i.
+>
+> However I am facing some initial issues in configuring and finding the
+> necessary drivers.
+>
+> On one machine I could not install and I got the foll. Error.  (JRE was
+> there)
+> =================================================
+> C:\_frequent\non_project\downloads>java -jar
+> opendbcopy-0.41.2-install.jar
+> Exception in thread "main" java.util.zip.ZipException: error in opening
+> zip file
+>
+>         at java.util.zip.ZipFile.open(Native Method)
+>         at java.util.zip.ZipFile.<init>(Unknown Source)
+>         at java.util.jar.JarFile.<init>(Unknown Source)
+>         at java.util.jar.JarFile.<init>(Unknown Source)
+> =================================================
+>
+>
+> On other machine, I could install  but could not get to start using
+> start.bat.  I got the error
+>
+> ========================================================================
+> =======
+> .
+> loading opendbcopy ...
+> .
+> java -Xms128m -Xmx512m -classpath ";C:\Program
+> Files\opendbcopy\lib\opendbcopy.j
+> ar;C:\Program Files\opendbcopy\lib\log4j-1.2.8.jar;C:\Program
+> Files\opendbcopy\l
+> ib\xerces.jar;C:\Program Files\opendbcopy\lib\jdom.jar;;"
+> opendbcopy.controller.
+> MainController
+> .
+> added file:/C:/Program Files/opendbcopy/lib/ojdbc14.jar dynamically to
+> your clas
+> spath
+> Exception in thread "main" java.lang.NoClassDefFoundError:
+> org/xml/sax/SAXNotRec
+> ognizedException
+>         at opendbcopy.io.ImportFromXML.importFile(ImportFromXML.java:58)
+> at
+> opendbcopy.controller.MainController.<init>(MainController.java:87)
+>         at
+> opendbcopy.controller.MainController.main(MainController.java:123)
+> ========================================================================
+> =======
+>
+>
+> Please advise how I need to proceed.
+>

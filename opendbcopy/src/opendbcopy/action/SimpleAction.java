@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,20 +22,17 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.action;
 
-import opendbcopy.config.XMLTags;
-
-import opendbcopy.controller.MainController;
-
-import opendbcopy.gui.FrameMain;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
-import org.jdom.Element;
-
 import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
+import javax.swing.ImageIcon;
+
+import opendbcopy.config.XMLTags;
+import opendbcopy.controller.MainController;
+import opendbcopy.gui.FrameMain;
+
+import org.apache.log4j.Level;
+import org.jdom.Element;
 
 
 /**
@@ -45,7 +42,6 @@ import javax.swing.AbstractAction;
  * @version $Revision$
  */
 public class SimpleAction extends AbstractAction {
-    private static Logger  logger = Logger.getLogger(SimpleAction.class.getName());
     private FrameMain      frame;
     private MainController controller;
     private Element        operation;
@@ -54,13 +50,22 @@ public class SimpleAction extends AbstractAction {
      * Creates a new SimpleAction object.
      *
      * @param command DOCUMENT ME!
+     * @param name DOCUMENT ME!
+     * @param imageIcon DOCUMENT ME!
      * @param frame DOCUMENT ME!
      * @param controller DOCUMENT ME!
      */
     public SimpleAction(String         command,
+                        String         name,
+                        ImageIcon      imageIcon,
                         FrameMain      frame,
                         MainController controller) {
-        putValue(AbstractAction.NAME, command);
+        putValue(AbstractAction.NAME, name);
+        putValue(AbstractAction.ACTION_COMMAND_KEY, command);
+
+        if (imageIcon != null) {
+            putValue(AbstractAction.SMALL_ICON, imageIcon);
+        }
 
         this.operation = new Element(XMLTags.OPERATION);
         this.operation.setAttribute(XMLTags.NAME, command);

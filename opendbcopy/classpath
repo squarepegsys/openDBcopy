@@ -1,0 +1,32 @@
+#!/bin/sh
+
+SRCDIR="src"
+TESTDIR="test"
+BINDIR="bin"
+LIBDIR="lib"
+LOCALDIR="local"
+DIRS="$LOCALDIR $BINDIR $SRCDIR $TESTDIR"
+
+scriptdir=${0%/*}
+for dir in $scriptdir/$LIBDIR/*; do
+  if [[ $dir == *.jar || -d $dir ]]; then
+    classpath=$classpath\:$dir
+  fi  
+done
+classpath=${classpath#\:}
+
+for dir in $DIRS; do
+  if [[ -d $scriptdir/$dir ]]; then
+    classpath=$classpath\:$scriptdir/$dir
+  fi
+done
+classpath=${classpath#\:}
+
+for dir in $scriptdir/$BINDIR/*; do
+	if [[ $dir == *.jar ]]; then
+    classpath=$classpath\:$dir
+  fi 
+done
+classpath=${classpath#\:}
+
+echo $classpath

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,7 +24,6 @@ package opendbcopy.io;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -46,12 +45,11 @@ public final class PropertiesToFile {
      *
      * @return DOCUMENT ME!
      *
-     * @throws IllegalArgumentException DOCUMENT ME!
-     * @throws FileNotFoundException DOCUMENT ME!
      * @throws IOException DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
     public static final String exportPropertiesToFile(Properties p,
-                                                      String     fileName) throws IllegalArgumentException, FileNotFoundException, IOException {
+                                                      String     fileName) throws IOException {
         if ((p == null) || (fileName == null) || (fileName.length() == 0)) {
             throw new IllegalArgumentException("missing Properties or fileName to export");
         }
@@ -71,11 +69,10 @@ public final class PropertiesToFile {
      *
      * @return DOCUMENT ME!
      *
-     * @throws IllegalArgumentException DOCUMENT ME!
-     * @throws FileNotFoundException DOCUMENT ME!
      * @throws IOException DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public static final Properties importPropertiesFromFile(String fileName) throws IllegalArgumentException, FileNotFoundException, IOException {
+    public static final Properties importPropertiesFromFile(String fileName) throws IOException {
         if ((fileName == null) || (fileName.length() == 0)) {
             throw new IllegalArgumentException("missing fileName for properties file to import");
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,11 +28,14 @@ import opendbcopy.connection.exception.OpenConnectionException;
 
 import opendbcopy.controller.MainController;
 
-import opendbcopy.model.ProjectManager;
+import opendbcopy.plugin.ProjectManager;
 
-import opendbcopy.model.exception.MissingAttributeException;
-import opendbcopy.model.exception.MissingElementException;
-import opendbcopy.model.exception.UnsupportedAttributeValueException;
+import opendbcopy.plugin.model.Model;
+import opendbcopy.plugin.model.exception.MissingAttributeException;
+import opendbcopy.plugin.model.exception.MissingElementException;
+import opendbcopy.plugin.model.exception.UnsupportedAttributeValueException;
+
+import opendbcopy.resource.ResourceManager;
 
 import org.apache.log4j.Level;
 
@@ -56,19 +59,31 @@ import javax.swing.JPanel;
  * @version $Revision$
  */
 public class DynamicPanel extends JPanel implements Observer {
-    protected MainController controller;
-    protected FrameMain      parentFrame;
-    protected ProjectManager pm;
+    protected MainController  controller;
+    protected WorkingMode     workingMode;
+    protected ProjectManager  pm;
+    protected ResourceManager rm;
+    protected Model           model;
 
     /**
      * Creates a new DynamicPanel object.
      *
      * @param controller DOCUMENT ME!
+     * @param workingMode DOCUMENT ME!
+     * @param registerAsObserver DOCUMENT ME!
      */
-    public DynamicPanel(MainController controller) {
+    public DynamicPanel(MainController controller,
+                        WorkingMode    workingMode,
+                        Boolean        registerAsObserver) {
         this.controller      = controller;
+        this.rm              = controller.getResourceManager();
         this.pm              = controller.getProjectManager();
-        this.parentFrame     = controller.getFrame();
+        this.workingMode     = workingMode;
+        this.model           = workingMode.getModel();
+
+        if (registerAsObserver.booleanValue()) {
+            model.registerObserver(this);
+        }
     }
 
     /**
@@ -106,7 +121,7 @@ public class DynamicPanel extends JPanel implements Observer {
      */
     protected final void execute(Element operation,
                                  String  messageSuccessful) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, JDOMException, SQLException, IOException, Exception {
-        parentFrame.execute(operation, messageSuccessful);
+        workingMode.execute(operation, messageSuccessful);
     }
 
     /**
@@ -115,7 +130,7 @@ public class DynamicPanel extends JPanel implements Observer {
      * @param message DOCUMENT ME!
      */
     protected final void postMessage(String message) {
-        parentFrame.postMessage(message);
+        workingMode.postMessage(message);
     }
 
     /**
@@ -124,6 +139,6 @@ public class DynamicPanel extends JPanel implements Observer {
      * @param e DOCUMENT ME!
      */
     protected void postException(Exception e) {
-        parentFrame.postException(e, Level.ERROR);
+        workingMode.postException(e, Level.ERROR);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -41,6 +41,7 @@ public final class XMLTags {
     public static final String MAPPING = "mapping";
     public static final String FILTER = "filter";
     public static final String PLUGIN = "plugin";
+    public static final String PLUGINS = "plugins";
     public static final String STATISTICS = "statistics";
     public static final String SOURCE_DB = "source_db";
     public static final String DESTINATION_DB = "destination_db";
@@ -60,9 +61,8 @@ public final class XMLTags {
 
     // general attributes
     public static final String DB_MODE = "db_mode";
-    public static final String SINGLE_DB = "single";
-    public static final String DUAL_DB = "dual";
-    public static final String BOTH_DB = "both";
+    public static final String SINGLE_DB = "single_db";
+    public static final String DUAL_DB = "dual_db";
     public static final String DRIVER_CLASS = "driver_class";
     public static final String URL = "url";
     public static final String USERNAME = "username";
@@ -139,11 +139,17 @@ public final class XMLTags {
     public static final String SET_NULL = "set_null";
 
     // plugin attributes and nodes
-    public static final String PLUGIN_CONFIG = "plugin_config";
+    public static final String THREADS = "threads";
+    public static final String THREAD = "thread";
     public static final String CLASS = "class";
+    public static final String THREAD_CLASS = "thread_class";
+    public static final String MODEL_CLASS = "model_class";
     public static final String DESCRIPTION = "description";
     public static final String AUTHOR = "author";
     public static final String CONF = "conf";
+    public static final String INPUT = "input";
+    public static final String OUTPUT = "output";
+    public static final String REQUIRES_INPUT = "requires_input";
     public static final String DELIMITER = "delimiter";
     public static final String DELIMITER_POSITION = "delimiter_position";
     public static final String APPEND_FILE_AFTER_RECORDS = "append_file_after_records";
@@ -154,22 +160,46 @@ public final class XMLTags {
     public static final String PATH = "path";
     public static final String SHOW_HEADER = "show_header";
     public static final String SHOW_NULL_VALUES = "show_null_values";
-
+    public static final String DIRSET = "dirset";
+    public static final String FILESET = "fileset";
+    public static final String FILELIST = "filelist";
+    public static final String INCLUDE = "include";
+    public static final String EXCLUDE = "exclude";
+    public static final String DIR = "dir";
+    public static final String ID = "id";
+    public static final String FILES = "files";
+    public static final String MKDIR = "mkdir";
+    public static final String TODIR = "todir";
+    public static final String TOFILE = "tofile";
+    public static final String DELETE = "delete";
+    public static final String OVERWRITE = "overwrite";
+    public static final String UNKNOWN = "unknown";    
+    
     // application arguments
     public static final String ARGUMENTS = "arguments";
     public static final String RUNLEVEL = "runlevel";
 
     // SQLDriver tags
     public static final String DRIVERS = "drivers";
+    public static final String DEFAULT = "default";
 
     // Working Mode
     public static final String WORKING_MODE = "working_mode";
     public static final String WORKING_MODES = "working_modes";
-    public static final String STANDARD_WORKING_MODE_REFERENCE = "standard_working_mode_reference";
-    public static final String STANDARD_WORKING_MODE = "standard_working_mode";
+    public static final String DISPLAY_ORDER = "display_order";
     public static final String IDENTIFIER = "identifier";
     public static final String TITLE = "title";
+    public static final String RESOURCE_NAME = "resource_name";
     public static final String PANELS = "panels";
     public static final String PANEL = "panel";
     public static final String REGISTER_AS_OBSERVER = "register_as_observer";
+    
+    // Plugin Execution Status
+    public static final String EXECUTION_STATUS = "execution_status";
+    public static final String STARTED = "started";
+    public static final String INTERRUPTED = "interrupted";
+    public static final String SUSPENDED = "suspended";
+    public static final String RESUMED = "resumed";
+    public static final String DONE = "done";
+    public static final String EXCEPTION_OCCURED = "exception occured";
 }

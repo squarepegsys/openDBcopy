@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -30,23 +30,28 @@ package opendbcopy.config;
  */
 public final class OperationType {
     /** Project and Application Operations */
-    public static final String NEW = "New";
-    public static final String EXPORT_PROJECT = "Export Project ...";
-    public static final String IMPORT_PROJECT = "Import Project ...";
-    public static final String OPEN = "open";
-    public static final String EXIT = "Exit";
+    public static final String NEW_PROJECT = "new_project";
+    public static final String ADD_PLUGIN = "add_plugin";
+    public static final String REMOVE_PLUGIN = "remove_plugin";
+    public static final String EXPORT_PROJECT = "export_project";
+    public static final String IMPORT_PROJECT = "import_project";
+    public static final String EXIT = "exit";
+
+    public static final String NEW_PLUGIN = "new_plugin";
+    public static final String EXPORT_PLUGIN = "export_plugin";
+    public static final String IMPORT_PLUGIN = "import_plugin";
 
     /** Capture Operations */
     public static final String READ_METADATA = "read_metadata";
-    public static final String CAPTURE_SOURCE_MODEL = "Capture Source Model";
-    public static final String CAPTURE_DESTINATION_MODEL = "Capture Destination Model";
+    public static final String CAPTURE_SOURCE_MODEL = "capture_source_model";
+    public static final String CAPTURE_DESTINATION_MODEL = "capture_destination_model";
 
     /** Execute Menu */
-    public static final String EXECUTE = "Execute";
-    public static final String CANCEL = "Cancel";
+    public static final String EXECUTE = "execute";
+    public static final String CANCEL = "cancel";
 
     /** Test Menu */
-    public static final String TEST_SOURCE = "Test Source Connection";
-    public static final String TEST_DESTINATION = "Test Destination Connection";
-    public static final String TEST_TABLE_FILTER = "Test Table Filter";
+    public static final String TEST_SOURCE_CONNECTION = "test_source_connection";
+    public static final String TEST_DESTINATION_CONNECTION = "test_destination_connection";
+    public static final String TEST_TABLE_FILTER = "test_table_filter";
 }

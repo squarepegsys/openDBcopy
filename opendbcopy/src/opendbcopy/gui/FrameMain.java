@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,6 +23,7 @@
 package opendbcopy.gui;
 
 import opendbcopy.config.APM;
+import opendbcopy.config.OperationType;
 
 import opendbcopy.connection.exception.CloseConnectionException;
 import opendbcopy.connection.exception.DriverNotFoundException;
@@ -30,11 +31,13 @@ import opendbcopy.connection.exception.OpenConnectionException;
 
 import opendbcopy.controller.MainController;
 
-import opendbcopy.model.ProjectManager;
+import opendbcopy.plugin.ProjectManager;
 
-import opendbcopy.model.exception.MissingAttributeException;
-import opendbcopy.model.exception.MissingElementException;
-import opendbcopy.model.exception.UnsupportedAttributeValueException;
+import opendbcopy.plugin.model.exception.MissingAttributeException;
+import opendbcopy.plugin.model.exception.MissingElementException;
+import opendbcopy.plugin.model.exception.UnsupportedAttributeValueException;
+
+import opendbcopy.resource.ResourceManager;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -43,12 +46,12 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 
 import java.io.IOException;
@@ -60,12 +63,11 @@ import java.util.Observer;
 import java.util.Properties;
 
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.JTextPane;
 
 
 /**
@@ -75,44 +77,63 @@ import javax.swing.JTextPane;
  * @version $Revision$
  */
 public class FrameMain extends JFrame implements Observer {
+    private static final ImageIcon openIcon = new ImageIcon("resource/images/Open16.gif");
+    private static final ImageIcon saveAsIcon = new ImageIcon("resource/images/SaveAs16.gif");
+    private static final ImageIcon newIcon = new ImageIcon("resource/images/New16.gif");
+    private static final ImageIcon historyIcon = new ImageIcon("resource/images/History16.gif");
     private static Logger          logger = Logger.getLogger(FrameMain.class.getName());
     private static final Dimension SCREEN_SIZE = Toolkit.getDefaultToolkit().getScreenSize();
     private Menu                   menu;
     private MainController         controller;
+    private ResourceManager        rm;
     private ProjectManager         pm;
-    private PanelWorkingMode       panelWorkingMode;
     private String                 frameTitle;
     private String                 newLine;
     private JPanel                 contentPane;
-    private JTextPane              statusBar = new JTextPane();
-    private JScrollPane            scrollPane = null;
     private BorderLayout           borderLayout = new BorderLayout();
     private JPanel                 panelMain = new JPanel();
-    private JPanel                 panelControl = new JPanel();
     private GridLayout             gridLayout = new GridLayout();
-    private JButton                buttonNext = new JButton();
-    private JTabbedPane            tab;
+    private JTabbedPane            tabPluginModel;
     private DialogFile             dialogFile;
-    private int frameWidth;
-    private int frameHeight;
+    private FramePluginChain       framePluginChain;
+    private FrameShowFile          frameExecutionLog;
+    private int                    frameWidth;
+    private int                    frameHeight;
 
-    //Construct the frame
+    /**
+     * Creates a new FrameMain object.
+     *
+     * @param controller DOCUMENT ME!
+     * @param frameWidth DOCUMENT ME!
+     * @param frameHeight DOCUMENT ME!
+     *
+     * @throws MissingAttributeException DOCUMENT ME!
+     */
     public FrameMain(MainController controller,
-                     ProjectManager projectManager, int frameWidth, int frameHeight) {
-        this.controller     = controller;
-        this.pm             = projectManager;
-        this.frameWidth = frameWidth;
-        this.frameHeight = frameHeight;
+                     int            frameWidth,
+                     int            frameHeight) throws MissingAttributeException {
+        this.controller      = controller;
+        this.rm              = controller.getResourceManager();
+        this.pm              = controller.getProjectManager();
+        this.frameWidth      = frameWidth;
+        this.frameHeight     = frameHeight;
 
         // dialogFile must be setup before menu so that actions using dialogFile have a valid reference
         this.dialogFile     = new DialogFile(this);
-        this.menu           = new Menu(this, this.controller, projectManager);
+        this.menu           = new Menu(this, controller, pm);
 
         contentPane     = (JPanel) this.getContentPane();
         newLine         = System.getProperty("line.separator");
 
         try {
             guiInit();
+
+            framePluginChain = new FramePluginChain(this, controller);
+            locateDialogUpperRight(framePluginChain);
+            framePluginChain.show();
+
+            frameExecutionLog = new FrameShowFile(controller, 600, 300, controller.getExecutionLogFile(), rm.getString("menu.show.executionLog"));
+            locateDialogLowerRight(frameExecutionLog);
         } catch (Exception e) {
             postException(e, Level.ERROR);
         }
@@ -126,6 +147,13 @@ public class FrameMain extends JFrame implements Observer {
      */
     public final void update(Observable o,
                              Object     obj) {
+        if (controller.getProjectManager().getCurrentOperation().compareTo(OperationType.IMPORT_PROJECT) == 0) {
+            try {
+                //loadWorkingMode(controller.getProjectManager().getCurrentModel().getWorkingMode());
+            } catch (Exception e) {
+                postException(e, Level.ERROR);
+            }
+        }
     }
 
     /**
@@ -149,21 +177,40 @@ public class FrameMain extends JFrame implements Observer {
                               String  messageSuccessful) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, JDOMException, SQLException, IOException, Exception {
         try {
             controller.execute(operation);
-            postMessage(messageSuccessful);
+            logger.info(messageSuccessful);
         } catch (Exception e) {
-            statusBar.setForeground(Color.RED);
-            statusBar.setText(e.getMessage() + "\n" + "-> see log file (opendbcopy/log) for further details.");
-            logger.error(e.getMessage());
+            logger.error(e);
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Oooooops!", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     /**
      * DOCUMENT ME!
      *
-     * @param index DOCUMENT ME!
+     * @param message DOCUMENT ME!
      */
-    public final void setSelectedTabIndex(int index) {
-        tab.setSelectedIndex(index);
+    public final void postMessage(String message) {
+        logger.info(message);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param e DOCUMENT ME!
+     * @param level DOCUMENT ME!
+     */
+    public final void postException(Exception e,
+                                    Level     level) {
+        e.printStackTrace();
+
+        if (level.isGreaterOrEqual(Level.ERROR)) {
+            logger.error(e);
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Oooooops!", JOptionPane.ERROR_MESSAGE);
+        } else if (level.isGreaterOrEqual(Level.WARN)) {
+            logger.warn(e);
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Oooooops!", JOptionPane.WARNING_MESSAGE);
+        }
     }
 
     /**
@@ -174,10 +221,7 @@ public class FrameMain extends JFrame implements Observer {
     private void guiInit() throws Exception {
         JPanel contentPane = (JPanel) this.getContentPane();
 
-        panelWorkingMode = new PanelWorkingMode(this, controller);
-        controller.getWorkingModeManager().registerObserver(panelWorkingMode);
-
-        panelMain.add(panelWorkingMode);
+        panelMain.add(controller.getWorkingModeManager().getTabModelsLoaded());
 
         borderLayout.setHgap(10);
         borderLayout.setVgap(10);
@@ -187,36 +231,20 @@ public class FrameMain extends JFrame implements Observer {
         this.frameTitle = p.getProperty(APM.APPLICATION_NAME) + " " + p.getProperty(APM.APPLICATION_VERSION) + " - " + p.getProperty(APM.APPLICATION_COPYRIGHT);
         super.setTitle(this.frameTitle);
 
-        statusBar.setText(" ");
-        statusBar.setPreferredSize(new Dimension(300, 40));
-        statusBar.setBackground(null);
-        scrollPane = new JScrollPane(statusBar);
-
-        panelControl.setLayout(new BorderLayout(20, 20));
         panelMain.setLayout(gridLayout);
         gridLayout.setColumns(1);
         gridLayout.setHgap(0);
         panelMain.setBorder(BorderFactory.createEmptyBorder());
-        buttonNext.setPreferredSize(new Dimension(120, 40));
-        buttonNext.setText("Next >");
-        buttonNext.addActionListener(new FrameMain_buttonNext_actionAdapter(this));
-        panelControl.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 10));
-        panelControl.setMinimumSize(new Dimension(600, 60));
-        panelControl.setPreferredSize(new Dimension(600, 60));
-
-        panelControl.add(scrollPane, BorderLayout.CENTER);
-        panelControl.add(buttonNext, BorderLayout.EAST);
 
         contentPane.setLayout(borderLayout);
         contentPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         contentPane.add(panelMain, BorderLayout.CENTER);
-        contentPane.add(panelControl, BorderLayout.SOUTH);
 
         this.setJMenuBar(this.menu);
         this.menu.setVisible(true);
         this.setSize(new Dimension(frameWidth, frameHeight));
 
-        centerDialog(this);
+        locateDialogCentreScreen(this);
     }
 
     /**
@@ -224,7 +252,7 @@ public class FrameMain extends JFrame implements Observer {
      *
      * @param parent DOCUMENT ME!
      */
-    public final void centerDialog(Component parent) {
+    public final void locateDialogCentreScreen(Component parent) {
         //Center the window
         Dimension frameSize = parent.getSize();
 
@@ -242,79 +270,42 @@ public class FrameMain extends JFrame implements Observer {
     /**
      * DOCUMENT ME!
      *
-     * @param message DOCUMENT ME!
+     * @param parent DOCUMENT ME!
      */
-    public final void postMessage(String message) {
-        statusBar.setForeground(Color.BLACK);
-        statusBar.setText(message);
-        logger.info(message);
-    }
+    public final void locateDialogUpperRight(Component parent) {
+        Dimension frameSize = parent.getSize();
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param e DOCUMENT ME!
-     * @param level DOCUMENT ME!
-     */
-    public final void postException(Exception e,
-                                    Level     level) {
-        statusBar.setForeground(Color.RED);
-
-        if (level.isGreaterOrEqual(Level.ERROR)) {
-            logger.error(e.getMessage());
-            statusBar.setText("ERROR: " + e.getMessage() + newLine + "-> see log files in log directory for further details");
-        } else if (level.isGreaterOrEqual(Level.WARN)) {
-            logger.warn(e.getMessage());
-            statusBar.setForeground(Color.ORANGE);
-            statusBar.setText("WARNING: " + e.getMessage());
+        if (frameSize.height > SCREEN_SIZE.height) {
+            frameSize.height = SCREEN_SIZE.height;
         }
-    }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     */
-    public final int getSelectedTabIndex() {
-        return tab.getSelectedIndex();
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param workingMode DOCUMENT ME!
-     */
-    public final void loadWorkingMode(String workingMode) {
-        try {
-            if (workingMode == null) {
-                throw new Exception("Missing workingMode");
-            }
-
-            // destroy currentWorkingMode if available
-            controller.getWorkingModeManager().destroyCurrentWorkingMode();
-
-            tab = controller.getWorkingModeManager().loadWorkingMode(workingMode);
-
-            // set working mode in Project Model
-            pm.getProjectModel().setWorkingMode(workingMode);
-
-            // removes panelWorkingMode and possible tab which could already have been loaded
-            panelMain.removeAll();
-
-            // add tab containing panels loaded dynamically
-            panelMain.add(tab);
-
-            panelMain.updateUI();
-
-            if (logger.isDebugEnabled()) {
-                logger.debug("index = " + tab.getSelectedIndex() + " / " + tab.getTitleAt(0));
-            }
-        } catch (Exception ex) {
-            postException(ex, Level.ERROR);
+        if (frameSize.width > SCREEN_SIZE.width) {
+            frameSize.width = SCREEN_SIZE.width;
         }
+
+        parent.setLocation(SCREEN_SIZE.width - frameSize.width, 0);
     }
 
-    //File | Exit action performed
+    /**
+     * DOCUMENT ME!
+     *
+     * @param parent DOCUMENT ME!
+     */
+    public final void locateDialogLowerRight(Component parent) {
+        Dimension frameSize = parent.getSize();
+
+        if (frameSize.height > SCREEN_SIZE.height) {
+            frameSize.height = SCREEN_SIZE.height;
+        }
+
+        if (frameSize.width > SCREEN_SIZE.width) {
+            frameSize.width = SCREEN_SIZE.width;
+        }
+
+        parent.setLocation(SCREEN_SIZE.width - frameSize.width, SCREEN_SIZE.height - frameSize.height);
+    }
+
+    // Project | Exit action performed
     public final void jMenuFileExit_actionPerformed(ActionEvent e) {
         System.exit(0);
     }
@@ -333,11 +324,8 @@ public class FrameMain extends JFrame implements Observer {
      *
      * @param e DOCUMENT ME!
      */
-    void buttonNext_actionPerformed(ActionEvent e) {
-        // selection of working mode
-        if (tab == null) {
-            loadWorkingMode(panelWorkingMode.getSelectedWorkingMode());
-        }
+    void tab_mouseClicked(MouseEvent e) {
+        //controller.getWorkingModeManager().setSelectedTabIndex(tabPluginModel.getSelectedIndex());
     }
 
     /**
@@ -348,6 +336,60 @@ public class FrameMain extends JFrame implements Observer {
     public DialogFile getDialogFile() {
         return dialogFile;
     }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the historyIcon.
+     */
+    public final ImageIcon getHistoryIcon() {
+        return historyIcon;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the newIcon.
+     */
+    public final ImageIcon getNewIcon() {
+        return newIcon;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the openIcon.
+     */
+    public final ImageIcon getOpenIcon() {
+        return openIcon;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the saveAsIcon.
+     */
+    public final ImageIcon getSaveAsIcon() {
+        return saveAsIcon;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the framePluginChain.
+     */
+    public final FramePluginChain getFramePluginChain() {
+        return framePluginChain;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the frameExecutionLog.
+     */
+    public final FrameShowFile getFrameExecutionLog() {
+        return frameExecutionLog;
+    }
 }
 
 
@@ -357,15 +399,15 @@ public class FrameMain extends JFrame implements Observer {
  * @author Anthony Smith
  * @version $Revision$
  */
-class FrameMain_buttonNext_actionAdapter implements java.awt.event.ActionListener {
+class FrameMain_tab_mouseAdapter extends java.awt.event.MouseAdapter {
     FrameMain adaptee;
 
     /**
-     * Creates a new FrameMain_buttonNext_actionAdapter object.
+     * Creates a new FrameMain_tab_mouseAdapter object.
      *
      * @param adaptee DOCUMENT ME!
      */
-    FrameMain_buttonNext_actionAdapter(FrameMain adaptee) {
+    FrameMain_tab_mouseAdapter(FrameMain adaptee) {
         this.adaptee = adaptee;
     }
 
@@ -374,7 +416,7 @@ class FrameMain_buttonNext_actionAdapter implements java.awt.event.ActionListene
      *
      * @param e DOCUMENT ME!
      */
-    public final void actionPerformed(ActionEvent e) {
-        adaptee.buttonNext_actionPerformed(e);
+    public final void mouseClicked(MouseEvent e) {
+        adaptee.tab_mouseClicked(e);
     }
 }

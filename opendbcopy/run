@@ -1,0 +1,26 @@
+#!/bin/sh
+
+SRCDIR="src"
+TESTDIR="test"
+JAVA="java"
+JAVAFLAGS=""
+
+scriptdir=${0%/*}
+pattern=*/${1//.//}.java
+file=( `find $scriptdir/$SRCDIR $scriptdir/$TESTDIR -path "$pattern" 2>/dev/null` )
+if [[ -z $file ]]; then
+  class=$1
+else
+  class=${file##*/}
+  class=${class%%.*}
+  package=`sed -n -e 's/^package[ 	]*\(.*\);/\1/p' $file`
+  if [[ ! -z $package ]]; then
+    class=$package.$class
+  fi
+fi
+
+export CLASSPATH=/usr/local/classes:.\:`$scriptdir/classpath`
+
+shift
+echo $JAVA $JAVAFLAGS $class "$@"
+exec $JAVA $JAVAFLAGS $class "$@"

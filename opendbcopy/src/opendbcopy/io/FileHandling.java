@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,7 +23,10 @@
 package opendbcopy.io;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 import java.util.StringTokenizer;
 import java.util.Vector;
@@ -37,16 +40,39 @@ import java.util.Vector;
  */
 public final class FileHandling {
     /**
+     * code borrowed from http://www.ragnon.com/javadetails/java-0064.html
+     *
+     * @param in DOCUMENT ME!
+     * @param out DOCUMENT ME!
+     *
+     * @throws IOException DOCUMENT ME!
+     */
+    public static void copyFile(File in,
+                                File out) throws IOException {
+        FileInputStream  fis = new FileInputStream(in);
+        FileOutputStream fos = new FileOutputStream(out);
+        byte[]           buf = new byte[1024];
+        int              i = 0;
+
+        while ((i = fis.read(buf)) != -1) {
+            fos.write(buf, 0, i);
+        }
+
+        fis.close();
+        fos.close();
+    }
+
+    /**
      * DOCUMENT ME!
      *
      * @param pathFilename may be relative or absolute
      *
      * @return valid file or directory
      *
-     * @throws IllegalArgumentException DOCUMENT ME!
      * @throws FileNotFoundException DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public static File getFile(String pathFilename) throws IllegalArgumentException, FileNotFoundException {
+    public static File getFile(String pathFilename) throws FileNotFoundException {
         if (pathFilename == null) {
             throw new IllegalArgumentException("Missing pathFilename");
         }
@@ -68,11 +94,11 @@ public final class FileHandling {
      *
      * @return DOCUMENT ME!
      *
-     * @throws IllegalArgumentException DOCUMENT ME!
      * @throws FileNotFoundException DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
     public static File getFileInDirectory(File   directory,
-                                          String filename) throws IllegalArgumentException, FileNotFoundException {
+                                          String filename) throws FileNotFoundException {
         if (!directory.isDirectory()) {
             throw new IllegalArgumentException("File directory must be a directory, which it isn't");
         }
@@ -97,14 +123,16 @@ public final class FileHandling {
      *
      * @param directory DOCUMENT ME!
      * @param fileType DOCUMENT ME!
+     * @param excludeFilename DOCUMENT ME!
      *
      * @return returns array of valid files, if such exist, else return an empty array
      *
-     * @throws IllegalArgumentException DOCUMENT ME!
      * @throws FileNotFoundException DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
     public static File[] getFilesInDirectory(File   directory,
-                                             String fileType, String excludeFilename) throws IllegalArgumentException, FileNotFoundException {
+                                             String fileType,
+                                             String excludeFilename) throws FileNotFoundException {
         Vector filesVector = new Vector();
 
         if (!directory.isDirectory()) {
@@ -115,23 +143,23 @@ public final class FileHandling {
 
         for (int i = 0; i < files.length; i++) {
             if (getFileEnding(files[i].getName()).compareTo(fileType) == 0) {
-            	if (excludeFilename != null) {
-            		if (files[i].getName().compareTo(excludeFilename) != 0) {
+                if (excludeFilename != null) {
+                    if (files[i].getName().compareTo(excludeFilename) != 0) {
                         filesVector.add(files[i]);
-            		}
-            	} else {
+                    }
+                } else {
                     filesVector.add(files[i]);
-            	}
+                }
             }
         }
 
         // now create a file array containing the matching files
         File[] matchingFiles = new File[filesVector.size()];
-        
+
         for (int i = 0; i < filesVector.size(); i++) {
-        	matchingFiles[i] = (File) filesVector.get(i);
+            matchingFiles[i] = (File) filesVector.get(i);
         }
-        
+
         return matchingFiles;
     }
 
@@ -144,7 +172,7 @@ public final class FileHandling {
      *
      * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public static String getFileEnding(String filename) throws IllegalArgumentException {
+    public static String getFileEnding(String filename) {
         if (filename == null) {
             throw new IllegalArgumentException("Missing filename");
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,7 +22,6 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.action;
 
-import opendbcopy.config.OperationType;
 import opendbcopy.config.XMLTags;
 
 import opendbcopy.controller.MainController;
@@ -37,7 +36,10 @@ import org.jdom.Element;
 
 import java.awt.event.ActionEvent;
 
+import java.io.File;
+
 import javax.swing.AbstractAction;
+import javax.swing.ImageIcon;
 
 
 /**
@@ -51,29 +53,40 @@ public class OpenFileAction extends AbstractAction {
     private MainController controller;
     private FrameMain      frame;
     private Element        operation;
-    private DialogFile dialogFile;
-    
+    private DialogFile     dialogFile;
+    private File           currentDir;
+
     /**
      * Creates a new OpenFileAction object.
      *
      * @param command DOCUMENT ME!
+     * @param name DOCUMENT ME!
+     * @param imageIcon DOCUMENT ME!
      * @param fileType DOCUMENT ME!
+     * @param currentDir DOCUMENT ME!
      * @param frame DOCUMENT ME!
      * @param controller DOCUMENT ME!
      */
     public OpenFileAction(String         command,
+                          String         name,
+                          ImageIcon      imageIcon,
                           String         fileType,
+                          File           currentDir,
                           FrameMain      frame,
                           MainController controller) {
-        putValue(AbstractAction.NAME, command);
+        putValue(AbstractAction.NAME, name);
+        putValue(AbstractAction.ACTION_COMMAND_KEY, command);
+        putValue(AbstractAction.SMALL_ICON, imageIcon);
 
         this.operation = new Element(XMLTags.OPERATION);
         this.operation.setAttribute(XMLTags.NAME, command);
+        this.operation.setAttribute(XMLTags.TITLE, name);
         this.operation.setAttribute(XMLTags.FILE_TYPE, fileType);
 
+        this.currentDir     = currentDir;
         this.controller     = controller;
         this.frame          = frame;
-        this.dialogFile = frame.getDialogFile();
+        this.dialogFile     = frame.getDialogFile();
     }
 
     /**
@@ -82,22 +95,11 @@ public class OpenFileAction extends AbstractAction {
      * @param evt DOCUMENT ME!
      */
     public void actionPerformed(ActionEvent evt) {
-        operation.setAttribute(XMLTags.FILE, dialogFile.openDialog(operation.getAttributeValue(XMLTags.NAME), operation.getAttributeValue(XMLTags.FILE_TYPE)));
+        operation.setAttribute(XMLTags.FILE, dialogFile.openDialog(operation.getAttributeValue(XMLTags.TITLE), operation.getAttributeValue(XMLTags.FILE_TYPE), currentDir));
 
         if (operation.getAttributeValue(XMLTags.FILE).length() > 0) {
             try {
-
-                if (operation.getAttributeValue(XMLTags.NAME).compareTo(OperationType.IMPORT_PROJECT) == 0) {
-                	try {
-                    	frame.loadWorkingMode(controller.getProjectManager().getProjectModel().getWorkingMode());
-                	} catch (Exception e) {
-                		frame.postException(e, Level.ERROR);
-                	}
-                }
-
-                // call as last method so that possible new DynamicPanels can update themselves, if required
                 controller.execute(operation);
-
             } catch (Exception e) {
                 frame.postException(e, Level.ERROR);
             }

@@ -1,46 +1,40 @@
 <working_modes>
-	<working_mode identifier="dual">
-		<title value="Work with two databases given a source and destination database" />
+	<working_mode identifier="dual_db" model_class="opendbcopy.model.DatabaseModel">
+		<title value="title.standardWorkingMode.dual_db" />
 		<panels>
-			<panel title="1. Database Connections">
-				<class name="opendbcopy.gui.dual.PanelConnection" register_as_observer="true" />
+			<panel title="title.dual_db.panel.1">
+				<class name="opendbcopy.gui.PanelConnection" register_as_observer="true" />
 			</panel>
-			<panel title="2. Models">
-				<class name="opendbcopy.gui.dual.PanelModel" register_as_observer="true" />
+			<panel title="title.dual_db.panel.2">
+				<class name="opendbcopy.gui.PanelModel" register_as_observer="true" />
 			</panel>
-			<panel title="3. Table Mapping">
+			<panel title="title.dual_db.panel.3">
 				<class name="opendbcopy.gui.dual.PanelMappingTable" register_as_observer="true" />
 			</panel>
-			<panel title="4. Column Mapping">
+			<panel title="title.dual_db.panel.4">
 				<class name="opendbcopy.gui.dual.PanelMappingColumn" register_as_observer="true" />
 			</panel>
-			<panel title="5. Global Filters">
-				<class name="opendbcopy.gui.PanelFilter" register_as_observer="true" />
-			</panel>
-			<panel title="6. Execute Plugin">
+			<panel title="title.dual_db.panel.5">
 				<class name="opendbcopy.gui.PanelExecute" />
 			</panel>
 		</panels>
 	</working_mode>
-	<working_mode identifier="single">
-		<title value="Work with one database given a source database" />
+	<working_mode identifier="single_db" model_class="opendbcopy.model.DatabaseModel">
+		<title value="title.standardWorkingMode.single_db" />
 		<panels>
-			<panel title="1. Database Connection">
-				<class name="opendbcopy.gui.single.PanelConnection" register_as_observer="true" />
+			<panel title="title.single_db.panel.1">
+				<class name="opendbcopy.gui.PanelConnection" register_as_observer="true" />
 			</panel>
-			<panel title="2. Model">
-				<class name="opendbcopy.gui.single.PanelModel" register_as_observer="true" />
+			<panel title="title.single_db.panel.2">
+				<class name="opendbcopy.gui.PanelModel" register_as_observer="true" />
 			</panel>
-			<panel title="3. Process Tables / Views">
+			<panel title="title.single_db.panel.3">
 				<class name="opendbcopy.gui.single.PanelProcessTable" register_as_observer="true" />
 			</panel>
-			<panel title="4. Process Columns">
+			<panel title="title.single_db.panel.4">
 				<class name="opendbcopy.gui.single.PanelProcessColumn" register_as_observer="true" />
 			</panel>
-			<panel title="5. Global Filters">
-				<class name="opendbcopy.gui.PanelFilter" register_as_observer="true" />
-			</panel>
-			<panel title="6. Execute Plugin">
+			<panel title="title.single_db.panel.5">
 				<class name="opendbcopy.gui.PanelExecute" />
 			</panel>
 		</panels>

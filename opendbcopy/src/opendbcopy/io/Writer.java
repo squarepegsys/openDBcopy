@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -40,11 +40,11 @@ public final class Writer {
      * @param stringBuffer DOCUMENT ME!
      * @param fileName DOCUMENT ME!
      *
-     * @throws IllegalArgumentException DOCUMENT ME!
      * @throws IOException DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
     public static final void write(StringBuffer stringBuffer,
-                                   String       fileName) throws IllegalArgumentException, IOException {
+                                   String       fileName) throws IOException {
         if ((stringBuffer == null) || (fileName == null) || (fileName.length() == 0)) {
             throw new IllegalArgumentException("Missing arguments values: stringBuffer=" + stringBuffer + " fileName=" + fileName);
         }

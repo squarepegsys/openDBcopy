@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,38 +23,53 @@
 package opendbcopy.controller;
 
 import opendbcopy.config.APM;
+import opendbcopy.config.SQLDriverManager;
+import opendbcopy.config.XMLTags;
 
 import opendbcopy.connection.exception.CloseConnectionException;
 import opendbcopy.connection.exception.DriverNotFoundException;
 import opendbcopy.connection.exception.OpenConnectionException;
 
+import opendbcopy.gui.FrameConsole;
 import opendbcopy.gui.FrameMain;
 import opendbcopy.gui.WorkingModeManager;
 
+import opendbcopy.io.FileHandling;
 import opendbcopy.io.ImportFromXML;
 import opendbcopy.io.PropertiesToFile;
 
-import opendbcopy.model.ProjectManager;
+import opendbcopy.plugin.ProjectManager;
 
-import opendbcopy.model.exception.MissingAttributeException;
-import opendbcopy.model.exception.MissingElementException;
-import opendbcopy.model.exception.UnsupportedAttributeValueException;
+import opendbcopy.plugin.model.exception.MissingAttributeException;
+import opendbcopy.plugin.model.exception.MissingElementException;
+import opendbcopy.plugin.model.exception.PluginException;
+import opendbcopy.plugin.model.exception.UnsupportedAttributeValueException;
 
-import opendbcopy.plugin.PluginManager;
+import opendbcopy.resource.ResourceManager;
 
+import org.apache.log4j.Category;
+import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 import org.apache.log4j.PropertyConfigurator;
 
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
+
+import java.lang.reflect.InvocationTargetException;
 
 import java.sql.SQLException;
 
+import java.util.HashMap;
+import java.util.MissingResourceException;
 import java.util.Observer;
 import java.util.Properties;
 
@@ -68,15 +83,30 @@ import javax.swing.UIManager;
  * @version $Revision$
  */
 public class MainController {
+    public static final String        fileSep = System.getProperty("file.separator");
+    public static final String        lineSep = System.getProperty("line.separator");
     private static Logger             logger = Logger.getLogger(MainController.class.getName());
     private static Properties         applicationProperties;
+    private static File               opendbcopyUserHomeDir;
+    private static File               logDir;
+    private static File               inoutDir;
+    private static File               personalProjectsDir;
+    private static File               personalPluginsDir;
+    private static File               personalConfDir;
+    private static File               personalSQLDriversFile;
+    private static File               executionLogFile;
+    private static String             pathFilenameConsoleOut;
     private static ProjectManager     pm;
+    private static ResourceManager    rm;
     private static FrameMain          frameMain;
+    private static FrameConsole       frameConsole;
     private static WorkingModeManager workingModeManager;
-    private static PluginManager      pluginManager;
-    private boolean                   isGuiEnabled = false;
-	private int frameWidth = 0;
-	private int frameHeight = 0;
+    private static SQLDriverManager   sqlDriverManager;
+    private static TaskLauncher       taskLauncher;
+    private static HashMap            resourcesDynamicallyLoaded;
+    private static boolean            isGuiEnabled = false;
+    private static int                frameWidth = 0;
+    private static int                frameHeight = 0;
 
     /**
      * default Constructor args may be null or contain parameters
@@ -92,23 +122,25 @@ public class MainController {
      * @throws JDOMException DOCUMENT ME!
      * @throws SQLException DOCUMENT ME!
      * @throws FileNotFoundException DOCUMENT ME!
+     * @throws ClassNotFoundException DOCUMENT ME!
+     * @throws IllegalAccessException DOCUMENT ME!
+     * @throws InstantiationException DOCUMENT ME!
+     * @throws InvocationTargetException DOCUMENT ME!
      * @throws IOException DOCUMENT ME!
      * @throws Exception DOCUMENT ME!
      */
-    public MainController(String[] args) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, JDOMException, SQLException, FileNotFoundException, IOException, Exception {
-        applicationProperties = loadApplicationProperties();
-
-        // check if the gui shall be shown or not
-        if ((applicationProperties.getProperty(APM.SHOW_GUI) != null) && (applicationProperties.getProperty(APM.SHOW_GUI).compareToIgnoreCase("true") == 0)) {
-            isGuiEnabled = true;
+    public MainController(String[] args) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, JDOMException, SQLException, FileNotFoundException, ClassNotFoundException, IllegalAccessException, InstantiationException, InvocationTargetException, IOException, Exception {
+        if (isGuiEnabled()) {
+            taskLauncher = new TaskLauncher(this, 5, frameWidth, frameHeight, pathFilenameConsoleOut, applicationProperties.getProperty(APM.OPENDBCOPY_LOGO_FILE));
+            taskLauncher.go();
         }
 
         setupLog4j(applicationProperties.getProperty(APM.LOG4J_PROPERTIES_FILE));
 
-        Document drivers = null;
         Document project = null;
         Document typeMapping = null;
         Document workingMode = null;
+        Document standardModels = null;
 
         try {
             // set the look and feel. If not existing, set default crossplatform look and feel
@@ -118,45 +150,68 @@ public class MainController {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Cannot set Look and Feel");
+            System.err.println(rm.getString("text.controller.cannotSetLF"));
         }
 
         // evaluate arguments
-        project     = Arguments.process(args);
+        project = Arguments.process(args);
 
-        workingMode     = ImportFromXML.importFile(applicationProperties.getProperty(APM.STANDARD_WORKING_MODES_CONF_FILE));
+        addMessage(rm.getString("text.controller.argumentsDone"));
+
+        if (isGuiEnabled()) {
+            try {
+                frameWidth      = Integer.parseInt(applicationProperties.getProperty(APM.FRAME_MAIN_WIDTH));
+                frameHeight     = Integer.parseInt(applicationProperties.getProperty(APM.FRAME_MAIN_HEIGHT));
+            } catch (Exception e) {
+                frameWidth      = 800;
+                frameHeight     = 650;
+            }
+
+            workingModeManager = new WorkingModeManager(this, frameWidth, frameHeight);
+        }
+
+        addMessage(rm.getString("text.controller.workingModeManagerDone"));
 
         // read drivers file
-        drivers     = ImportFromXML.importFile(applicationProperties.getProperty(APM.DRIVERS_CONF_FILE));
+        sqlDriverManager = new SQLDriverManager(personalSQLDriversFile, applicationProperties.getProperty(APM.ENCODING));
+        addMessage(rm.getString("text.controller.sqlDriversDone"));
 
         // read SQL types mapping
         typeMapping = ImportFromXML.importFile(applicationProperties.getProperty(APM.SQL_TYPE_MAPPING_CONF_FILE));
+        addMessage(rm.getString("text.controller.sqlJavaMappingDone"));
 
         if (project == null) {
-            pm = new ProjectManager(this, typeMapping, drivers);
+            pm = new ProjectManager(this, typeMapping, standardModels, applicationProperties.getProperty(APM.PLUGINS_DIRECTORY), applicationProperties.getProperty(APM.PLUGINS_CONF_FILE), applicationProperties.getProperty(APM.WORKING_MODE_CONF_FILE), applicationProperties.getProperty(APM.ENCODING));
+        } else {
+            pm = new ProjectManager(this, typeMapping, standardModels, project, applicationProperties.getProperty(APM.PLUGINS_DIRECTORY), applicationProperties.getProperty(APM.PLUGINS_CONF_FILE), applicationProperties.getProperty(APM.WORKING_MODE_CONF_FILE), applicationProperties.getProperty(APM.ENCODING));
         }
 
+        addMessage(rm.getString("text.controller.readingPluginDone"));
+
+        // show the frame
         if (isGuiEnabled()) {
-        	try {
-        		frameWidth = Integer.parseInt(applicationProperties.getProperty(APM.FRAME_WIDTH));
-        		frameHeight = Integer.parseInt(applicationProperties.getProperty(APM.FRAME_HEIGHT));
-        	} catch (Exception e) {
-        		frameWidth = 800;
-        		frameHeight = 650;
-        	}
+            // must be initialised before workingModeManager
+            frameMain = new FrameMain(this, frameWidth, frameHeight);
 
-            workingModeManager     = new WorkingModeManager(this, workingMode, frameWidth, frameHeight);
-        }
-
-        pluginManager = new PluginManager(this, applicationProperties.getProperty(APM.PLUGINS_DIRECTORY), applicationProperties.getProperty(APM.PLUGINS_CONF_FILE), applicationProperties.getProperty(APM.WORKING_MODE_CONF_FILE), applicationProperties.getProperty(APM.ENCODING));
-
-        // show the frame as the last operation of setup
-        if (isGuiEnabled()) {
-        	// must be initialised before workingModeManager
-        	frameMain              = new FrameMain(this, pm, frameWidth, frameHeight);
+            // add observer for project
             pm.addObserver(frameMain);
 
-        	frameMain.setVisible(true);
+            // add observer for working mode
+            workingModeManager.registerObserver(frameMain);
+
+            frameMain.setVisible(true);
+        }
+
+        // execute project immediately
+        if (project != null) {
+            // load project, working mode in gui
+            if (isGuiEnabled()) {
+                if (pm.getCurrentModel().getWorkingMode() != null) {
+                    //frameMain.loadWorkingMode(pm.getCurrentModel().getWorkingMode());
+                }
+            }
+
+            Element operation = new Element(XMLTags.OPERATION);
         }
     }
 
@@ -167,17 +222,49 @@ public class MainController {
      */
     public static void main(String[] args) {
         try {
+            applicationProperties = loadApplicationProperties();
+
+            System.out.println("reading language specific resources");
+            rm = new ResourceManager("resources", applicationProperties.getProperty(APM.LANGUAGE));
+
+            setupDirectoriesAndCreateLocalFiles();
+            System.out.println(rm.getString("text.controller.checkingDirectoriesDone"));
+
+            String[] params = { pathFilenameConsoleOut };
+            System.out.println(rm.getString("text.controller.consoleRedirect", params));
+
+            // lead System.out into single file
+            PrintStream out = new PrintStream(new FileOutputStream(pathFilenameConsoleOut));
+            System.setOut(out);
+            System.setErr(out);
+
+            // check if the gui shall be shown or not
+            if ((applicationProperties.getProperty(APM.SHOW_GUI) != null) && (applicationProperties.getProperty(APM.SHOW_GUI).compareToIgnoreCase("true") == 0)) {
+                isGuiEnabled = true;
+            }
+
+            if (isGuiEnabled()) {
+                frameWidth      = 300;
+                frameHeight     = 400;
+
+                try {
+                    frameWidth      = Integer.parseInt(applicationProperties.getProperty(APM.FRAME_CONSOLE_WIDTH));
+                    frameHeight     = Integer.parseInt(applicationProperties.getProperty(APM.FRAME_CONSOLE_HEIGHT));
+                } catch (Exception e) {
+                    // use default values as specified above
+                }
+            }
+
             ClasspathLoader.addLibDirectoryToClasspath();
 
             new MainController(args);
-        } catch (FileNotFoundException e) {
-            System.err.println(e.getMessage());
-            System.exit(0);
+        } catch (MissingResourceException e) {
+            e.printStackTrace();
         } catch (IOException e) {
-            System.err.println(e.getMessage());
+            e.printStackTrace();
             System.exit(0);
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -186,7 +273,6 @@ public class MainController {
      *
      * @param operation DOCUMENT ME!
      *
-     * @throws IllegalArgumentException DOCUMENT ME!
      * @throws UnsupportedAttributeValueException DOCUMENT ME!
      * @throws MissingAttributeException DOCUMENT ME!
      * @throws MissingElementException DOCUMENT ME!
@@ -197,8 +283,9 @@ public class MainController {
      * @throws SQLException DOCUMENT ME!
      * @throws IOException DOCUMENT ME!
      * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public final void execute(Element operation) throws IllegalArgumentException, UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, JDOMException, SQLException, IOException, Exception {
+    public final void execute(Element operation) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, JDOMException, SQLException, IOException, Exception {
         if (operation == null) {
             throw new IllegalArgumentException("Missing operation");
         }
@@ -213,11 +300,12 @@ public class MainController {
      *
      * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public final void registerObserver(Observer observer) throws IllegalArgumentException {
+    public final void registerObserver(Observer observer) {
         if (observer == null) {
             throw new IllegalArgumentException("Missing observer");
         }
 
+        // register project observer
         pm.addObserver(observer);
     }
 
@@ -228,7 +316,7 @@ public class MainController {
      *
      * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public final void deleteObserver(Observer observer) throws IllegalArgumentException {
+    public final void deleteObserver(Observer observer) {
         if (observer == null) {
             throw new IllegalArgumentException("Missing observer");
         }
@@ -275,18 +363,37 @@ public class MainController {
      * DOCUMENT ME!
      *
      * @param workingModeElement DOCUMENT ME!
-     * @param pluginIdentifier DOCUMENT ME!
-     * @param pluginDescription DOCUMENT ME!
+     * @param pluginElement DOCUMENT ME!
      *
      * @throws UnsupportedAttributeValueException DOCUMENT ME!
      * @throws MissingAttributeException DOCUMENT ME!
      * @throws MissingElementException DOCUMENT ME!
      */
     public final void addWorkingModeForPlugin(Element workingModeElement,
-                                              String  pluginIdentifier,
-                                              String  pluginDescription) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException {
+                                              Element pluginElement) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException {
         if (isGuiEnabled()) {
-            workingModeManager.addWorkingModeForPlugin(workingModeElement, pluginIdentifier, pluginDescription);
+            workingModeManager.addWorkingMode(workingModeElement, pluginElement);
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param workingModeIdentifier DOCUMENT ME!
+     * @param isExecutableModel DOCUMENT ME!
+     *
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws ClassNotFoundException DOCUMENT ME!
+     * @throws InstantiationException DOCUMENT ME!
+     * @throws InvocationTargetException DOCUMENT ME!
+     * @throws IllegalAccessException DOCUMENT ME!
+     * @throws PluginException DOCUMENT ME!
+     */
+    public final void loadWorkingModeForPlugin(String  workingModeIdentifier,
+                                               boolean isExecutableModel) throws MissingAttributeException, MissingElementException, ClassNotFoundException, InstantiationException, InvocationTargetException, IllegalAccessException, PluginException {
+        if (isGuiEnabled()) {
+            workingModeManager.loadWorkingMode(workingModeIdentifier, isExecutableModel);
         }
     }
 
@@ -295,12 +402,99 @@ public class MainController {
      *
      * @return DOCUMENT ME!
      *
-     * @throws IllegalArgumentException DOCUMENT ME!
      * @throws FileNotFoundException DOCUMENT ME!
      * @throws IOException DOCUMENT ME!
      */
-    private static Properties loadApplicationProperties() throws IllegalArgumentException, FileNotFoundException, IOException {
+    private static Properties loadApplicationProperties() throws FileNotFoundException, IOException {
         return PropertiesToFile.importPropertiesFromFile("conf/opendbcopy.properties");
+    }
+
+    /**
+     * Creates required directories in user_home for opendbcopy.
+     *
+     * @throws IOException DOCUMENT ME!
+     */
+    private static void setupDirectoriesAndCreateLocalFiles() throws IOException {
+        // check that user's home directory for opendbcopy exists
+        String userDir = System.getProperty("user.home") + fileSep + applicationProperties.getProperty(APM.OPENDBCOPY_USER_HOME_DIR);
+
+        try {
+            opendbcopyUserHomeDir = FileHandling.getFile(userDir);
+        } catch (FileNotFoundException e) {
+            opendbcopyUserHomeDir = new File(userDir);
+            opendbcopyUserHomeDir.mkdir();
+
+            String[] param = { opendbcopyUserHomeDir.getAbsolutePath() };
+            System.out.println(rm.getString("text.controller.created", param));
+        }
+
+        // check that log directory exists, else create it
+        logDir     = setupDirInOpendbcopyUserHome("log");
+
+        // check that personal conf directory exists, else create it
+        personalConfDir     = setupDirInOpendbcopyUserHome("conf");
+
+        // check that plugin in out dir exists, else create it
+        inoutDir     = setupDirInOpendbcopyUserHome(applicationProperties.getProperty(APM.PLUGIN_IN_OUT_DIR));
+
+        // check that local plugins folder exists, else create it
+        personalPluginsDir     = setupDirInOpendbcopyUserHome(applicationProperties.getProperty(APM.PLUGINS_DIRECTORY));
+
+        // check that local projects folder exists, else create it
+        personalProjectsDir     = setupDirInOpendbcopyUserHome(applicationProperties.getProperty(APM.PROJECTS_DIRECTORY));
+
+        // create path filenames for console output
+        pathFilenameConsoleOut = logDir.getAbsolutePath() + fileSep + "application_log.txt";
+
+        // check if opendbcopy user home dir contains sql driver file, if not, copy a standard copy into this directory
+        File   standardSQLDriverFile = FileHandling.getFile(applicationProperties.getProperty(APM.DRIVERS_CONF_FILE));
+        String standardSQLDriverFilename = standardSQLDriverFile.getName();
+        String personalSQLDriverPathFilename = opendbcopyUserHomeDir.getAbsolutePath() + fileSep + applicationProperties.getProperty(APM.DRIVERS_CONF_FILE);
+
+        personalSQLDriversFile = FileHandling.getFileInDirectory(personalConfDir, standardSQLDriverFilename);
+
+        if (personalSQLDriversFile == null) {
+            personalSQLDriversFile = new File(opendbcopyUserHomeDir.getAbsolutePath() + fileSep + applicationProperties.getProperty(APM.DRIVERS_CONF_FILE));
+
+            FileHandling.copyFile(standardSQLDriverFile, personalSQLDriversFile);
+        }
+
+        // execution log file reference
+        executionLogFile = new File(logDir.getAbsolutePath() + fileSep + "execution_log.txt");
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param dirName DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     */
+    private static File setupDirInOpendbcopyUserHome(String dirName) {
+        File file = null;
+
+        try {
+            file = FileHandling.getFile(opendbcopyUserHomeDir.getAbsolutePath() + fileSep + dirName);
+        } catch (FileNotFoundException e) {
+            file = new File(opendbcopyUserHomeDir.getAbsolutePath() + fileSep + dirName);
+            file.mkdir();
+
+            String[] param = { file.getAbsolutePath() };
+            System.out.println(rm.getString("text.controller.created", param));
+        }
+
+        return file;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param message DOCUMENT ME!
+     */
+    private void addMessage(String message) {
+        if (isGuiEnabled()) {
+            taskLauncher.setMessage(message);
+        }
     }
 
     /**
@@ -337,6 +531,16 @@ public class MainController {
      */
     private static void setupLog4j(String fileName) {
         PropertyConfigurator.configure(fileName);
+
+        try {
+            // setup fileAppender for application logging
+            FileAppender fa = new FileAppender(new PatternLayout("%5p %d %m%n"), executionLogFile.getAbsolutePath(), false);
+
+            //            fa.setThreshold(Priority.INFO);
+            Category cat = Category.getInstance("opendbcopy.plugin");
+            cat.addAppender(fa);
+        } catch (IOException e) {
+        }
     }
 
     /**
@@ -344,17 +548,8 @@ public class MainController {
      *
      * @return Returns the isGuiEnabled.
      */
-    public boolean isGuiEnabled() {
+    public static boolean isGuiEnabled() {
         return isGuiEnabled;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return Returns the pluginManager.
-     */
-    public PluginManager getPluginManager() {
-        return pluginManager;
     }
 
     /**
@@ -364,5 +559,109 @@ public class MainController {
      */
     public WorkingModeManager getWorkingModeManager() {
         return workingModeManager;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the sqlDriverManager.
+     */
+    public SQLDriverManager getSqlDriverManager() {
+        return sqlDriverManager;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the rm.
+     */
+    public ResourceManager getResourceManager() {
+        return rm;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param file DOCUMENT ME!
+     *
+     * @return Returns the resourcesDynamicallyLoaded.
+     */
+    public static final boolean isResourcesDynamicallyLoaded(File file) {
+        if (resourcesDynamicallyLoaded != null) {
+            if (resourcesDynamicallyLoaded.containsKey(file.getName())) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param file DOCUMENT ME!
+     */
+    public static final void addResourceDynamicallyLoaded(File file) {
+        if (resourcesDynamicallyLoaded == null) {
+            resourcesDynamicallyLoaded = new HashMap();
+        }
+
+        resourcesDynamicallyLoaded.put(file.getName(), file);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the personalConfDir.
+     */
+    public final File getPersonalConfDir() {
+        return personalConfDir;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the personalPluginsDir.
+     */
+    public final File getPersonalPluginsDir() {
+        return personalPluginsDir;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the personalProjectsDir.
+     */
+    public final File getPersonalProjectsDir() {
+        return personalProjectsDir;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the frameConsole.
+     */
+    public final FrameConsole getFrameConsole() {
+        return frameConsole;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param frameConsole The frameConsole to set.
+     */
+    public final void setFrameConsole(FrameConsole frameConsole) {
+        MainController.frameConsole = frameConsole;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the executionLogFile.
+     */
+    public final File getExecutionLogFile() {
+        return executionLogFile;
     }
 }

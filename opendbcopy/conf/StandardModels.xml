@@ -1,0 +1,53 @@
+<plugins>
+	<plugin model_class="opendbcopy.model.DatabaseModel">
+		<description value="" />
+		<author name="Anthony Smith" />
+		<conf />
+		<input />
+		<output />
+		<source_db>
+	      <driver />
+	      <metadata />
+	      <connection />
+	      <catalog value="" />
+	      <schema value="%" />
+	      <table_pattern value="%" />
+	      <model />
+	   </source_db>
+		<destination_db>
+	      <driver />
+	      <metadata />
+	      <connection />
+	      <catalog value="" />
+	      <schema value="%" />
+	      <table_pattern value="%" />
+	      <model />
+	   </destination_db>
+	   <mapping />
+	   <filter />
+   </plugin>
+	<plugin model_class="opendbcopy.model.DatabaseModel">
+		<description value="" />
+		<author name="Anthony Smith" />
+		<conf />
+		<input />
+		<output />
+		<source_db>
+	      <driver />
+	      <metadata />
+	      <connection />
+	      <catalog value="" />
+	      <schema value="%" />
+	      <table_pattern value="%" />
+	      <model />
+	   </source_db>
+	   <filter />
+   </plugin>
+	<plugin model_class="opendbcopy.model.SimpleModel">
+		<description value="" />
+		<author name="Anthony Smith" />
+		<conf />
+		<input />
+		<output />
+   </plugin>
+</plugins>

@@ -4,7 +4,7 @@
 <!-- Ant build file                                              -->
 <!-- =============================================================== -->
 
-<project name="opendbcopy" default="compile" basedir=".">
+<project name="opendbcopy" default="deployjar2plugins" basedir=".">
 
    	<property name="basedir" value="."/>
    	<property name="build.compiler" value="modern"/>
@@ -105,7 +105,17 @@
    	<!-- Create the zip file                                           -->
    	<!-- ============================================================= -->
    	<target name="zip">
-      	<zip zipfile="opendbcopy.zip" basedir="."></zip>
+      	<zip zipfile="opendbcopy.zip" basedir="."/>
+   	</target>
+   
+	<target name="deployjar2plugins" depends="jar">
+   		<copy file="${lib.dir}/${name}.jar" todir="../opendbcopy-plugins/opendbcopy.copy/lib"/>
+   		<copy file="${lib.dir}/${name}.jar" todir="../opendbcopy-plugins/opendbcopy.delete/lib"/>
+   		<copy file="${lib.dir}/${name}.jar" todir="../opendbcopy-plugins/opendbcopy.dump/lib"/>
+   		<copy file="${lib.dir}/${name}.jar" todir="../opendbcopy-plugins/opendbcopy.schemageneration/lib"/>
+   		<copy file="${lib.dir}/${name}.jar" todir="../opendbcopy-plugins/opendbcopy.script/lib"/>
+   		<copy file="${lib.dir}/${name}.jar" todir="../opendbcopy-plugins/opendbcopy.statistics/lib"/>
+   		<copy file="${lib.dir}/${name}.jar" todir="../opendbcopy-plugins/opendbcopy.zip/lib"/>
    	</target>
    
 	<!-- ============================================================= -->
@@ -161,8 +171,37 @@
          	bottom="Copyright &#169; 2004 by Anthony Smith, Puzzle ITC GmbH"
         />
    </target>
+   
+   	<!-- ============================================================= -->
+   	<!-- Creates checkstyle report                                     -->
+   	<!-- ============================================================= -->
+   	<target name="checkstyle" description="Check code style for compliance with coding standards">
+	   	<!-- definition is here because not all users will have tools installed -->
+	   	<property name="checkstyle.dir" value="${basedir}/tools/checkstyle-3.1"/>
+	   	<patternset id="java.files.pattern" includes="**/*.java"/>
+	   	
+		<property name="checkstyle.data.dir" location="${build.dir}/docs/checkstyle"/>
+		<property name="checkstyle.data.file" location="${checkstyle.data.dir}/checkstyle.xml"/>
+		<property name="checkstyle.report.file" location="${checkstyle.data.dir}/checkstyle.html"/>
+		<property name="checkstyle.xsl.file" location="${checkstyle.dir}/contrib/checkstyle-noframes.xsl"/>
+        <mkdir dir="${checkstyle.data.dir}"/>
+		<taskdef resource="checkstyletask.properties" classpath="${checkstyle.dir}/checkstyle-all-3.1.jar"/>
+		<checkstyle
+			config="${checkstyle.dir}/check_config.xml" 
+			failOnViolation="false"
+			failureProperty="checkstyle.failure">
+            <fileset dir="src">
+            	<patternset refid="java.files.pattern"/>
+			</fileset>
 
-   <target name="hbm2java" depends="cleanhbm">        
+			<!-- uncomment to print to console as well -->
+			<!--formatter type="plain"/-->
+            <formatter type="xml" toFile="${checkstyle.data.file}"/>
+		</checkstyle>
+        <xslt in="${checkstyle.data.file}" out="${checkstyle.report.file}" style="${checkstyle.xsl.file}"/>
+	</target>
+
+   	<target name="hbm2java" depends="cleanhbm">        
         <taskdef name="hbm2java"
             classname="net.sf.hibernate.tool.hbm2java.Hbm2JavaTask">
             <classpath>

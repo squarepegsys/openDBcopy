@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -36,7 +36,10 @@ import org.jdom.Element;
 
 import java.awt.event.ActionEvent;
 
+import java.io.File;
+
 import javax.swing.AbstractAction;
+import javax.swing.ImageIcon;
 
 
 /**
@@ -50,29 +53,40 @@ public class SaveFileAction extends AbstractAction {
     private opendbcopy.controller.MainController controller;
     private opendbcopy.gui.FrameMain             frame;
     private Element                              operation;
-    private DialogFile dialogFile;
+    private DialogFile                           dialogFile;
+    private File                                 currentDir;
 
     /**
      * Creates a new SaveFileAction object.
      *
      * @param command DOCUMENT ME!
+     * @param name DOCUMENT ME!
+     * @param imageIcon DOCUMENT ME!
      * @param fileType DOCUMENT ME!
+     * @param currentDir DOCUMENT ME!
      * @param frame DOCUMENT ME!
      * @param controller DOCUMENT ME!
      */
     public SaveFileAction(String         command,
+                          String         name,
+                          ImageIcon      imageIcon,
                           String         fileType,
+                          File           currentDir,
                           FrameMain      frame,
                           MainController controller) {
-        putValue(AbstractAction.NAME, command);
+        putValue(AbstractAction.NAME, name);
+        putValue(AbstractAction.ACTION_COMMAND_KEY, command);
+        putValue(AbstractAction.SMALL_ICON, imageIcon);
 
         operation = new Element(XMLTags.OPERATION);
         operation.setAttribute(XMLTags.NAME, command);
+        operation.setAttribute(XMLTags.TITLE, name);
         operation.setAttribute(XMLTags.FILE_TYPE, fileType);
 
+        this.currentDir     = currentDir;
         this.controller     = controller;
         this.frame          = frame;
-        this.dialogFile = frame.getDialogFile();
+        this.dialogFile     = frame.getDialogFile();
 
         this.setEnabled(false);
     }
@@ -83,7 +97,7 @@ public class SaveFileAction extends AbstractAction {
      * @param evt DOCUMENT ME!
      */
     public void actionPerformed(ActionEvent evt) {
-        operation.setAttribute(XMLTags.FILE, dialogFile.saveDialog(operation.getAttributeValue(XMLTags.NAME), operation.getAttributeValue(XMLTags.FILE_TYPE)));
+        operation.setAttribute(XMLTags.FILE, dialogFile.saveDialog(operation.getAttributeValue(XMLTags.TITLE), operation.getAttributeValue(XMLTags.FILE_TYPE), currentDir));
 
         if (operation.getAttributeValue(XMLTags.FILE).length() > 0) {
             try {

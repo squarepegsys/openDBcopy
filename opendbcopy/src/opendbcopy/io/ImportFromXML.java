@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -46,12 +46,12 @@ public final class ImportFromXML {
      *
      * @return DOCUMENT ME!
      *
-     * @throws IllegalArgumentException DOCUMENT ME!
      * @throws FileNotFoundException DOCUMENT ME!
      * @throws IOException DOCUMENT ME!
      * @throws JDOMException DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public static final Document importFile(String pathFilename) throws IllegalArgumentException, FileNotFoundException, IOException, JDOMException {
+    public static final Document importFile(String pathFilename) throws FileNotFoundException, IOException, JDOMException {
         if ((pathFilename == null) || (pathFilename.length() == 0)) {
             throw new IllegalArgumentException("Missing pathFilename");
         }
@@ -71,12 +71,12 @@ public final class ImportFromXML {
      *
      * @return DOCUMENT ME!
      *
-     * @throws IllegalArgumentException DOCUMENT ME!
      * @throws FileNotFoundException DOCUMENT ME!
      * @throws IOException DOCUMENT ME!
      * @throws JDOMException DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public static final Document importFile(File file) throws IllegalArgumentException, FileNotFoundException, IOException, JDOMException {
+    public static final Document importFile(File file) throws FileNotFoundException, IOException, JDOMException {
         if (file == null) {
             throw new IllegalArgumentException("Missing file");
         }

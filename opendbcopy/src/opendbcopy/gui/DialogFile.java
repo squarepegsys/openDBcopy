@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,6 +27,8 @@ import opendbcopy.config.FileType;
 import org.apache.log4j.Logger;
 
 import java.awt.Component;
+
+import java.io.File;
 
 import java.util.StringTokenizer;
 
@@ -62,7 +64,8 @@ public class DialogFile extends JFrame {
               this.chooser = new JFileChooser( java.lang.System.getProperty( "user.home" ) );
               System.setSecurityManager( backup );
         */
-        this.chooser = new JFileChooser(java.lang.System.getProperty("user.dir"));
+        chooser = new JFileChooser(java.lang.System.getProperty("user.dir"));
+        chooser.setFileHidingEnabled(false);
     }
 
     /**
@@ -70,15 +73,21 @@ public class DialogFile extends JFrame {
      *
      * @param title DOCUMENT ME!
      * @param fileType DOCUMENT ME!
+     * @param currentDir DOCUMENT ME!
      *
      * @return DOCUMENT ME!
      */
     public final String openDialog(String title,
-                                   String fileType) {
+                                   String fileType,
+                                   File   currentDir) {
         boolean fileEndingOk = false;
         int     DialogReturnValue = 0;
 
         chooser.setDialogTitle(title);
+
+        if (currentDir != null) {
+            chooser.setCurrentDirectory(currentDir);
+        }
 
         ExampleFileFilter filter = new ExampleFileFilter();
 
@@ -113,15 +122,21 @@ public class DialogFile extends JFrame {
      *
      * @param title DOCUMENT ME!
      * @param fileType DOCUMENT ME!
+     * @param currentDir DOCUMENT ME!
      *
      * @return DOCUMENT ME!
      */
     public final String saveDialog(String title,
-                                   String fileType) {
+                                   String fileType,
+                                   File   currentDir) {
         boolean fileEndingOk = false;
         int     dialogReturnValue = 0;
 
         chooser.setDialogTitle(title);
+
+        if (currentDir != null) {
+            chooser.setCurrentDirectory(currentDir);
+        }
 
         ExampleFileFilter filter = new ExampleFileFilter();
 

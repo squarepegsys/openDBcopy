@@ -45,14 +45,11 @@ public class CloseConnectionException extends SQLException {
      * @param sqlState DOCUMENT ME!
      * @param errorCode DOCUMENT ME!
      */
-    public CloseConnectionException(String message,
-                                    String toString,
-                                    String sqlState,
-                                    int    errorCode) {
-        this.message       = message;
-        this.toString      = toString;
-        this.sqlState      = sqlState;
-        this.errorCode     = errorCode;
+    public CloseConnectionException(SQLException e) {
+        this.message       = e.getMessage();
+        this.toString      = e.toString();
+        this.sqlState      = e.getSQLState();
+        this.errorCode     = e.getErrorCode();
     }
 
     /**
@@ -70,7 +67,7 @@ public class CloseConnectionException extends SQLException {
      * @return Returns the message.
      */
     public String getMessage() {
-        return "MESSAGE:\n" + message + "\n\nTO STRING:\n" + toString + "\n\nERROR CODE:\n" + errorCode + "\n\nSQL STATE:\n" + sqlState;
+        return message;
     }
 
     /**

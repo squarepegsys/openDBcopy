@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,7 +28,7 @@ import opendbcopy.connection.exception.CloseConnectionException;
 import opendbcopy.connection.exception.DriverNotFoundException;
 import opendbcopy.connection.exception.OpenConnectionException;
 
-import opendbcopy.model.exception.MissingAttributeException;
+import opendbcopy.plugin.model.exception.MissingAttributeException;
 
 import org.jdom.Element;
 
@@ -65,7 +65,7 @@ public final class DBConnection {
                 connection.close();
             }
         } catch (SQLException e1) {
-            throw new CloseConnectionException(e1.getMessage(), e1.toString(), e1.getSQLState(), e1.getErrorCode());
+            throw new CloseConnectionException(e1);
         }
     }
 
@@ -76,12 +76,12 @@ public final class DBConnection {
      *
      * @return DOCUMENT ME!
      *
-     * @throws IllegalArgumentException DOCUMENT ME!
      * @throws MissingAttributeException DOCUMENT ME!
      * @throws DriverNotFoundException DOCUMENT ME!
      * @throws OpenConnectionException DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public static final Connection getConnection(Element connection) throws IllegalArgumentException, MissingAttributeException, DriverNotFoundException, OpenConnectionException {
+    public static final Connection getConnection(Element connection) throws MissingAttributeException, DriverNotFoundException, OpenConnectionException {
         if (connection == null) {
             throw new IllegalArgumentException("Missing connection element");
         }
@@ -120,7 +120,7 @@ public final class DBConnection {
         // maybe that an SQLException is thrown but the connection is still valid!
          catch (SQLException e1) {
             if (conn == null) {
-                throw new OpenConnectionException(e1.getMessage(), e1.toString(), e1.getSQLState(), e1.getErrorCode());
+                throw new OpenConnectionException(e1);
             }
         }
 
@@ -141,13 +141,12 @@ public final class DBConnection {
      *
      * @return DOCUMENT ME!
      *
-     * @throws IllegalArgumentException DOCUMENT ME!
      * @throws MissingAttributeException DOCUMENT ME!
      * @throws DriverNotFoundException DOCUMENT ME!
      * @throws OpenConnectionException DOCUMENT ME!
      * @throws CloseConnectionException DOCUMENT ME!
      */
-    public static final boolean testConnection(Element connection) throws IllegalArgumentException, MissingAttributeException, DriverNotFoundException, OpenConnectionException, CloseConnectionException {
+    public static final boolean testConnection(Element connection) throws MissingAttributeException, DriverNotFoundException, OpenConnectionException, CloseConnectionException {
         Connection conn = getConnection(connection);
 
         if (conn != null) {

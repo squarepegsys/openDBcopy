@@ -1,0 +1,32 @@
+#!@BASH@
+
+SRCDIR="@SRCDIR@"
+TESTDIR="@TESTDIR@"
+BINDIR="@BINDIR@"
+LIBDIR="@LIBDIR@"
+LOCALDIR="@LOCALDIR@"
+DIRS="$LOCALDIR $BINDIR $SRCDIR $TESTDIR"
+
+scriptdir=${0%/*}
+for dir in $scriptdir/$LIBDIR/*; do
+  if [[ $dir == *.jar || -d $dir ]]; then
+    classpath=$classpath\@AJ_PATH_SEPARATOR@$dir
+  fi  
+done
+classpath=${classpath#\@AJ_PATH_SEPARATOR@}
+
+for dir in $DIRS; do
+  if [[ -d $scriptdir/$dir ]]; then
+    classpath=$classpath\@AJ_PATH_SEPARATOR@$scriptdir/$dir
+  fi
+done
+classpath=${classpath#\@AJ_PATH_SEPARATOR@}
+
+for dir in $scriptdir/$BINDIR/*; do
+	if [[ $dir == *.jar ]]; then
+    classpath=$classpath\@AJ_PATH_SEPARATOR@$dir
+  fi 
+done
+classpath=${classpath#\@AJ_PATH_SEPARATOR@}
+
+echo $classpath

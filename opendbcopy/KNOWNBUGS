@@ -1,0 +1,11 @@
+opendbcopy is like a baby ... if it cries it requires your attention.
+
+Please note that opendbcopy has been successfully used on several projects such as:
+
+1) Copying data from DB2 running on OS390 to Oracle 9.2.0.3 on AIX 5.2 using a custom plugin
+
+2) Copying data from MySQL to MySQL using the standard plugins and to test the custom plugin.
+
+3) Copying data from MySQL to PostgreSQL (Linux)
+
+4) Copying MS Access databases using the standard jdbc:odbc bridge

@@ -1,7 +1,9 @@
 <!-- 
-	this file has originally been borrowed from Squirrel-SQL 
+	this file has originally been borrowed from Squirrel-SQL and adapted for the needs of opendbcopy
 	
-	you may change this file according to your needs, please order drivers alphabetically
+	do not change this file if it is within opendbcopy/conf. 
+	
+	Instead modify the version within your home directory under .opendbcopy
 -->
 
 <drivers>

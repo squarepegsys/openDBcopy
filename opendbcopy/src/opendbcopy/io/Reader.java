@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,6 +24,8 @@ package opendbcopy.io;
 
 import opendbcopy.config.FileCharacter;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -43,18 +45,16 @@ public final class Reader {
      *
      * @return DOCUMENT ME!
      *
-     * @throws IllegalArgumentException DOCUMENT ME!
      * @throws FileNotFoundException DOCUMENT ME!
      * @throws IOException DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public static final StringBuffer read(String fileName) throws IllegalArgumentException, FileNotFoundException, IOException {
+    public static final StringBuffer read(String fileName) throws FileNotFoundException, IOException {
         if ((fileName == null) || (fileName.length() == 0)) {
             throw new IllegalArgumentException("Missing fileName");
         }
 
         StringBuffer stringBuffer = new StringBuffer();
-        char[]       cbuf = null;
-
         FileReader   fileReader = new FileReader(fileName);
 
         int          c = fileReader.read();
@@ -67,5 +67,70 @@ public final class Reader {
         fileReader.close();
 
         return stringBuffer;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param file DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws FileNotFoundException DOCUMENT ME!
+     * @throws IOException DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     */
+    public static final StringBuffer readSingle(File file) throws FileNotFoundException, IOException {
+        if (file == null) {
+            throw new IllegalArgumentException("Missing fileName");
+        }
+
+        StringBuffer stringBuffer = new StringBuffer();
+        FileReader   fileReader = new FileReader(file);
+
+        int          c = fileReader.read();
+
+        while (c != FileCharacter.EOF) {
+            stringBuffer.append((char) c);
+            c = fileReader.read();
+        }
+
+        fileReader.close();
+
+        return stringBuffer;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param file DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws FileNotFoundException DOCUMENT ME!
+     * @throws IOException DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     */
+    public static final StringBuffer read(File file) throws FileNotFoundException, IOException {
+        if (file == null) {
+            throw new IllegalArgumentException("Missing fileName");
+        }
+
+        StringBuffer   stringBuffer = new StringBuffer();
+        String         lineSep = System.getProperty("line.separator");
+
+        BufferedReader in = new BufferedReader(new FileReader(file));
+        String         line = null;
+
+        for (;;) {
+            line = in.readLine();
+
+            // EOF
+            if (line == null) {
+                return stringBuffer;
+            } else {
+                stringBuffer.append(line + lineSep);
+            }
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -35,9 +35,9 @@ public final class APM {
     public static final String APPLICATION_WEBSITE = "application_website";
     public static final String APPLICATION_DEVELOPER_NAME = "application_developer_name";
     public static final String LOG4J_PROPERTIES_FILE = "log4j_properties_file";
-    public static final String STANDARD_WORKING_MODES_CONF_FILE = "standard_working_modes_conf_file";
     public static final String WORKING_MODE_CONF_FILE = "working_mode_conf_file";
     public static final String DRIVERS_CONF_FILE = "drivers_conf_file";
+    public static final String PROJECTS_DIRECTORY = "projects_directory";
     public static final String PLUGINS_DIRECTORY = "plugins_directory";
     public static final String PLUGINS_CONF_FILE = "plugins_conf_file";
     public static final String SQL_TYPE_MAPPING_CONF_FILE = "sql_type_mapping_conf_file";
@@ -45,6 +45,12 @@ public final class APM {
     public static final String LOOK_AND_FEEL = "look_and_feel";
     public static final String SYSTEM = "system";
     public static final String SHOW_GUI = "show_gui";
-    public static final String FRAME_WIDTH = "frame_width";
-    public static final String FRAME_HEIGHT = "frame_height";
+    public static final String LANGUAGE = "language";
+    public static final String FRAME_MAIN_WIDTH = "frame_main_width";
+    public static final String FRAME_MAIN_HEIGHT = "frame_main_height";
+    public static final String FRAME_CONSOLE_WIDTH = "frame_console_width";
+    public static final String FRAME_CONSOLE_HEIGHT = "frame_console_height";
+    public static final String OPENDBCOPY_LOGO_FILE = "opendbcopy_logo_file";
+    public static final String OPENDBCOPY_USER_HOME_DIR = "opendbcopy_user_home_dir";
+    public static final String PLUGIN_IN_OUT_DIR = "plugin_in_out_dir";
 }

@@ -47,7 +47,7 @@
         <panel classname="TargetPanel"/> 
         <panel classname="PacksPanel"/>
         <panel classname="InstallPanel"/>
-  	    <panel classname="ShortcutPanel"/>
+  	<panel classname="ShortcutPanel"/>
         <panel classname="FinishPanel"/>
     </panels>
     
@@ -61,13 +61,14 @@
             <file src="ChangeLog" targetdir="$INSTALL_PATH"/>
             <file src="start.bat" targetdir="$INSTALL_PATH"/>
             <file src="start.sh" targetdir="$INSTALL_PATH"/>
-            <file src="log" targetdir="$INSTALL_PATH"/>
+            <file src="resource" targetdir="$INSTALL_PATH"/>
             <file src="conf" targetdir="$INSTALL_PATH"/>
             <file src="plugins" targetdir="$INSTALL_PATH"/>
             <file src="lib/opendbcopy.jar" targetdir="$INSTALL_PATH/lib"/>
             <file src="lib/jdom.jar" targetdir="$INSTALL_PATH/lib"/>
             <file src="lib/xerces.jar" targetdir="$INSTALL_PATH/lib"/>
             <file src="lib/log4j-1.2.8.jar" targetdir="$INSTALL_PATH/lib"/>
+	    <file src="lib/commons-lang-2.0.jar" targetdir="$INSTALL_PATH/lib"/>
         </pack>
 
         <pack name="Documentation" required="no" preselected="yes">

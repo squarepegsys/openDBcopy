@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.filter;
 
@@ -39,14 +39,18 @@ public final class StringConverter {
      */
     public static Object trimString(Object  o,
                                     boolean returnNullWhenEmpty) {
-        if (returnNullWhenEmpty) {
-            if (((String) o).trim().length() == 0) {
-                return null;
+        if (o instanceof String || o instanceof Character) {
+            if (returnNullWhenEmpty) {
+                if (((String) o).trim().length() == 0) {
+                    return null;
+                } else {
+                    return ((String) o).trim();
+                }
             } else {
                 return ((String) o).trim();
             }
         } else {
-            return ((String) o).trim();
+            return o;
         }
     }
 
@@ -60,34 +64,38 @@ public final class StringConverter {
      */
     public static Object trimAndRemoveMultipleIntermediateWhitespaces(Object  o,
                                                                       boolean returnNullWhenEmpty) {
-        Object in = trimString(o, returnNullWhenEmpty);
+        if (o instanceof String || o instanceof Character) {
+            Object in = trimString(o, returnNullWhenEmpty);
 
-        if ((in != null) && (((String) in).length() > 0)) {
-            StringBuffer strb = new StringBuffer(((String) in));
-            StringBuffer strbn = new StringBuffer();
+            if ((in != null) && (((String) in).length() > 0)) {
+                StringBuffer strb = new StringBuffer(((String) in));
+                StringBuffer strbn = new StringBuffer();
 
-            int          index = 0;
+                int          index = 0;
 
-            while (index < strb.length()) {
-                if ((strb.charAt(index) == ' ') && (index != 0)) {
-                    strbn.append(" ");
+                while (index < strb.length()) {
+                    if ((strb.charAt(index) == ' ') && (index != 0)) {
+                        strbn.append(" ");
 
-                    while (strb.charAt(index) == ' ') {
-                        index++;
+                        while (strb.charAt(index) == ' ') {
+                            index++;
+                        }
                     }
+
+                    strbn.append(strb.charAt(index));
+                    index++;
                 }
 
-                strbn.append(strb.charAt(index));
-                index++;
-            }
-
-            return strbn.toString();
-        } else {
-            if (returnNullWhenEmpty) {
-                return null;
+                return strbn.toString();
             } else {
-                return in;
+                if (returnNullWhenEmpty) {
+                    return null;
+                } else {
+                    return in;
+                }
             }
+        } else {
+            return o;
         }
     }
 }

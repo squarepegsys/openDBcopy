@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -48,12 +48,12 @@ public final class ExportToXML {
      * @param fileName DOCUMENT ME!
      * @param encoding DOCUMENT ME!
      *
-     * @throws IllegalArgumentException DOCUMENT ME!
      * @throws IOException DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
     public static final void createXML(Document doc,
                                        String   fileName,
-                                       String   encoding) throws IllegalArgumentException, IOException {
+                                       String   encoding) throws IOException {
         if ((doc == null) || (fileName == null) || (encoding == null) || (fileName.length() == 0)) {
             throw new IllegalArgumentException("Missing arguments (doc, fileName or encoding) to export into XML file");
         }

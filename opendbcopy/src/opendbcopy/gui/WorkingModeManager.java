@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,22 +26,25 @@ import opendbcopy.config.XMLTags;
 
 import opendbcopy.controller.MainController;
 
-import opendbcopy.model.exception.MissingAttributeException;
-import opendbcopy.model.exception.MissingElementException;
-import opendbcopy.model.exception.UnsupportedAttributeValueException;
+import opendbcopy.plugin.model.Model;
+import opendbcopy.plugin.model.exception.MissingAttributeException;
+import opendbcopy.plugin.model.exception.MissingElementException;
+import opendbcopy.plugin.model.exception.PluginException;
 
-import org.jdom.Document;
+import opendbcopy.resource.ResourceManager;
+
 import org.jdom.Element;
 
-import java.awt.event.MouseEvent;
+import java.lang.reflect.InvocationTargetException;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.TreeMap;
 import java.util.Vector;
 
+import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
 
@@ -52,42 +55,45 @@ import javax.swing.JTabbedPane;
  * @version $Revision$
  */
 public class WorkingModeManager extends Observable {
-    private MainController controller;
-    private HashMap        modes;
-    private HashMap        plugins;
-    private Vector         modesNames;
-    private WorkingMode    currentWorkingMode;
-    private JTabbedPane    tab;
-    private int            frameWidth;
-    private int            frameHeight;
+    private MainController  controller;
+    private ResourceManager rm;
+    private HashMap         availableModes;
+    private HashMap         availablePlugins;
+    private HashMap         pluginThreads;
+    private WorkingMode     currentWorkingMode;
+    private JTabbedPane     tabModelsLoaded;
+    private JTabbedPane     tabModelsToExecute;
+    private int             frameWidth;
+    private int             frameHeight;
 
     /**
-     * Creates a new WorkingModeManager object.
+     * Creates a new WorkingModeManager object.  Please be aware that WorkingModeManager contains two JTabbedPanes. One to hold WorkingModes which
+     * are in LinkedList of models to be executed, one to hold WorkingModes which are in LinkedList of modes only loaded. Because of the MVC pattern
+     * implemented it is up to the controller to decide whether a GUI is available or not. Therefore models, which are contained within a project
+     * and are loaded at startup, are passed to WorkingModeManager if and only if Gui is enabled. The Gui is able to display both LinkedList of
+     * WorkingModes.
      *
      * @param controller DOCUMENT ME!
-     * @param workingModeDocument DOCUMENT ME!
      * @param frameWidth DOCUMENT ME!
      * @param frameHeight DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
     public WorkingModeManager(MainController controller,
-                              Document       workingModeDocument,
                               int            frameWidth,
-                              int            frameHeight) throws Exception {
+                              int            frameHeight) throws MissingAttributeException, MissingElementException {
         this.frameWidth      = frameWidth;
         this.frameHeight     = frameHeight;
         this.controller      = controller;
+        this.rm              = controller.getResourceManager();
+
+        tabModelsLoaded        = new JTabbedPane();
+        tabModelsToExecute     = new JTabbedPane();
 
         // init containers
-        modes          = new HashMap();
-        plugins        = new HashMap();
-        modesNames     = new Vector();
-
-        // now read the available working modes
-        readStandardWorkingModes(workingModeDocument);
-
-        broadcast();
+        availableModes       = new HashMap();
+        availablePlugins     = new HashMap();
     }
 
     /**
@@ -99,114 +105,102 @@ public class WorkingModeManager extends Observable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Given a working mode identifier or description load it
      *
-     * @param workingModeTitle DOCUMENT ME!
+     * @param workingModeIdentifier can be a working mode identifier or its description
+     * @param isExecutableModel DOCUMENT ME!
      *
-     * @return DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
-     */
-    public final JTabbedPane loadWorkingMode(String workingModeTitle) throws Exception {
-        currentWorkingMode     = findWorkingMode(workingModeTitle);
-
-        tab = currentWorkingMode.loadDynamically(frameWidth, frameHeight);
-        tab.addMouseListener(new TabManager_tab_mouseAdapter(this));
-
-        return tab;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
-     */
-    public final void destroyCurrentWorkingMode() throws Exception {
-        if (currentWorkingMode != null) {
-            currentWorkingMode.destroyDynamicPanels();
-        }
-
-        broadcast();
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     */
-    public final Vector getAvailableWorkingModes() {
-        return modesNames;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     */
-    public final HashMap getPluginsForCurrentWorkingMode() {
-        return currentWorkingMode.getAvailablePlugins();
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param workingModeElement DOCUMENT ME!
-     * @param pluginIdentifier DOCUMENT ME!
-     * @param pluginDescription DOCUMENT ME!
-     *
-     * @throws UnsupportedAttributeValueException DOCUMENT ME!
      * @throws MissingAttributeException DOCUMENT ME!
      * @throws MissingElementException DOCUMENT ME!
-     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws ClassNotFoundException DOCUMENT ME!
+     * @throws InstantiationException DOCUMENT ME!
+     * @throws InvocationTargetException DOCUMENT ME!
+     * @throws IllegalAccessException DOCUMENT ME!
+     * @throws PluginException DOCUMENT ME!
+     * @throws RuntimeException DOCUMENT ME!
      */
-    public final void addWorkingModeForPlugin(Element workingModeElement,
-                                              String  pluginIdentifier,
-                                              String  pluginDescription) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException {
-        if ((workingModeElement == null) || (pluginIdentifier == null) || (pluginDescription == null)) {
-            throw new IllegalArgumentException("Missing arguments values: workingModeElement=" + workingModeElement + " pluginIdentifier=" + pluginIdentifier + " pluginDescription=" + pluginDescription);
+    public final void loadWorkingMode(String  workingModeIdentifier,
+                                      boolean isExecutableModel) throws MissingAttributeException, MissingElementException, ClassNotFoundException, InstantiationException, InvocationTargetException, IllegalAccessException, PluginException {
+        WorkingMode wm = null;
+        Model       model = null;
+        JPanel      panel = null;
+
+        if (!availableModes.containsKey(workingModeIdentifier)) {
+            throw new RuntimeException("Unknown workingModeIdentifier");
+        } else {
+            wm = createNewWorkingMode(workingModeIdentifier);
         }
 
-        if ((workingModeElement.getAttributeValue(XMLTags.IDENTIFIER) == null) || (workingModeElement.getAttributeValue(XMLTags.IDENTIFIER).length() == 0)) {
-            throw new MissingAttributeException(workingModeElement, XMLTags.IDENTIFIER);
+        // now load the model with appropriate model
+        if (isExecutableModel) {
+            // takes the last model that is within the linked list of executable models
+            model = controller.getProjectManager().getPluginManager().getModelToExecute(tabModelsToExecute.getTabCount());
+            model.setTitle(rm.getString(wm.getTitle()));
+            panel = wm.load(model, frameWidth, frameHeight);
+            tabModelsToExecute.addTab(rm.getString(wm.getTitle()), panel);
+            tabModelsToExecute.setSelectedIndex(tabModelsToExecute.getTabCount() - 1);
+        } else {
+            // creates a new model for linked list of models loaded
+            controller.getProjectManager().getPluginManager().loadModel(wm.getPluginElement(), rm.getString(wm.getTitle()));
+            model     = controller.getProjectManager().getPluginManager().getModelLoaded(tabModelsLoaded.getTabCount());
+            panel     = wm.load(model, frameWidth, frameHeight);
+            tabModelsLoaded.addTab(rm.getString(wm.getTitle()), panel);
+            tabModelsLoaded.setSelectedIndex(tabModelsLoaded.getTabCount() - 1);
         }
 
-        String identifier = workingModeElement.getAttributeValue(XMLTags.IDENTIFIER);
-
-        // if plugin references a standard working mode, check availability
-        if (identifier.compareToIgnoreCase(XMLTags.STANDARD_WORKING_MODE_REFERENCE) == 0) {
-            List standardWorkingModes = workingModeElement.getChildren(XMLTags.STANDARD_WORKING_MODE);
-
-            if (standardWorkingModes.size() == 0) {
-                throw new MissingElementException(workingModeElement, XMLTags.STANDARD_WORKING_MODE);
-            }
-
-            Iterator itStandardWorkingModes = standardWorkingModes.iterator();
-
-            while (itStandardWorkingModes.hasNext()) {
-                Element standardWorkingMode = (Element) itStandardWorkingModes.next();
-
-                if ((standardWorkingMode.getAttributeValue(XMLTags.IDENTIFIER) == null) || (standardWorkingMode.getAttributeValue(XMLTags.IDENTIFIER).length() == 0)) {
-                    throw new MissingAttributeException(standardWorkingMode, XMLTags.IDENTIFIER);
-                }
-
-                if (!modes.containsKey(standardWorkingMode.getAttributeValue(XMLTags.IDENTIFIER))) {
-                    throw new UnsupportedAttributeValueException(standardWorkingMode, XMLTags.IDENTIFIER);
-                }
-
-                // add plugin information to available plugins of selected working mode
-                WorkingMode workingMode = (WorkingMode) modes.get(standardWorkingMode.getAttributeValue(XMLTags.IDENTIFIER));
-                workingMode.addPlugin(pluginIdentifier, pluginDescription);
-            }
-        }
-        // a new working mode must be registered
-        else {
-            addWorkingMode(workingModeElement);
-
-            WorkingMode workingMode = (WorkingMode) modes.get(workingModeElement.getAttributeValue(XMLTags.IDENTIFIER));
-            workingMode.addPlugin(pluginIdentifier, pluginDescription);
-        }
+        // set current working mode
+        currentWorkingMode = wm;
 
         broadcast();
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param index DOCUMENT ME!
+     */
+    public final void removeWorkingMode(int index) {
+        tabModelsLoaded.remove(index);
+    }
+
+    /**
+     * Returns a vector of available working modes ordered using display_order tag If a working mode does not provide a display order it is appended
+     * at the end
+     *
+     * @return DOCUMENT ME!
+     */
+    public final Vector getAvailableWorkingModesOrdered() {
+        Iterator itWorkingModes = availableModes.values().iterator();
+        TreeMap  modesDisplayOrdered = new TreeMap();
+        Vector   modesDisplayUnordered = new Vector();
+        Vector   modesOrdered = new Vector();
+
+        while (itWorkingModes.hasNext()) {
+            Element wm = (Element) itWorkingModes.next();
+
+            if (wm.getAttributeValue(XMLTags.DISPLAY_ORDER) != null) {
+                modesDisplayOrdered.put(wm.getAttributeValue(XMLTags.DISPLAY_ORDER), wm);
+            } else {
+                modesDisplayUnordered.add(wm);
+            }
+        }
+
+        if (modesDisplayOrdered.size() > 0) {
+            Iterator itModesOrdered = modesDisplayOrdered.values().iterator();
+
+            while (itModesOrdered.hasNext()) {
+                modesOrdered.add((Element) itModesOrdered.next());
+            }
+        }
+
+        if (modesDisplayUnordered.size() > 0) {
+            for (int i = 0; i < modesDisplayUnordered.size(); i++) {
+                modesOrdered.add((Element) modesDisplayUnordered.elementAt(i));
+            }
+        }
+
+        // now put ordered and unordered working modes together
+        return modesOrdered;
     }
 
     /**
@@ -216,7 +210,7 @@ public class WorkingModeManager extends Observable {
      *
      * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public final void registerObserver(Observer observer) throws IllegalArgumentException {
+    public final void registerObserver(Observer observer) {
         if (observer == null) {
             throw new IllegalArgumentException("Missing observer");
         }
@@ -231,7 +225,7 @@ public class WorkingModeManager extends Observable {
      *
      * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public final void deleteObserver(Observer observer) throws IllegalArgumentException {
+    public final void deleteObserver(Observer observer) {
         if (observer == null) {
             throw new IllegalArgumentException("Missing observer");
         }
@@ -243,165 +237,82 @@ public class WorkingModeManager extends Observable {
      * DOCUMENT ME!
      *
      * @param workingModeElement DOCUMENT ME!
-     *
-     * @throws MissingAttributeException DOCUMENT ME!
-     * @throws MissingElementException DOCUMENT ME!
-     * @throws IllegalArgumentException DOCUMENT ME!
-     */
-    private void addWorkingMode(Element workingModeElement) throws MissingAttributeException, MissingElementException {
-        if (workingModeElement == null) {
-            throw new IllegalArgumentException("Missing workingModeElement");
-        }
-
-        if ((workingModeElement.getAttributeValue(XMLTags.IDENTIFIER) != null) && (workingModeElement.getAttributeValue(XMLTags.IDENTIFIER).length() > 0)) {
-            String identifier = null;
-            String titleWorkingMode = null;
-
-            identifier = workingModeElement.getAttributeValue(XMLTags.IDENTIFIER);
-
-            if (workingModeElement.getChild(XMLTags.TITLE) == null) {
-                throw new MissingElementException(workingModeElement, XMLTags.TITLE);
-            }
-
-            titleWorkingMode = workingModeElement.getChild(XMLTags.TITLE).getAttributeValue(XMLTags.VALUE);
-
-            if (titleWorkingMode == null) {
-                throw new MissingAttributeException(workingModeElement.getChild(XMLTags.TITLE), XMLTags.VALUE);
-            }
-
-            // add name to vector of available working modes
-            modesNames.add(titleWorkingMode);
-
-            WorkingMode workingMode = new WorkingMode(controller, identifier, titleWorkingMode);
-
-            // now retrieve requested panels
-            Iterator itPanels = workingModeElement.getChild(XMLTags.PANELS).getChildren(XMLTags.PANEL).iterator();
-
-            while (itPanels.hasNext()) {
-                Element dynamicPanelElement = (Element) itPanels.next();
-                String  titlePanel = dynamicPanelElement.getAttributeValue(XMLTags.TITLE);
-                String  className = dynamicPanelElement.getChild(XMLTags.CLASS).getAttributeValue(XMLTags.NAME);
-
-                boolean registerObserver = false;
-
-                if ((dynamicPanelElement.getChild(XMLTags.CLASS).getAttributeValue(XMLTags.REGISTER_AS_OBSERVER) != null) && (dynamicPanelElement.getChild(XMLTags.CLASS).getAttributeValue(XMLTags.REGISTER_AS_OBSERVER).compareToIgnoreCase("true") == 0)) {
-                    registerObserver = true;
-                } else {
-                    registerObserver = false;
-                }
-
-                workingMode.addDynamicPanelMetadata(new DynamicPanelMetadata(titlePanel, className, registerObserver));
-            }
-
-            modes.put(identifier, workingMode);
-        } else {
-            throw new MissingAttributeException(workingModeElement, XMLTags.IDENTIFIER);
-        }
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param workingModeIdentifier DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     *
-     * @throws IllegalArgumentException DOCUMENT ME!
-     * @throws RuntimeException DOCUMENT ME!
-     */
-    private WorkingMode getWorkingMode(String workingModeIdentifier) throws IllegalArgumentException {
-        if (workingModeIdentifier == null) {
-            throw new IllegalArgumentException("Missing workingModeIdentifier");
-        }
-
-        if (modes.containsKey(workingModeIdentifier)) {
-            return (WorkingMode) modes.get(workingModeIdentifier);
-        } else {
-            throw new RuntimeException("Working Mode with identifier " + workingModeIdentifier + " does not exist.");
-        }
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param workingModeTitle DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
-     * @throws RuntimeException DOCUMENT ME!
-     */
-    private WorkingMode findWorkingMode(String workingModeTitle) throws Exception {
-        WorkingMode workingMode = null;
-
-        if (modes.size() > 0) {
-            Iterator itWorkingModes = modes.values().iterator();
-
-            while (itWorkingModes.hasNext()) {
-                workingMode = (WorkingMode) itWorkingModes.next();
-
-                if (workingMode.getTitle().compareTo(workingModeTitle) == 0) {
-                    return workingMode;
-                }
-            }
-        }
-
-        throw new RuntimeException("Working Mode with title " + workingModeTitle + " does not exist.");
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param workingModeDocument DOCUMENT ME!
+     * @param pluginElement DOCUMENT ME!
      *
      * @throws MissingAttributeException DOCUMENT ME!
      * @throws MissingElementException DOCUMENT ME!
      */
-    private void readStandardWorkingModes(Document workingModeDocument) throws MissingAttributeException, MissingElementException {
-        Iterator itWorkingModes = workingModeDocument.getRootElement().getChildren(XMLTags.WORKING_MODE).iterator();
+    public final void addWorkingMode(Element workingModeElement,
+                                     Element pluginElement) throws MissingAttributeException, MissingElementException {
+        availableModes.put(workingModeElement.getAttributeValue(XMLTags.IDENTIFIER), workingModeElement);
+        availablePlugins.put(workingModeElement.getAttributeValue(XMLTags.IDENTIFIER), pluginElement);
 
-        while (itWorkingModes.hasNext()) {
-            Element workingModeElement = (Element) itWorkingModes.next();
-            addWorkingMode(workingModeElement);
+        String resourceName = null;
+
+        if (workingModeElement.getAttributeValue(XMLTags.RESOURCE_NAME) != null) {
+            resourceName = workingModeElement.getAttributeValue(XMLTags.RESOURCE_NAME);
+        }
+
+        // load resources for Working Mode if such exist
+        if (resourceName != null) {
+            rm.addResourceBundle(resourceName);
+        }
+
+        broadcast();
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param identifier DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws RuntimeException DOCUMENT ME!
+     */
+    private WorkingMode createNewWorkingMode(String identifier) throws MissingAttributeException, MissingElementException {
+        if (identifier == null) {
+            throw new IllegalArgumentException("Missing identifier");
+        }
+
+        if (availableModes.containsKey(identifier) && availablePlugins.containsKey(identifier)) {
+            // create cloned elements
+            Element workingModeElementClone = (Element) ((Element) availableModes.get(identifier)).clone();
+            Element pluginElementClone = (Element) ((Element) availablePlugins.get(identifier)).clone();
+
+            return new WorkingMode(controller, workingModeElementClone, pluginElementClone);
+        } else {
+            throw new RuntimeException("Working Mode with identifier " + identifier + " does not exist.");
         }
     }
 
     /**
      * DOCUMENT ME!
      *
-     * @param e DOCUMENT ME!
+     * @return Returns the tabModelsLoaded.
      */
-    void tab_mouseClicked(MouseEvent e) {
-        System.out.println(tab.getSelectedIndex());
-        currentWorkingMode.setSelectedTab(tab.getSelectedIndex());
-    }
-}
-
-
-/**
- * class description
- *
- * @author Anthony Smith
- * @version $Revision$
- */
-class TabManager_tab_mouseAdapter extends java.awt.event.MouseAdapter {
-    WorkingModeManager adaptee;
-
-    /**
-     * Creates a new FrameMain_tab_mouseAdapter object.
-     *
-     * @param adaptee DOCUMENT ME!
-     */
-    TabManager_tab_mouseAdapter(WorkingModeManager adaptee) {
-        this.adaptee = adaptee;
+    public final JTabbedPane getTabModelsLoaded() {
+        return tabModelsLoaded;
     }
 
     /**
      * DOCUMENT ME!
      *
-     * @param e DOCUMENT ME!
+     * @return DOCUMENT ME!
      */
-    public final void mouseClicked(MouseEvent e) {
-        adaptee.tab_mouseClicked(e);
+    public final JTabbedPane getTabModelsToExecute() {
+        return tabModelsToExecute;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the currentWorkingMode.
+     */
+    public final WorkingMode getCurrentWorkingMode() {
+        return currentWorkingMode;
     }
 }

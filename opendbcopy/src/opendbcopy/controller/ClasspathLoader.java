@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Anthony Smith
+ * Copyright (C) 2004 Anthony Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,7 +24,8 @@ package opendbcopy.controller;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+
+import java.util.StringTokenizer;
 
 
 /**
@@ -40,16 +41,15 @@ public final class ClasspathLoader {
      * @throws IOException DOCUMENT ME!
      */
     public static void addLibDirectoryToClasspath() throws IOException {
-        String   classpath = System.getProperty("java.class.path");
+        String classpath = System.getProperty("java.class.path");
 
-        File     libDir = new File("lib");
+        File   libDir = new File("lib");
 
-        String[] libFiles = libDir.list();
+        File[] libFiles = libDir.listFiles();
 
         for (int i = 0; i < libFiles.length; i++) {
-            if ((libFiles[i].compareToIgnoreCase("CVS") != 0) && (libFiles[i].compareToIgnoreCase("opendbcopy.jar") != 0)) {
-                URL newLib = new URL(libDir.toURL() + libFiles[i]);
-                addLibToClasspath(newLib);
+            if ((libFiles[i].getName().compareToIgnoreCase("CVS") != 0) && (libFiles[i].getName().compareToIgnoreCase("opendbcopy.jar") != 0)) {
+                addResourceToClasspath(libFiles[i]);
             }
         }
     }
@@ -57,50 +57,37 @@ public final class ClasspathLoader {
     /**
      * DOCUMENT ME!
      *
-     * @param url DOCUMENT ME!
+     * @param file DOCUMENT ME!
      *
      * @throws IOException DOCUMENT ME!
      */
-    public static void addLibToClasspath(URL url) throws IOException {
-        String classpath = System.getProperty("java.class.path");
-
-        if (!checkIfInClassPath(classpath, url)) {
-            ClassPathHacker.addURL(url);
-            System.out.println("added " + url + " dynamically to your classpath");
+    public static void addResourceToClasspath(File file) throws IOException {
+        if (!checkIfAlreadyLoaded(file)) {
+            ClassPathHacker.addFile(file);
+            MainController.addResourceDynamicallyLoaded(file);
+            System.out.println("added " + file.getAbsolutePath() + " dynamically to your classpath");
         }
     }
 
     /**
      * DOCUMENT ME!
      *
-     * @param classpath DOCUMENT ME!
-     * @param archive DOCUMENT ME!
+     * @param file DOCUMENT ME!
      *
      * @return DOCUMENT ME!
      */
-    private static boolean checkIfInClassPath(String classpath,
-                                              String archive) {
-        if (classpath.indexOf(archive) > -1) {
+    private static boolean checkIfAlreadyLoaded(File file) {
+        if (MainController.isResourcesDynamicallyLoaded(file)) {
             return true;
         } else {
-            return false;
-        }
-    }
+            // check if already in classpath
+            StringTokenizer st = new StringTokenizer(System.getProperty("java.class.path"), file.getName());
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param classpath DOCUMENT ME!
-     * @param url DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     */
-    private static boolean checkIfInClassPath(String classpath,
-                                              URL    url) {
-        if (classpath.indexOf(url.getFile()) > -1) {
-            return true;
-        } else {
-            return false;
+            if (st.countTokens() == 1) {
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 }
