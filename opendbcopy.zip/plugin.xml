@@ -23,18 +23,21 @@
 =============================================================== 
 -->
 
-<plugin identifier="zip" model_class="opendbcopy.plugin.model.Model" input_required="true">
+<plugin identifier="zip" model_class="opendbcopy.plugin.model.simple.SimpleModel">
 	<conf>
+		<input>
+			<file_dir_filelists_selection required="true" value="" type="file_dir_filelists_selection" description="plugin.opendbcopy.zip.conf.input.selection" />
+			<file value="" type="file" description="plugin.opendbcopy.zip.conf.input.inputFile" />
+			<dir value="" type="dir" description="plugin.opendbcopy.zip.conf.input.inputDir" />
+		</input>
+		<output>
+			<file value="" type="file" description="plugin.opendbcopy.zip.conf.output.outputFile" />
+		</output>
 	</conf>
 	<threads>
 		<thread thread_class="opendbcopy.plugin.zip.ZipPlugin" description="title.plugin.opendbcopy.zip" />
 	</threads>
-	<input>
-		<filelist id="statistics" dir="inout" files="statistics.csv" />
-	</input>
-	<output>
-		<path value="inout/" />
-		<file value="compressed.zip" />
-	</output>
+	<input />
+	<output />
 </plugin>
 

@@ -23,23 +23,26 @@
 =============================================================== 
 -->
 
-<working_mode identifier="delete" display_order="4" resource_name="plugin_opendbcopy_delete">
-	<title value="title.plugin.opendbcopy.delete" />
+<gui identifier="script" display_order="60" resource_name="plugin_opendbcopy_script">
+	<title value="title.plugin.opendbcopy.script" />
 	<panels>
-		<panel title="title.plugin.opendbcopy.delete.panel.0">
+		<panel title="title.plugin.opendbcopy.script.panel.0">
 			<class name="opendbcopy.gui.PanelConfiguration" />
 		</panel>
-		<panel title="title.plugin.opendbcopy.delete.panel.1">
+		<panel title="title.plugin.opendbcopy.script.panel.1">
 			<class name="opendbcopy.gui.database.PanelConnection" register_as_observer="true" />
 		</panel>
-		<panel title="title.plugin.opendbcopy.delete.panel.2">
+		<panel title="title.plugin.opendbcopy.script.panel.2">
 			<class name="opendbcopy.gui.database.PanelModel" register_as_observer="true" />
 		</panel>
-		<panel title="title.plugin.opendbcopy.delete.panel.3">
+		<panel title="title.plugin.opendbcopy.script.panel.3">
 			<class name="opendbcopy.gui.database.dual.PanelMappingTable" register_as_observer="true" />
 		</panel>
-		<panel title="title.plugin.opendbcopy.delete.panel.4">
+		<panel title="title.plugin.opendbcopy.script.panel.4">
+			<class name="opendbcopy.gui.database.dual.PanelMappingColumn" register_as_observer="true" />
+		</panel>
+		<panel title="title.plugin.opendbcopy.script.panel.5">
 			<class name="opendbcopy.gui.PanelExecute" />
 		</panel>
 	</panels>
-</working_mode>
+</gui>

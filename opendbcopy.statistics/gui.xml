@@ -23,26 +23,20 @@
 =============================================================== 
 -->
 
-<working_mode identifier="script" display_order="5" resource_name="plugin_opendbcopy_script">
-	<title value="title.plugin.opendbcopy.script" />
+<gui identifier="statistics" display_order="40" resource_name="plugin_opendbcopy_statistics">
+	<title value="title.plugin.opendbcopy.statistics" />
 	<panels>
-		<panel title="title.plugin.opendbcopy.script.panel.0">
+		<panel title="title.plugin.opendbcopy.statistics.panel.0">
 			<class name="opendbcopy.gui.PanelConfiguration" />
 		</panel>
-		<panel title="title.plugin.opendbcopy.script.panel.1">
+		<panel title="title.plugin.opendbcopy.statistics.panel.1">
 			<class name="opendbcopy.gui.database.PanelConnection" register_as_observer="true" />
 		</panel>
-		<panel title="title.plugin.opendbcopy.script.panel.2">
+		<panel title="title.plugin.opendbcopy.statistics.panel.2">
 			<class name="opendbcopy.gui.database.PanelModel" register_as_observer="true" />
 		</panel>
-		<panel title="title.plugin.opendbcopy.script.panel.3">
-			<class name="opendbcopy.gui.database.dual.PanelMappingTable" register_as_observer="true" />
-		</panel>
-		<panel title="title.plugin.opendbcopy.script.panel.4">
-			<class name="opendbcopy.gui.database.dual.PanelMappingColumn" register_as_observer="true" />
-		</panel>
-		<panel title="title.plugin.opendbcopy.script.panel.5">
+		<panel title="title.plugin.opendbcopy.statistics.panel.3">
 			<class name="opendbcopy.gui.PanelExecute" />
 		</panel>
 	</panels>
-</working_mode>
+</gui>

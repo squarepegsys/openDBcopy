@@ -102,7 +102,7 @@
    		
    		<!-- copy configuration to destination dir -->
 	   	<copy file="${plugin.file}" todir="${OPENDBCOPY_HOME}/plugins/${plugin.name}"/>
-		<copy file="${workingMode.file}" todir="${OPENDBCOPY_HOME}/plugins/${plugin.name}"/>
+		<copy file="${gui.file}" todir="${OPENDBCOPY_HOME}/plugins/${plugin.name}"/>
 
 		<!-- copy lib dir to destination dir -->
 	   	<copy todir="${OPENDBCOPY_HOME}/plugins/${plugin.name}/lib">
@@ -119,7 +119,7 @@
 	
 		<!-- copy plugin configuration and working mode into distribution -->
 	   	<copy file="${plugin.file}" todir="${dist.dir}/${plugin.name}"/>
-		<copy file="${workingMode.file}" todir="${dist.dir}/${plugin.name}"/>
+		<copy file="${gui.file}" todir="${dist.dir}/${plugin.name}"/>
 		
 		<!-- copy lib dir into distribution -->
 	   	<copy todir="${dist.dir}/${plugin.name}/lib">

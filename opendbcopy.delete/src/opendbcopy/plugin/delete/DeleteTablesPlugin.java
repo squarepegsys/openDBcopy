@@ -56,8 +56,8 @@ import java.util.List;
 public class DeleteTablesPlugin extends DynamicPluginThread {
     private DatabaseModel model;
     private List          processTables = null;
-    private Connection    connDestination = null;
-    private Statement     stmDestination = null;
+    private Connection    connSource = null;
+    private Statement     stmSource = null;
     private String        deleteString = null;
     private int           counterTables = 0;
 
@@ -83,15 +83,15 @@ public class DeleteTablesPlugin extends DynamicPluginThread {
     protected void setUp() throws PluginException {
         try {
             // get connection to destination database
-            connDestination     = DBConnection.getConnection(model.getDestinationConnection());
+            connSource     = DBConnection.getConnection(model.getSourceConnection());
 
             // extract the tables to copy
-            processTables = model.getDestinationTablesToProcessOrdered();
+            processTables = model.getSourceTablesToProcessOrdered();
 
             // now set the number of tables that need to be copied
             model.setLengthProgressTable(processTables.size());
         } catch (Exception e) {
-            throw new PluginException(e.getMessage());
+            throw new PluginException(e);
         }
     }
 
@@ -107,26 +107,26 @@ public class DeleteTablesPlugin extends DynamicPluginThread {
             while (!isInterrupted() && itProcessTables.hasNext()) {
                 Element tableProcess = (Element) itProcessTables.next();
 
-                String  destinationTableName = tableProcess.getAttributeValue(XMLTags.DESTINATION_DB);
+                String  sourceTableName = tableProcess.getAttributeValue(XMLTags.NAME);
 
                 // setting record counter to minimum of progress bar
                 model.setCurrentProgressRecord(0);
                 model.setLengthProgressRecord(0);
 
                 // get Delete Statement
-                stmDestination     = connDestination.createStatement();
-                deleteString       = Helper.getDeleteTableStatement(model.getQualifiedDestinationTableName(destinationTableName));
+                stmSource     = connSource.createStatement();
+                deleteString       = Helper.getDeleteTableStatement(model.getQualifiedSourceTableName(sourceTableName));
 
                 model.setCurrentProgressTable(counterTables);
 
                 // Execute Delete
-                int recordsDeleted = stmDestination.executeUpdate(deleteString);
+                int recordsDeleted = stmSource.executeUpdate(deleteString);
 
                 model.setLengthProgressRecord(recordsDeleted);
                 model.setCurrentProgressRecord(recordsDeleted);
 
-                model.setProgressMessage("Deleted " + recordsDeleted + " records in " + model.getQualifiedDestinationTableName(destinationTableName));
-                logger.info("Deleted " + recordsDeleted + " records in " + model.getQualifiedDestinationTableName(destinationTableName));
+                model.setProgressMessage("Deleted " + recordsDeleted + " records in " + model.getQualifiedSourceTableName(sourceTableName));
+                logger.info("Deleted " + recordsDeleted + " records in " + model.getQualifiedSourceTableName(sourceTableName));
 
                 // required in case of last table that had to be copied
                 counterTables++;
@@ -138,20 +138,20 @@ public class DeleteTablesPlugin extends DynamicPluginThread {
 
             if (!isInterrupted()) {
                 if (processTables.size() > 0) {
-                    connDestination.commit();
-                    stmDestination.close();
-                    DBConnection.closeConnection(connDestination);
-                    logger.info(counterTables + " table(s) deleted and commited.");
+                    connSource.commit();
+                    stmSource.close();
+                    DBConnection.closeConnection(connSource);
+                    logger.info(counterTables + " table(s) deleted and committed.");
                 } else {
                     logger.warn("no tables to process!");
                 }
             } else {
                 if (processTables.size() > 0) {
-                    connDestination.rollback();
-                    stmDestination.close();
+                    connSource.rollback();
+                    stmSource.close();
                 }
 
-                DBConnection.closeConnection(connDestination);
+                DBConnection.closeConnection(connSource);
                 logger.info("execution cancelled by user. A Rollback has been made.");
             }
         } catch (SQLException sqle) {
@@ -159,12 +159,12 @@ public class DeleteTablesPlugin extends DynamicPluginThread {
         } catch (Exception e1) {
             // clean up
             try {
-                DBConnection.closeConnection(connDestination);
+                DBConnection.closeConnection(connSource);
             } catch (CloseConnectionException e2) {
                 // bad luck ... don't worry
             }
 
-            throw new PluginException(e1.getMessage());
+            throw new PluginException(e1);
         }
     }
 }

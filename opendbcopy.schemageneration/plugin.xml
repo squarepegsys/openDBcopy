@@ -23,15 +23,15 @@
 =============================================================== 
 -->
 
-<plugin identifier="schemageneration" model_class="opendbcopy.plugin.schemageneration.DatabaseModel">
+<plugin identifier="schemageneration" model_class="opendbcopy.plugin.schemageneration.model.SchemagenerationModel">
 	<conf>
 		<!-- path may be relative or absolute -->
-		<path value="inout/" />
-		<file value="statistics" />			
-		<file_type value="csv" />
-		
-		<!-- for a tab delimiter enter \n as value -->
-		<delimiter value=";" />
+		<dir required="true" value="plugins/opendbcopy.schemageneration/hbm" type="dir" description="plugin.opendbcopy.schemageneration.conf.outputDir" />	
+		<package_name required="true" value="schema" type="string" description="plugin.opendbcopy.schemageneration.conf.packageName" />
+		<hibernate_dialect required="true" value="" type="hibernate_dialect" description="plugin.opendbcopy.schemageneration.hibernateDialect" />		
+		<output>
+			<filelist value="schemageneration" type="string" description="plugin.opendbcopy.schemageneration.conf.output.filelistIdentifier" />
+		</output>			
 	</conf>
 	<threads>
 		<thread thread_class="opendbcopy.plugin.schemageneration.GenerateHibernateMappingPlugin" description="title.plugin.opendbcopy.schemageneration" />
@@ -45,7 +45,7 @@
       <catalog value="" />
       <schema value="%" />
       <table_pattern value="%" />
-      <model />
+      <model read_primary_keys="true" read_foreign_keys="true" read_indexes="true" />
    </source_db>
 	<destination_db>
       <driver />

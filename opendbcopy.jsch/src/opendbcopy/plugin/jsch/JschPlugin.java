@@ -174,7 +174,7 @@ public class JschPlugin extends DynamicPluginThread {
                 out.close();
 
                 // set output of plugin
-                Element outputFileList = InputOutputHelper.createFileList(new File(outFilename), identifier);
+                Element outputFileList = InputOutputHelper.createFileListElement(new File(outFilename), identifier);
 
                 if (output == null) {
                     output = new Element(XMLTags.OUTPUT);

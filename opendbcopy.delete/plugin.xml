@@ -23,16 +23,8 @@
 =============================================================== 
 -->
 
-<plugin identifier="delete" model_class="opendbcopy.plugin.statistics.DatabaseModel">
-	<conf>
-		<!-- path may be relative or absolute -->
-		<path value="inout/" />
-		<file value="statistics" />			
-		<file_type value="csv" />
-		
-		<!-- for a tab delimiter enter \n as value -->
-		<delimiter value=";" />
-	</conf>
+<plugin identifier="delete" model_class="opendbcopy.plugin.model.database.DatabaseModel">
+	<conf />
 	<threads>
 		<thread thread_class="opendbcopy.plugin.delete.DeleteTablesPlugin" description="title.plugin.opendbcopy.delete" />
 	</threads>

@@ -23,7 +23,7 @@
 =============================================================== 
 -->
 
-<working_mode identifier="dump" display_order="4" resource_name="plugin_opendbcopy_dump">
+<gui identifier="dump" display_order="50" resource_name="plugin_opendbcopy_dump">
 	<title value="title.plugin.opendbcopy.dump" />
 	<panels>
 		<panel title="title.plugin.opendbcopy.dump.panel.0">
@@ -45,4 +45,4 @@
 			<class name="opendbcopy.gui.PanelExecute" />
 		</panel>
 	</panels>
-</working_mode>
+</gui>

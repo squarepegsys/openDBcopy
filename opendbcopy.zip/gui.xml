@@ -23,14 +23,14 @@
 =============================================================== 
 -->
 
-<working_mode identifier="jsch" display_order="6" resource_name="plugin_opendbcopy_jsch">
-	<title value="title.plugin.opendbcopy.jsch" />
+<gui identifier="zip" display_order="70" resource_name="plugin_opendbcopy_zip">
+	<title value="title.plugin.opendbcopy.zip" />
 	<panels>
-		<panel title="title.plugin.opendbcopy.jsch.panel.0">
+		<panel title="title.plugin.opendbcopy.zip.panel.0">
 			<class name="opendbcopy.gui.PanelConfiguration" />
 		</panel>
-		<panel title="title.plugin.opendbcopy.jsch.panel.1">
+		<panel title="title.plugin.opendbcopy.zip.panel.1">
 			<class name="opendbcopy.gui.PanelExecute" />
 		</panel>
 	</panels>
-</working_mode>
+</gui>

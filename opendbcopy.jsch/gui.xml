@@ -23,29 +23,14 @@
 =============================================================== 
 -->
 
-<working_mode identifier="copy" display_order="2" resource_name="plugin_opendbcopy_copy">
-	<title value="title.plugin.opendbcopy.copy" />
+<gui identifier="jsch" display_order="80" resource_name="plugin_opendbcopy_jsch">
+	<title value="title.plugin.opendbcopy.jsch" />
 	<panels>
-		<panel title="title.plugin.opendbcopy.copy.panel.0">
+		<panel title="title.plugin.opendbcopy.jsch.panel.0">
 			<class name="opendbcopy.gui.PanelConfiguration" />
 		</panel>
-		<panel title="title.plugin.opendbcopy.copy.panel.1">
-			<class name="opendbcopy.gui.database.PanelConnection" register_as_observer="true" />
-		</panel>
-		<panel title="title.plugin.opendbcopy.copy.panel.2">
-			<class name="opendbcopy.gui.database.PanelModel" register_as_observer="true" />
-		</panel>
-		<panel title="title.plugin.opendbcopy.copy.panel.3">
-			<class name="opendbcopy.gui.database.dual.PanelMappingTable" register_as_observer="true" />
-		</panel>
-		<panel title="title.plugin.opendbcopy.copy.panel.4">
-			<class name="opendbcopy.gui.database.dual.PanelMappingColumn" register_as_observer="true" />
-		</panel>
-		<panel title="title.plugin.opendbcopy.copy.panel.5">
-			<class name="opendbcopy.gui.database.PanelFilter" register_as_observer="true" />
-		</panel>
-		<panel title="title.plugin.opendbcopy.copy.panel.6">
+		<panel title="title.plugin.opendbcopy.jsch.panel.1">
 			<class name="opendbcopy.gui.PanelExecute" />
 		</panel>
 	</panels>
-</working_mode>
+</gui>

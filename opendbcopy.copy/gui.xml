@@ -23,26 +23,29 @@
 =============================================================== 
 -->
 
-<working_mode identifier="schemageneration" display_order="1" resource_name="plugin_opendbcopy_schemageneration">
-	<title value="title.plugin.opendbcopy.schemageneration" />
+<gui identifier="copy" display_order="20" resource_name="plugin_opendbcopy_copy">
+	<title value="title.plugin.opendbcopy.copy" />
 	<panels>
-		<panel title="title.plugin.opendbcopy.schemageneration.panel.0">
+		<panel title="title.plugin.opendbcopy.copy.panel.0">
 			<class name="opendbcopy.gui.PanelConfiguration" />
 		</panel>
-		<panel title="title.plugin.opendbcopy.schemageneration.panel.1">
+		<panel title="title.plugin.opendbcopy.copy.panel.1">
 			<class name="opendbcopy.gui.database.PanelConnection" register_as_observer="true" />
 		</panel>
-		<panel title="title.plugin.opendbcopy.schemageneration.panel.2">
+		<panel title="title.plugin.opendbcopy.copy.panel.2">
 			<class name="opendbcopy.gui.database.PanelModel" register_as_observer="true" />
 		</panel>
-		<panel title="title.plugin.opendbcopy.schemageneration.panel.3">
+		<panel title="title.plugin.opendbcopy.copy.panel.3">
 			<class name="opendbcopy.gui.database.dual.PanelMappingTable" register_as_observer="true" />
 		</panel>
-		<panel title="title.plugin.opendbcopy.schemageneration.panel.4">
+		<panel title="title.plugin.opendbcopy.copy.panel.4">
 			<class name="opendbcopy.gui.database.dual.PanelMappingColumn" register_as_observer="true" />
 		</panel>
-		<panel title="title.plugin.opendbcopy.schemageneration.panel.5">
+		<panel title="title.plugin.opendbcopy.copy.panel.5">
+			<class name="opendbcopy.gui.database.PanelFilter" register_as_observer="true" />
+		</panel>
+		<panel title="title.plugin.opendbcopy.copy.panel.6">
 			<class name="opendbcopy.gui.PanelExecute" />
 		</panel>
 	</panels>
-</working_mode>
+</gui>

@@ -23,15 +23,14 @@
 =============================================================== 
 -->
 
-<plugin identifier="script" model_class="opendbcopy.plugin.script.DatabaseModel">
+<plugin identifier="script" model_class="opendbcopy.plugin.model.database.DatabaseModel">
 	<conf>
 		<!-- path may be relative or absolute -->
-		<path value="inout/" />
-		<file value="statistics" />			
-		<file_type value="csv" />
-		
-		<!-- for a tab delimiter enter \n as value -->
-		<delimiter value=";" />
+		<dir required="true" value="" type="dir" description="plugin.opendbcopy.script.conf.outputDir" />			
+		<show_qualified_table_name value="true" type="boolean" description="plugin.opendbcopy.script.conf.showQualifiedTableName" />
+		<output>
+			<filelist value="scripts" type="string" description="plugin.opendbcopy.script.conf.output.filelistIdentifier" />
+		</output>			
 	</conf>
 	<threads>
 		<thread thread_class="opendbcopy.plugin.script.InsertScriptPlugin" description="title.plugin.opendbcopy.script" />
@@ -56,4 +55,6 @@
       <table_pattern value="%" />
       <model />
    </destination_db>
+   <mapping />
+   <filter />
 </plugin>

@@ -22,31 +22,39 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin.statistics;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-
 import opendbcopy.config.XMLTags;
+
 import opendbcopy.connection.DBConnection;
+
 import opendbcopy.connection.exception.DriverNotFoundException;
 import opendbcopy.connection.exception.OpenConnectionException;
+
 import opendbcopy.controller.MainController;
+
 import opendbcopy.plugin.model.DynamicPluginThread;
 import opendbcopy.plugin.model.Model;
 import opendbcopy.plugin.model.exception.MissingAttributeException;
 import opendbcopy.plugin.model.exception.MissingElementException;
 import opendbcopy.plugin.model.exception.PluginException;
 import opendbcopy.plugin.model.exception.UnsupportedAttributeValueException;
+
 import opendbcopy.sql.Helper;
+
 import opendbcopy.util.InputOutputHelper;
 
 import org.jdom.Element;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 
 /**
@@ -62,7 +70,7 @@ public class WriteStatisticsToFilePlugin extends DynamicPluginThread {
      * Creates a new WriteStatisticsToFilePlugin object.
      *
      * @param controller DOCUMENT ME!
-     * @param model DOCUMENT ME!
+     * @param baseModel DOCUMENT ME!
      *
      * @throws PluginException DOCUMENT ME!
      */
@@ -116,19 +124,36 @@ public class WriteStatisticsToFilePlugin extends DynamicPluginThread {
      * @throws MissingElementException DOCUMENT ME!
      * @throws IOException DOCUMENT ME!
      */
-    private void writeStatisticsToFile() throws IllegalArgumentException, UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, IOException {
+    private void writeStatisticsToFile() throws IllegalArgumentException, UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, IOException, PluginException {
         StringBuffer buffer = new StringBuffer();
         int          difference = 0;
         int          sourceRecords = 0;
         int          destinationRecords = 0;
         int          totalSourceRecords = 0;
         int          totalDestinationRecords = 0;
-        String       newLine = System.getProperty("line.separator");
+        String       newLine = controller.getLineSep();
 
         // get parameters for plugin
         Element conf = model.getConf();
-        String  fileName = conf.getChild(XMLTags.PATH).getAttributeValue(XMLTags.VALUE) + conf.getChild(XMLTags.FILE).getAttributeValue(XMLTags.VALUE) + "." + conf.getChild(XMLTags.FILE_TYPE).getAttributeValue(XMLTags.VALUE);
-        String  delimiter = conf.getChild(XMLTags.DELIMITER).getAttributeValue(XMLTags.VALUE);
+        
+        String pathFilename = conf.getChild(XMLTags.FILE).getAttributeValue(XMLTags.VALUE);
+        if (pathFilename == null) {
+        	throw new PluginException("Missing path / filename to store statistics");
+        }
+
+        String fileType = conf.getChild(XMLTags.FILE_TYPE).getAttributeValue(XMLTags.VALUE);
+        if (fileType == null) {
+        	throw new PluginException("Missing file type");
+        }
+
+        int indexFileExtension = pathFilename.indexOf(fileType);
+
+        // file does not yet contain extension
+        if (indexFileExtension != pathFilename.length() - fileType.length()) {
+        	pathFilename = pathFilename + "." + fileType;
+        }
+        
+        String  delimiter = ";";
 
         // init the string buffer to show table headings
         buffer.append("Created by opendbcopy statistics on " + model.getSourceStatistics().getAttributeValue(XMLTags.CAPTURE_DATE) + newLine);
@@ -233,7 +258,7 @@ public class WriteStatisticsToFilePlugin extends DynamicPluginThread {
         }
 
         if (!isInterrupted()) {
-            File       outputFile = new File(fileName);
+            File       outputFile = new File(pathFilename);
             FileWriter fileWriter = new FileWriter(outputFile);
 
             fileWriter.write(buffer.toString());
@@ -241,9 +266,9 @@ public class WriteStatisticsToFilePlugin extends DynamicPluginThread {
             fileWriter.close();
 
             // append output file to plugin
-            model.setOutput(InputOutputHelper.createFileList(outputFile, "statistics"));
+            model.appendToOutput(InputOutputHelper.createFileElement(outputFile));
 
-            logger.info("statistics written to " + fileName);
+            logger.info("statistics written to " + pathFilename);
         }
     }
 

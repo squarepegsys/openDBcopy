@@ -40,6 +40,7 @@ import opendbcopy.plugin.model.exception.UnsupportedAttributeValueException;
 
 import org.jdom.Element;
 
+import java.io.File;
 import java.io.IOException;
 
 import java.util.HashMap;
@@ -55,20 +56,21 @@ import java.util.Properties;
  * @version $Revision$
  */
 public class GenerateHibernateMappingPlugin extends DynamicPluginThread {
-    private DatabaseModel model;
-    private TypeMapping   typeMapping;
-    private StringBuffer  sb;
-    private Element       conf;
-    private String        path = "";
-    private String        packageName = "";
-    private String        hibernateDialect;
-    private String        newLine = "";
-    private String        database = "";
-    private String        identifierQuoteStringOut = "";
-    private boolean       show_qualified_table_name = false;
-    private int           counterRecords = 0;
-    private int           counterTables = 0;
-    private List          processTables;
+    private static final String HBM_FILE_SUFFIX = ".hbm.xml";
+    private DatabaseModel       model;
+    private TypeMapping         typeMapping;
+    private StringBuffer        sb;
+    private Element             conf;
+    private File                outputPath;
+    private String              packageName;
+    private String              hibernateDialect;
+    private String              newLine;
+    private String              database = "";
+    private String              identifierQuoteStringOut = "";
+    private boolean             show_qualified_table_name = false;
+    private int                 counterRecords = 0;
+    private int                 counterTables = 0;
+    private List                processTables;
 
     /**
      * Creates a new CopyMapping object.
@@ -94,13 +96,23 @@ public class GenerateHibernateMappingPlugin extends DynamicPluginThread {
             // setup SQL Type -> Java Type Mapping up as HashMap for fast lookup
             typeMapping     = new TypeMapping(getTypeMapping());
 
-            newLine     = System.getProperty("line.separator");
+            newLine     = MainController.lineSep;
 
             // read the plugin configuration
-            conf                 = model.getConf();
-            path                 = conf.getChild(XMLTags.PATH).getAttributeValue(XMLTags.VALUE);
-            packageName          = conf.getChild("package_name").getAttributeValue(XMLTags.VALUE);
-            hibernateDialect     = conf.getChild("hibernate_dialect").getAttributeValue(XMLTags.VALUE);
+            conf     = model.getConf();
+
+            outputPath = new File(conf.getChild(XMLTags.DIR).getAttributeValue(XMLTags.VALUE));
+
+            if (!outputPath.exists()) {
+                boolean mkDirOk = outputPath.mkdir();
+
+                if (!mkDirOk) {
+                    throw new PluginException("Could not create " + outputPath.getAbsolutePath());
+                }
+            }
+
+            packageName          = conf.getChild(XMLTags.PACKAGE_NAME).getAttributeValue(XMLTags.VALUE);
+            hibernateDialect     = conf.getChild(XMLTags.HIBERNATE_DIALECT).getAttributeValue(XMLTags.VALUE);
 
             if (model.getDbMode() == model.DUAL_MODE) {
                 database = model.getDestinationDb().getName();
@@ -145,7 +157,7 @@ public class GenerateHibernateMappingPlugin extends DynamicPluginThread {
                 if (model.getDbMode() == model.DUAL_MODE) {
                     destinationTableName     = tableProcess.getAttributeValue(XMLTags.DESTINATION_DB);
                     processColumns           = model.getMappingColumnsToProcessByDestinationTable(destinationTableName);
-                    fileName                 = path + destinationTableName + ".hbm.xml";
+                    fileName                 = outputPath.getAbsolutePath() + MainController.fileSep + destinationTableName + HBM_FILE_SUFFIX;
                 }
 
                 sb = new StringBuffer();
@@ -154,7 +166,7 @@ public class GenerateHibernateMappingPlugin extends DynamicPluginThread {
 
                 Writer.write(sb, fileName);
 
-                postMessage(fileName + " written");
+                logger.info(fileName + " written");
 
                 model.setCurrentProgressTable(++counterTables);
             }
@@ -180,11 +192,11 @@ public class GenerateHibernateMappingPlugin extends DynamicPluginThread {
 
             p.setProperty("hibernate.dialect", hibernateDialect);
 
-            PropertiesToFile.exportPropertiesToFile(p, path + "hibernate.properties");
-            model.setProgressMessage("hibernate properties written to " + path + "hibernate.properties");
+            PropertiesToFile.exportPropertiesToFile(p, outputPath.getAbsolutePath() + MainController.fileSep + "hibernate.properties");
+            logger.info("hibernate properties written to " + outputPath.getAbsolutePath() + MainController.fileSep + "hibernate.properties");
 
             if (!isInterrupted()) {
-                postMessage(counterTables + " table(s) processed");
+                logger.info(counterTables + " table(s) processed");
             }
         } catch (MissingAttributeException e) {
             throw new PluginException(e);

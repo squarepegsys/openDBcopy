@@ -22,35 +22,31 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin.copy;
 
-import opendbcopy.config.XMLTags;
-
-import opendbcopy.connection.DBConnection;
-
-import opendbcopy.connection.exception.CloseConnectionException;
-
-import opendbcopy.controller.MainController;
-
-import opendbcopy.filter.StringConverter;
-
-import opendbcopy.io.Writer;
-
-import opendbcopy.plugin.model.DynamicPluginThread;
-import opendbcopy.plugin.model.Model;
-import opendbcopy.plugin.model.database.DatabaseModel;
-import opendbcopy.plugin.model.exception.PluginException;
-
-import opendbcopy.sql.Helper;
-
-import org.jdom.Element;
-
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import opendbcopy.config.XMLTags;
+import opendbcopy.connection.DBConnection;
+import opendbcopy.connection.exception.CloseConnectionException;
+import opendbcopy.controller.MainController;
+import opendbcopy.filter.StringConverter;
+import opendbcopy.plugin.model.DynamicPluginThread;
+import opendbcopy.plugin.model.Model;
+import opendbcopy.plugin.model.database.DatabaseModel;
+import opendbcopy.plugin.model.exception.PluginException;
+import opendbcopy.sql.Helper;
+import opendbcopy.util.InputOutputHelper;
+
+import org.jdom.Element;
 
 
 /**
@@ -60,6 +56,7 @@ import java.util.List;
  * @version $Revision$
  */
 public class CopyMappingPlugin extends DynamicPluginThread {
+    private static final String            fileType = "csv";
     private DatabaseModel     model;
     private Connection        connSource;
     private Connection        connDestination;
@@ -73,9 +70,8 @@ public class CopyMappingPlugin extends DynamicPluginThread {
     private String            sourceTableName = "";
     private String            destinationTableName = "";
     private String            newLine = "";
-    private String            path = "";
+    private File              outputPath = null;
     private String            fileName = "";
-    private String            fileType = "";
     private String            delimiter = "";
     private boolean           log_error = false;
     private boolean           errorLogSetup = false;
@@ -107,7 +103,7 @@ public class CopyMappingPlugin extends DynamicPluginThread {
      * @throws PluginException DOCUMENT ME!
      */
     protected final void setUp() throws PluginException {
-        newLine = System.getProperty("line.separator");
+        newLine = MainController.lineSep;
 
         // read the plugin configuration
         Element conf = model.getConf();
@@ -116,17 +112,24 @@ public class CopyMappingPlugin extends DynamicPluginThread {
             throw new PluginException("Missing conf element");
         }
 
-        path          = conf.getChild(XMLTags.PATH).getAttributeValue(XMLTags.VALUE);
-        fileType      = conf.getChild(XMLTags.FILE_TYPE).getAttributeValue(XMLTags.VALUE);
-        delimiter     = conf.getChild(XMLTags.DELIMITER).getAttributeValue(XMLTags.VALUE);
-        log_error     = Boolean.valueOf(conf.getChild(XMLTags.LOG_ERROR).getAttributeValue(XMLTags.VALUE)).booleanValue();
-
-        if (log_error) {
-            recordBuffer          = new StringBuffer();
-            recordErrorBuffer     = new StringBuffer();
-        }
-
         try {
+            outputPath = new File(conf.getChild(XMLTags.DIR).getAttributeValue(XMLTags.VALUE));
+
+            if (!outputPath.exists()) {
+                boolean mkDirOk = outputPath.mkdir();
+
+                if (!mkDirOk) {
+                    throw new PluginException("Could not create " + outputPath.getAbsolutePath());
+                }
+            }
+
+            log_error                     = Boolean.valueOf(conf.getChild(XMLTags.LOG_ERROR).getAttributeValue(XMLTags.VALUE)).booleanValue();
+
+            if (log_error) {
+                recordBuffer          = new StringBuffer();
+                recordErrorBuffer     = new StringBuffer();
+            }
+
             // check string filters
             if (model.getStringFilterTrim().getAttributeValue(XMLTags.PROCESS).compareTo("true") == 0) {
                 trimString = true;
@@ -170,6 +173,8 @@ public class CopyMappingPlugin extends DynamicPluginThread {
             stmSource = connSource.createStatement();
 
             Iterator itProcessTables = processTables.iterator();
+            
+            ArrayList generatedFiles = new ArrayList();
 
             while (!isInterrupted() && itProcessTables.hasNext()) {
                 tableProcess     = (Element) itProcessTables.next();
@@ -178,7 +183,7 @@ public class CopyMappingPlugin extends DynamicPluginThread {
                 destinationTableName     = tableProcess.getAttributeValue(XMLTags.DESTINATION_DB);
 
                 if (log_error) {
-                    fileName = path + destinationTableName + "_ERRORS" + "." + fileType;
+                    fileName = destinationTableName + "_ERRORS" + "." + fileType;
                 }
 
                 processColumns = model.getMappingColumnsToProcessByDestinationTable(destinationTableName);
@@ -291,8 +296,14 @@ public class CopyMappingPlugin extends DynamicPluginThread {
 
                 if (log_error) {
                     if (recordErrorBuffer.length() > 0) {
-                        Writer.write(recordErrorBuffer, fileName);
-                        logger.error(fileName + " contains records which could not be processed");
+                        // open file writer			
+                    	File errorFile = new File(outputPath.getAbsolutePath() + MainController.fileSep + fileName);
+                        OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(errorFile), MainController.getEncoding());
+                        fileWriter.write(recordErrorBuffer.toString());
+                        fileWriter.close();
+                        generatedFiles.add(errorFile);
+
+                        logger.error(errorFile + " contains records which could not be processed");
                         recordErrorBuffer     = new StringBuffer();
                         errorLogSetup         = false;
                     }
@@ -306,6 +317,15 @@ public class CopyMappingPlugin extends DynamicPluginThread {
             DBConnection.closeConnection(connDestination);
 
             if (!isInterrupted()) {
+            	if (generatedFiles != null && generatedFiles.size() > 0) {
+                    File[] outputFiles = new File[generatedFiles.size()];
+                    outputFiles = (File[]) generatedFiles.toArray(outputFiles);
+
+                    Element outputConf = model.getConf().getChild(XMLTags.OUTPUT);
+
+                    model.appendToOutput(InputOutputHelper.createFileListElement(outputFiles, outputConf.getChild(XMLTags.FILELIST).getAttributeValue(XMLTags.VALUE)));
+            	}
+
                 logger.info(counterTables + " table(s) processed");
             }
         } catch (SQLException sqle) {
@@ -321,14 +341,6 @@ public class CopyMappingPlugin extends DynamicPluginThread {
 
             throw new PluginException(e1);
         }
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @throws PluginException DOCUMENT ME!
-     */
-    protected final void tearDown() throws PluginException {
     }
 
     /**

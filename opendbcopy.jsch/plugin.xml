@@ -23,7 +23,7 @@
 =============================================================== 
 -->
 
-<plugin identifier="jsch" model_class="opendbcopy.plugin.jsch.SimpleModel">
+<plugin identifier="jsch" model_class="opendbcopy.plugin.model.simple.SimpleModel">
 	<conf>
 		<!-- path may be relative or absolute -->
 		<path value="inout/" />

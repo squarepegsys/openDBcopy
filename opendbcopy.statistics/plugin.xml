@@ -26,12 +26,11 @@
 <plugin identifier="statistics" model_class="opendbcopy.plugin.statistics.StatisticsModel">
 	<conf>
 		<!-- path may be relative or absolute -->
-		<path value="inout/" />
-		<file value="statistics" />			
-		<file_type value="csv" />
-		
-		<!-- for a tab delimiter enter \n as value -->
-		<delimiter value=";" />
+		<file required="true" value="" type="file" description="plugin.opendbcopy.statistics.conf.outputFile" />			
+		<file_type value="csv" type="string" description="plugin.opendbcopy.statistics.conf.fileType" />
+		<output>
+			<file editable="false" value="" type="string" description="plugin.opendbcopy.statistics.conf.outputFile" />
+		</output>			
 	</conf>
 	<threads>
 		<thread thread_class="opendbcopy.plugin.statistics.WriteStatisticsToFilePlugin" description="title.plugin.opendbcopy.statistics" />

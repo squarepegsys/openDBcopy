@@ -22,40 +22,38 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin.script;
 
+import java.io.File;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+
 import opendbcopy.config.XMLTags;
-
 import opendbcopy.connection.DBConnection;
-
-import opendbcopy.connection.exception.CloseConnectionException;
-
+import opendbcopy.connection.exception.DriverNotFoundException;
+import opendbcopy.connection.exception.OpenConnectionException;
 import opendbcopy.controller.MainController;
-
 import opendbcopy.io.Writer;
-
 import opendbcopy.plugin.model.DynamicPluginThread;
 import opendbcopy.plugin.model.Model;
 import opendbcopy.plugin.model.database.DatabaseModel;
+import opendbcopy.plugin.model.database.exception.DependencyNotSolvableException;
 import opendbcopy.plugin.model.database.typeinfo.TypeInfo;
 import opendbcopy.plugin.model.database.typeinfo.TypeInfoHelper;
 import opendbcopy.plugin.model.exception.MissingAttributeException;
 import opendbcopy.plugin.model.exception.MissingElementException;
 import opendbcopy.plugin.model.exception.PluginException;
 import opendbcopy.plugin.model.exception.UnsupportedAttributeValueException;
-
 import opendbcopy.sql.Helper;
-
+import opendbcopy.util.InputOutputHelper;
 import opendbcopy.util.IntHashMap;
 
 import org.jdom.Element;
-
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
 
 
 /**
@@ -70,7 +68,7 @@ public class InsertScriptPlugin extends DynamicPluginThread {
     private Statement     stmSource;
     private ResultSet     rs;
     private StringBuffer  sbScript;
-    private String        path = "";
+    private File        outputPath;
     private String        newLine = "";
     private String        database = "";
     private String        identifierQuoteStringOut = "";
@@ -100,12 +98,20 @@ public class InsertScriptPlugin extends DynamicPluginThread {
      */
     protected void setUp() throws PluginException {
         try {
-            newLine = System.getProperty("line.separator");
+            newLine = controller.getLineSep();
 
             // read the plugin configuration
             Element conf = model.getConf();
-            path                          = conf.getChild(XMLTags.PATH).getAttributeValue(XMLTags.VALUE);
-            show_qualified_table_name     = Boolean.valueOf(conf.getChild("show_qualified_table_name").getAttributeValue(XMLTags.VALUE)).booleanValue();
+            outputPath = new File(conf.getChild(XMLTags.DIR).getAttributeValue(XMLTags.VALUE));
+            
+            if (!outputPath.exists()) {
+            	boolean mkDirOk = outputPath.mkdir();
+            	if (!mkDirOk) {
+            		throw new PluginException("Could not create " + outputPath.getAbsolutePath());
+            	}
+            }
+            
+            show_qualified_table_name     = Boolean.valueOf(conf.getChild(XMLTags.SHOW_QUALIFIED_TABLE_NAME).getAttributeValue(XMLTags.VALUE)).booleanValue();
 
             if (model.getDbMode() == model.DUAL_MODE) {
                 identifierQuoteStringOut     = model.getDestinationMetadata().getChild(XMLTags.IDENTIFIER_QUOTE_STRING).getAttributeValue(XMLTags.VALUE);
@@ -127,8 +133,18 @@ public class InsertScriptPlugin extends DynamicPluginThread {
 
             // now set the number of tables that need to be copied
             model.setLengthProgressTable(processTables.size());
-        } catch (Exception e) {
-            throw new PluginException(e.getMessage());
+        } catch (UnsupportedAttributeValueException e) {
+            throw new PluginException(e);
+        } catch (MissingAttributeException e) {
+            throw new PluginException(e);
+        } catch (MissingElementException e) {
+            throw new PluginException(e);
+        } catch (DependencyNotSolvableException e) {
+            throw new PluginException(e);
+        } catch (OpenConnectionException e) {
+            throw new PluginException(e);
+        } catch (DriverNotFoundException e) {
+            throw new PluginException(e);
         }
     }
 
@@ -141,13 +157,15 @@ public class InsertScriptPlugin extends DynamicPluginThread {
         try {
             stmSource = connSource.createStatement();
 
-            String   sourceTableName = "";
-            String   destinationTableName = "";
-            String   qualifiedTableName = "";
-            String   tableName = "";
-            String   fileName = "";
-            String   selectStm = "";
-            Iterator itProcessTables = processTables.iterator();
+            ArrayList generatedFiles = new ArrayList();
+
+            String    sourceTableName = "";
+            String    destinationTableName = "";
+            String    qualifiedTableName = "";
+            String    tableName = "";
+            String    fileName = "";
+            String    selectStm = "";
+            Iterator  itProcessTables = processTables.iterator();
 
             while (itProcessTables.hasNext() && !isInterrupted()) {
                 Element tableProcess = (Element) itProcessTables.next();
@@ -158,7 +176,7 @@ public class InsertScriptPlugin extends DynamicPluginThread {
                     sourceTableName          = tableProcess.getAttributeValue(XMLTags.SOURCE_DB);
                     destinationTableName     = tableProcess.getAttributeValue(XMLTags.DESTINATION_DB);
                     processColumns           = model.getMappingColumnsToProcessByDestinationTable(destinationTableName);
-                    fileName                 = path + counterTables + "_" + destinationTableName + ".sql";
+                    fileName                 = counterTables + "_" + destinationTableName + ".sql";
                     selectStm                = Helper.getSelectStatement(model, sourceTableName, XMLTags.SOURCE_DB, processColumns);
 
                     if (show_qualified_table_name) {
@@ -171,7 +189,7 @@ public class InsertScriptPlugin extends DynamicPluginThread {
                 } else {
                     sourceTableName     = tableProcess.getAttributeValue(XMLTags.NAME);
                     processColumns      = model.getSourceColumnsToProcess(sourceTableName);
-                    fileName            = path + counterTables + "_" + sourceTableName + ".sql";
+                    fileName            = counterTables + "_" + sourceTableName + ".sql";
                     selectStm           = Helper.getSelectStatement(model, sourceTableName, XMLTags.NAME, processColumns);
 
                     if (show_qualified_table_name) {
@@ -200,7 +218,11 @@ public class InsertScriptPlugin extends DynamicPluginThread {
 
                 srcResult.close();
 
-                Writer.write(sbScript, fileName);
+                File file = new File(outputPath.getAbsolutePath() + controller.getFileSep() + fileName);
+
+                Writer.write(sbScript, file);
+
+                generatedFiles.add(file);
 
                 model.setCurrentProgressTable(++counterTables);
 
@@ -209,17 +231,26 @@ public class InsertScriptPlugin extends DynamicPluginThread {
 
             if (!isInterrupted()) {
                 logger.info(counterTables + " table(s) processed");
-            }
-        } catch (SQLException sqle) {
-            throw new PluginException(sqle);
-        } catch (Exception e1) {
-            try {
-                DBConnection.closeConnection(connSource);
-            } catch (CloseConnectionException e2) {
-                // bad luck ... don't worry
-            }
 
-            throw new PluginException(e1.getMessage());
+                File[] outputFiles = new File[generatedFiles.size()];
+                outputFiles = (File[]) generatedFiles.toArray(outputFiles);
+
+                Element outputConf = model.getConf().getChild(XMLTags.OUTPUT);
+                
+                model.appendToOutput(InputOutputHelper.createFileListElement(outputFiles, outputConf.getChild(XMLTags.FILELIST).getAttributeValue(XMLTags.VALUE)));
+            }
+        } catch (UnsupportedAttributeValueException e) {
+            throw new PluginException(e);
+        } catch (MissingAttributeException e) {
+            throw new PluginException(e);
+        } catch (MissingElementException e) {
+            throw new PluginException(e);
+        } catch (SQLException e) {
+            throw new PluginException(e);
+        } catch (IOException e) {
+            throw new PluginException(e);
+        } catch (Exception e) {
+            throw new PluginException(e);
         }
     }
 
@@ -301,11 +332,9 @@ public class InsertScriptPlugin extends DynamicPluginThread {
      *
      * @param tableName DOCUMENT ME!
      * @param processOrder DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
      */
     private void initScriptHeader(String tableName,
-                                  int    processOrder) throws Exception {
+                                  int    processOrder) {
         sbScript = new StringBuffer();
 
         sbScript.append("#############################################################################" + newLine);

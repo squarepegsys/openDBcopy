@@ -23,15 +23,14 @@
 =============================================================== 
 -->
 
-<plugin identifier="copy" model_class="opendbcopy.plugin.statistics.DatabaseModel">
+<plugin identifier="copy" model_class="opendbcopy.plugin.model.database.DatabaseModel">
 	<conf>
 		<!-- path may be relative or absolute -->
-		<path value="inout/" />
-		<file value="statistics" />			
-		<file_type value="csv" />
-		
-		<!-- for a tab delimiter enter \n as value -->
-		<delimiter value=";" />
+		<dir required="true" value="" type="dir" description="plugin.opendbcopy.copy.conf.outputDirErrorLogs" />	
+		<log_error value="true" type="boolean" description="plugin.opendbcopy.copy.conf.logError" />
+		<output>
+			<filelist value="error_logs" type="string" description="plugin.opendbcopy.copy.conf.output.filelistIdentifier" />
+		</output>			
 	</conf>
 	<threads>
 		<thread thread_class="opendbcopy.plugin.copy.CopyMappingPlugin" description="title.plugin.opendbcopy.copy" />
@@ -57,4 +56,9 @@
       <model />
    </destination_db>
    <mapping />
+   <filter>
+	  <string name="trim" process="false" />
+	  <string name="remove_intermediate_whitespaces" process="false" />
+	  <string name="set_null" process="false" />
+   </filter>
 </plugin>

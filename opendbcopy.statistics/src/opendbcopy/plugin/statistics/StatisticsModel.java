@@ -24,11 +24,12 @@ package opendbcopy.plugin.statistics;
 
 import opendbcopy.config.XMLTags;
 
+import opendbcopy.controller.MainController;
+
 import opendbcopy.plugin.model.database.DatabaseModel;
 import opendbcopy.plugin.model.exception.MissingAttributeException;
 import opendbcopy.plugin.model.exception.MissingElementException;
 import opendbcopy.plugin.model.exception.UnsupportedAttributeValueException;
-
 
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -49,8 +50,8 @@ public class StatisticsModel extends DatabaseModel {
     /**
      * Creates a new StatisticsModel object.
      *
+     * @param controller DOCUMENT ME!
      * @param pluginElement DOCUMENT ME!
-     * @param encoding DOCUMENT ME!
      *
      * @throws UnsupportedAttributeValueException DOCUMENT ME!
      * @throws MissingAttributeException DOCUMENT ME!
@@ -58,9 +59,9 @@ public class StatisticsModel extends DatabaseModel {
      * @throws JDOMException DOCUMENT ME!
      * @throws IOException DOCUMENT ME!
      */
-    public StatisticsModel(Element pluginElement,
-                           String  encoding) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, JDOMException, IOException {
-        super(pluginElement, encoding);
+    public StatisticsModel(MainController controller,
+                           Element        pluginElement) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, JDOMException, IOException {
+        super(controller, pluginElement);
         loadStatistics(pluginElement);
     }
 

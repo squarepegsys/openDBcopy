@@ -37,16 +37,20 @@ import opendbcopy.plugin.model.exception.PluginException;
 
 import opendbcopy.sql.Helper;
 
+import opendbcopy.util.InputOutputHelper;
+
 import org.jdom.Element;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -66,15 +70,14 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
     private int           counterRecords = 0;
     private int           counterTables = 0;
     private int           append_file_after_records = 0;
-    private String        delimiter = "";
-    private String        delimiterOriginal = "";
+    private String        delimiterString = "";
+    private String        delimiterOriginalString = "";
     private String        newLine = "";
-    private String        path = "";
     private String        fileType = "";
     private boolean       show_header = false;
-    private boolean       append_delimiter_after_data = false;
     private boolean       show_null_values = false;
     List                  processTables = null;
+    private File          outputPath = null;
 
     /**
      * Creates a new CopyMappingPlugin object.
@@ -96,32 +99,38 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
      * @throws PluginException DOCUMENT ME!
      */
     protected final void setUp() throws PluginException {
-        // use the system's newline character instead of \n
-        newLine = System.getProperty("line.separator");
+        newLine = controller.getLineSep();
 
         // read the plugins configuration
         Element conf = model.getConf();
 
-        path                          = conf.getChild(XMLTags.PATH).getAttributeValue(XMLTags.VALUE);
-        fileType                      = conf.getChild(XMLTags.FILE_TYPE).getAttributeValue(XMLTags.VALUE);
-        delimiterOriginal             = conf.getChild(XMLTags.DELIMITER).getAttributeValue(XMLTags.VALUE);
-        delimiter                     = delimiterOriginal;
-        show_header                   = Boolean.valueOf(conf.getChild(XMLTags.SHOW_HEADER).getAttributeValue(XMLTags.VALUE)).booleanValue();
-        show_null_values              = Boolean.valueOf(conf.getChild("show_null_values").getAttributeValue(XMLTags.VALUE)).booleanValue();
-        append_file_after_records     = Integer.parseInt(conf.getChild(XMLTags.APPEND_FILE_AFTER_RECORDS).getAttributeValue(XMLTags.VALUE));
-
-        if (conf.getChild(XMLTags.DELIMITER_POSITION).getAttributeValue(XMLTags.VALUE).compareTo("after") == 0) {
-            append_delimiter_after_data = true;
-        }
-
         try {
+            outputPath = new File(conf.getChild(XMLTags.DIR).getAttributeValue(XMLTags.VALUE));
+
+            if (!outputPath.exists()) {
+                boolean mkDirOk = outputPath.mkdir();
+
+                if (!mkDirOk) {
+                    throw new PluginException("Could not create " + outputPath.getAbsolutePath());
+                }
+            }
+
+            fileType                      = conf.getChild(XMLTags.FILE_TYPE).getAttributeValue(XMLTags.VALUE);
+            show_header                   = Boolean.valueOf(conf.getChild(XMLTags.SHOW_HEADER).getAttributeValue(XMLTags.VALUE)).booleanValue();
+            show_null_values              = Boolean.valueOf(conf.getChild("show_null_values").getAttributeValue(XMLTags.VALUE)).booleanValue();
+            append_file_after_records     = Integer.parseInt(conf.getChild(XMLTags.APPEND_FILE_AFTER_RECORDS).getAttributeValue(XMLTags.VALUE));
+
+            delimiterOriginalString     = conf.getChild(XMLTags.DELIMITER).getAttributeValue(XMLTags.VALUE);
+
+            delimiterString     = new String(delimiterOriginalString);
+
             // get connection
             connSource     = DBConnection.getConnection(model.getSourceConnection());
 
             // extract the tables to dump
             processTables = model.getSourceTablesToProcessOrdered();
         } catch (Exception e) {
-            throw new PluginException(e.getMessage());
+            throw new PluginException(e);
         }
 
         // now set the number of tables that need to be copied
@@ -137,16 +146,18 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
         try {
             stmSource = connSource.createStatement();
 
-            String   stmSelect = "";
+            String    stmSelect = "";
 
-            Iterator itProcessTables = processTables.iterator();
+            ArrayList generatedFiles = new ArrayList();
+
+            Iterator  itProcessTables = processTables.iterator();
 
             while (itProcessTables.hasNext() && !isInterrupted()) {
                 Element tableProcess = (Element) itProcessTables.next();
 
                 String  sourceTableName = tableProcess.getAttributeValue(XMLTags.NAME);
 
-                String  fileName = getFileName(sourceTableName);
+                File    file = new File(outputPath.getAbsolutePath() + controller.getFileSep() + getFileName(sourceTableName));
 
                 counterRecords = 0;
 
@@ -163,7 +174,7 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
                 model.setCurrentProgressTable(0);
 
                 // Reading number of records for progress bar
-                model.setLengthProgressRecord(Helper.getNumberOfRecordsFiltered(stmSource, model, XMLTags.NAME, sourceTableName));
+                model.setLengthProgressRecord(Helper.getNumberOfRecordsFiltered(stmSource, model, XMLTags.SOURCE_DB, sourceTableName));
 
                 // get Select Statement
                 stmSelect = Helper.getSelectStatement(model, sourceTableName, XMLTags.NAME, processColumns);
@@ -177,8 +188,8 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
 
                 logger.info("Reading " + sourceTableName + " ...");
 
-                // open file writer					
-                FileWriter fileWriter = new FileWriter(new File(fileName));
+                // open file writer				
+                OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), MainController.getEncoding());
 
                 while (rs.next()) {
                     model.setCurrentProgressRecord(++counterRecords);
@@ -187,32 +198,13 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
                     for (int colCounter = 1; colCounter < (processColumns.size() + 1); colCounter++) {
                         String input = rs.getString(colCounter);
 
-                        // treat first column different
-                        if ((colCounter == 1) && !append_delimiter_after_data) {
-                            delimiter = "";
-                        } else {
-                            delimiter = delimiterOriginal;
-                        }
-
                         if (!rs.wasNull()) {
-                            if (append_delimiter_after_data) {
-                                recordBuffer.append(input + delimiter);
-                            } else {
-                                recordBuffer.append(delimiter + input);
-                            }
+                            recordBuffer.append(input + delimiterString);
                         } else {
                             if (show_null_values) {
-                                if (append_delimiter_after_data) {
-                                    recordBuffer.append("null" + delimiter);
-                                } else {
-                                    recordBuffer.append(delimiter + "null");
-                                }
+                                recordBuffer.append("null" + delimiterString);
                             } else {
-                                if (append_delimiter_after_data) {
-                                    recordBuffer.append("" + delimiter);
-                                } else {
-                                    recordBuffer.append(delimiter + "");
-                                }
+                                recordBuffer.append("" + delimiterString);
                             }
                         }
                     }
@@ -232,7 +224,10 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
                 }
 
                 rs.close();
-                logger.info(counterRecords + " records written to file " + fileName);
+
+                generatedFiles.add(file);
+
+                logger.info(counterRecords + " records written to file " + file.getAbsolutePath());
                 counterRecords = 0;
 
                 // required in case of last table that had to be copied
@@ -248,6 +243,13 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
 
             if (!isInterrupted()) {
                 logger.info(counterTables + " table(s) processed");
+
+                File[] outputFiles = new File[generatedFiles.size()];
+                outputFiles = (File[]) generatedFiles.toArray(outputFiles);
+
+                Element outputConf = model.getConf().getChild(XMLTags.OUTPUT);
+
+                model.appendToOutput(InputOutputHelper.createFileListElement(outputFiles, outputConf.getChild(XMLTags.FILELIST).getAttributeValue(XMLTags.VALUE)));
             }
         } catch (SQLException sqle) {
             throw new PluginException(sqle);
@@ -259,7 +261,7 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
                 // bad luck ... don't worry
             }
 
-            throw new PluginException(e1.getMessage());
+            throw new PluginException(e1);
         }
     }
 
@@ -281,7 +283,7 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
 
         // set the column headings
         while (itProcessColumns.hasNext()) {
-            recordBuffer.append(((Element) itProcessColumns.next()).getAttributeValue(XMLTags.NAME) + delimiter);
+            recordBuffer.append(((Element) itProcessColumns.next()).getAttributeValue(XMLTags.NAME) + delimiterString);
         }
 
         recordBuffer.append(newLine);
@@ -301,6 +303,6 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
             throw new IllegalArgumentException("Missing tableName");
         }
 
-        return path + tableName + "." + fileType;
+        return tableName + "." + fileType;
     }
 }
