@@ -171,6 +171,7 @@ else
     while [ $STATUS -eq 10 ]
     do
     # Execute the JVM
+       cd $OPENDBCOPY_HOME
        $JAVA $JAVA_OPTS \
                -classpath "$OPENDBCOPY_CLASSPATH" \
                opendbcopy.controller.MainController "$@"        
