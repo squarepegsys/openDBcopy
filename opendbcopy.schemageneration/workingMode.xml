@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 
+===============================================================
+ Required Working Modes to create Hibernate Mapping Files
+
+ Copyright (C) 2003 Anthony Smith
+===============================================================
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ as published by the Free Software Foundation; either version 2
+ of the License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+=============================================================== 
+-->
+
+<working_mode identifier="schemageneration" display_order="1" resource_name="plugin_opendbcopy_schemageneration">
+	<title value="title.plugin.opendbcopy.schemageneration" />
+	<panels>
+		<panel title="title.plugin.opendbcopy.schemageneration.panel.0">
+			<class name="opendbcopy.gui.PanelConfiguration" />
+		</panel>
+		<panel title="title.plugin.opendbcopy.schemageneration.panel.1">
+			<class name="opendbcopy.gui.database.PanelConnection" register_as_observer="true" />
+		</panel>
+		<panel title="title.plugin.opendbcopy.schemageneration.panel.2">
+			<class name="opendbcopy.gui.database.PanelModel" register_as_observer="true" />
+		</panel>
+		<panel title="title.plugin.opendbcopy.schemageneration.panel.3">
+			<class name="opendbcopy.gui.database.dual.PanelMappingTable" register_as_observer="true" />
+		</panel>
+		<panel title="title.plugin.opendbcopy.schemageneration.panel.4">
+			<class name="opendbcopy.gui.database.dual.PanelMappingColumn" register_as_observer="true" />
+		</panel>
+		<panel title="title.plugin.opendbcopy.schemageneration.panel.5">
+			<class name="opendbcopy.gui.PanelExecute" />
+		</panel>
+	</panels>
+</working_mode>
