@@ -11,6 +11,10 @@
         <class name="org.axiondb.jdbc.AxionDriver" />
         <url value="jdbc:axiondb:&lt;database-name&gt;[:&lt;database-directory&gt;]" />
     </driver>
+    <driver name="Excel JDBC Driver">
+		<class name="com.nilostep.xlsql.jdbc.xlDriver" />
+		<url value="jdbc:nilostep:excel:&lt;directory&gt;" />
+	</driver>
     <driver name="HSQLDB In-Memory">
         <class name="org.hsqldb.jdbcDriver" />
         <url value="jdbc:hsqldb:." />
@@ -43,9 +47,9 @@
         <class name="sun.jdbc.odbc.JdbcOdbcDriver" />
         <url value="jdbc:odbc:&lt;alias&gt;" />
     </driver>
-    <driver name="jTDS">
-        <class name="com.internetcds.jdbc.tds.Driver" />
-        <url value="jdbc:freetds:sqlserver://&lt;hostname&gt;[:&lt;4100&gt;]/&lt;dbname&gt;[;&lt;property&gt;=&lt;value&gt;[;...]]" />
+    <driver name="jTDS MSSQL Server JDBC Driver (http://jtds.sf.net)">
+        <class name="net.sourceforge.jtds.jdbc.Driver" />
+        <url value="jdbc:jtds:&lt;server_type&gt;://&lt;server&gt;[:&lt;port&gt;][/&lt;database&gt;][;&lt;property&gt;=&lt;value&gt;[;...]]" />
     </driver>
     <driver name="Mckoi">
         <class name="com.mckoi.JDBCDriver" />

@@ -30,6 +30,7 @@
 	<type number="2002" name="STRUCT" mapping="java.sql.Struct" />
 	<type number="92" name="TIME" mapping="java.sql.Date" />
 	<type number="93" name="TIMESTAMP" mapping="java.sql.Timestamp" />
+	<type number="1111" name="TIMESTAMP" mapping="java.sql.Timestamp" />
 	<type number="-6" name="TINYINT" mapping="byte" />
 	<type number="-3" name="VARBINARY" mapping="byte[]" />
 	<type number="12" name="VARCHAR" mapping="java.lang.String" />
