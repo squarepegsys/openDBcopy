@@ -11,10 +11,11 @@
    	<property name="build.sysclasspath" value="ignore"/>
 
    	<property name="name" value="opendbcopy"/>
-   	<property name="version" value="0.41.1"/>
+   	<property name="version" value="0.41.2"/>
 
    	<property name="sources.dir" value="${basedir}/src"/>
    	<property name="lib.dir" value="${basedir}/lib"/>
+   	<property name="log.dir" value="${basedir}/log"/>
    	<property name="dist.dir" value="${basedir}/dist"/>
    	<property name="build.dir" value="${basedir}/classes"/>
    	<property name="javadoc.dir" value="${basedir}/apidocs"/>
@@ -42,6 +43,7 @@
       	<mkdir dir="${build.dir}"/>
       	<mkdir dir="${lib.dir}"/>
       	<mkdir dir="${dist.dir}"/>
+      	<mkdir dir="${log.dir}"/>
    	</target>
 
    	<!-- ============================================================= -->
@@ -110,11 +112,18 @@
    	<!-- Create IzPack installable jar                                 -->
    	<!-- ============================================================= -->
 	<target name="installer" depends="jar">
+		
+		<!-- as there may be test files in log.dir which should not be in distribution -->
+		<delete quiet="true" dir="${log.dir}"/>
+		<mkdir dir="${log.dir}"/>
+		
 		<izpack input="install.xml"
 			output="${dist.dir}/${name}-${version}-install.jar"
 			installerType="standard-kunststoff"
 			basedir="${basedir}"
 			izPackDir="${izpack.dir}"/>		
+		<echo>Please ensure that maven generated site documentation before installer and</echo>
+		<echo>version was changed in project.xml, install.xml, build.xml</echo>
 	</target>
 	
    	<!-- ============================================================= -->

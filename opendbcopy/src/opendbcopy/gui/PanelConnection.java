@@ -42,12 +42,15 @@ import java.awt.Rectangle;
 import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 
+import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Observable;
 import java.util.Observer;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
@@ -86,6 +89,10 @@ public class PanelConnection extends JPanel implements Observer {
     private JTextField     tfUserNameD = new JTextField();
     private JPasswordField tfPasswordD = new JPasswordField();
     private JCheckBox      checkBoxDbMode = new JCheckBox();
+    private JComboBox      comboBoxDriverS = new JComboBox();
+    private JComboBox      comboBoxDriverD = new JComboBox();
+    private JLabel labelDriverNameS = new JLabel();
+    private JLabel labelDriverNameD = new JLabel();
     private JLabel         labelDriverS = new JLabel();
     private JLabel         labelURLS = new JLabel();
     private JLabel         labelUserNameS = new JLabel();
@@ -94,6 +101,7 @@ public class PanelConnection extends JPanel implements Observer {
     private JLabel         labelDriverD = new JLabel();
     private JLabel         labelUserNameD = new JLabel();
     private JLabel         labelPasswordD = new JLabel();
+    private Hashtable      driversHashtable = null;
 
     /**
      * Creates a new PanelConnection object.
@@ -111,6 +119,7 @@ public class PanelConnection extends JPanel implements Observer {
 
         //        Element connection = new Element(XMLTags.CONNECTION);
         try {
+        	retrieveDrivers();
             guiInit();
         } catch (Exception e) {
             logger.error(e.toString());
@@ -183,6 +192,36 @@ public class PanelConnection extends JPanel implements Observer {
 
     /**
      * DOCUMENT ME!
+     */
+    private void retrieveDrivers() {
+        try {
+            Iterator itDrivers = pm.getDrivers().getRootElement().getChildren(XMLTags.DRIVER).iterator();
+
+            driversHashtable = new Hashtable();
+
+            comboBoxDriverS.removeAllItems();
+            comboBoxDriverD.removeAllItems();
+            
+            comboBoxDriverS.addItem("pick a driver");
+            comboBoxDriverD.addItem("pick a driver");
+            
+            while (itDrivers.hasNext()) {
+                Element driver = (Element) itDrivers.next();
+
+                if (driver != null) {
+                    driversHashtable.put(driver.getAttributeValue(XMLTags.NAME), driver);
+                    comboBoxDriverS.addItem(driver.getAttributeValue(XMLTags.NAME));
+                    comboBoxDriverD.addItem(driver.getAttributeValue(XMLTags.NAME));
+                }
+            }
+        } catch (Exception e) {
+            logger.error(e.toString());
+            parentFrame.setStatusBar(e.toString(), Level.ERROR);
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
      *
      * @throws Exception DOCUMENT ME!
      */
@@ -205,68 +244,76 @@ public class PanelConnection extends JPanel implements Observer {
         checkBoxDbMode.setSelected(false);
         checkBoxDbMode.addActionListener(new PanelConnection_checkBoxDbMode_actionAdapter(this));
 
+        // Source layout
         panelSource.setLayout(null);
+        labelDriverNameS.setText("Driver Name");
+        labelDriverNameS.setBounds(new Rectangle(12, 30, 89, 15));
+        comboBoxDriverS.setBounds(new Rectangle(110, 30, 240, 20));
         labelDriverS.setText("Driver Class");
-        labelDriverS.setBounds(new Rectangle(12, 30, 89, 15));
-        tfDriverClassNameS.setToolTipText("Driver Class (this is just an example for MySQL)");
-        tfDriverClassNameS.setText("oracle.jdbc.driver.OracleDriver");
-        tfDriverClassNameS.setBounds(new Rectangle(110, 28, 240, 18));
+        labelDriverS.setBounds(new Rectangle(12, 60, 89, 15));
+        tfDriverClassNameS.setToolTipText("Driver Class (certain drivers provide more than one driver)");
+        tfDriverClassNameS.setBounds(new Rectangle(110, 60, 240, 20));
         labelURLS.setOpaque(true);
         labelURLS.setText("URL (required)");
-        labelURLS.setBounds(new Rectangle(12, 60, 95, 20));
-        tfURLS.setText("jdbc:oracle:thin:@mgs1300.gs-vbs.admin.ch:1525:najsp");
-        tfURLS.setBounds(new Rectangle(110, 61, 240, 18));
-        tfURLS.setToolTipText("URL (this is just an example for MySQL)");
+        labelURLS.setBounds(new Rectangle(12, 90, 95, 20));
+        tfURLS.setBounds(new Rectangle(110, 90, 240, 18));
         labelUserNameS.setText("User Name");
-        labelUserNameS.setBounds(new Rectangle(12, 85, 76, 18));
+        labelUserNameS.setBounds(new Rectangle(12, 120, 76, 20));
         labelPasswordS.setText("Password");
-        labelPasswordS.setBounds(new Rectangle(12, 111, 78, 15));
+        labelPasswordS.setBounds(new Rectangle(12, 150, 78, 15));
         tfUserNameS.setToolTipText("User Name");
         tfUserNameS.setText("");
-        tfUserNameS.setBounds(new Rectangle(110, 85, 240, 18));
+        tfUserNameS.setBounds(new Rectangle(110, 120, 240, 20));
         tfPasswordS.setMinimumSize(new Dimension(6, 21));
         tfPasswordS.setPreferredSize(new Dimension(6, 21));
         tfPasswordS.setToolTipText("Password");
         tfPasswordS.setText("");
-        tfPasswordS.setBounds(new Rectangle(110, 110, 240, 20));
+        tfPasswordS.setBounds(new Rectangle(110, 150, 240, 20));
 
-        buttonTestS.setBounds(new Rectangle(380, 61, 180, 24));
+        comboBoxDriverS.addActionListener(new PanelConnection_comboBoxDriverS_actionAdapter(this));
+        
+        buttonTestS.setBounds(new Rectangle(380, 90, 180, 24));
         buttonTestS.setText("Apply and Test");
         buttonTestS.addActionListener(new PanelConnection_buttonTestS_actionAdapter(this));
 
-        buttonTestD.setBounds(new Rectangle(380, 61, 180, 24));
-        buttonTestD.setText("Apply and Test");
-        buttonTestD.addActionListener(new PanelConnection_buttonTestD_actionAdapter(this));
-        tfUserNameD.setText("");
-        tfUserNameD.setBounds(new Rectangle(110, 85, 240, 18));
-        tfUserNameD.setToolTipText("User Name");
-        labelURLD.setText("URL (required)");
-        labelURLD.setBounds(new Rectangle(12, 60, 95, 20));
+        // Destination layout
+        panelDestination.setLayout(null);
+        labelDriverNameD.setText("Driver Name");
+        labelDriverNameD.setBounds(new Rectangle(12, 30, 89, 15));
+        comboBoxDriverD.setBounds(new Rectangle(110, 30, 240, 20));
+        labelDriverD.setText("Driver Class");
+        labelDriverD.setBounds(new Rectangle(12, 60, 89, 15));
+        tfDriverClassNameD.setToolTipText("Driver Class (certain drivers provide more than one driver)");
+        tfDriverClassNameD.setBounds(new Rectangle(110, 60, 240, 20));
         labelURLD.setOpaque(true);
-        tfPasswordD.setText("");
-        tfPasswordD.setBounds(new Rectangle(110, 110, 240, 19));
+        labelURLD.setText("URL (required)");
+        labelURLD.setBounds(new Rectangle(12, 90, 95, 20));
+        tfURLD.setBounds(new Rectangle(110, 90, 240, 20));
+        labelUserNameD.setText("User Name");
+        labelUserNameD.setBounds(new Rectangle(12, 120, 76, 20));
+        labelPasswordD.setText("Password");
+        labelPasswordD.setBounds(new Rectangle(12, 150, 78, 15));
+        tfUserNameD.setToolTipText("User Name");
+        tfUserNameD.setText("");
+        tfUserNameD.setBounds(new Rectangle(110, 120, 240, 20));
         tfPasswordD.setMinimumSize(new Dimension(6, 21));
         tfPasswordD.setPreferredSize(new Dimension(6, 21));
         tfPasswordD.setToolTipText("Password");
+        tfPasswordD.setText("");
+        tfPasswordD.setBounds(new Rectangle(110, 150, 240, 20));
 
-        tfURLD.setText("jdbc:mysql://localhost/destination_db");
-        tfURLD.setBounds(new Rectangle(110, 61, 240, 18));
-        tfURLD.setToolTipText("URL (this is just an example for MySQL)");
-        tfDriverClassNameD.setText("com.mysql.jdbc.Driver");
-        tfDriverClassNameD.setBounds(new Rectangle(110, 28, 240, 18));
-        tfDriverClassNameD.setToolTipText("Driver Class (this is just an example for MySQL)");
-        labelDriverD.setText("Driver Class");
-        labelDriverD.setBounds(new Rectangle(12, 30, 89, 15));
-        labelUserNameD.setText("User Name");
-        labelUserNameD.setBounds(new Rectangle(12, 85, 76, 18));
-        labelPasswordD.setText("Password");
-        labelPasswordD.setBounds(new Rectangle(12, 111, 78, 15));
-        panelDestination.setLayout(null);
-
+        comboBoxDriverD.addActionListener(new PanelConnection_comboBoxDriverD_actionAdapter(this));
+        
+        buttonTestD.setBounds(new Rectangle(380, 90, 180, 24));
+        buttonTestD.setText("Apply and Test");
+        buttonTestD.addActionListener(new PanelConnection_buttonTestD_actionAdapter(this));
+        
         panelControl.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1), " Choose between working with two databases or only one "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
         panelSource.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1), " Source Database Connection "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
         panelDestination.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1), " Destination Database Connection "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 
+        panelSource.add(labelDriverNameS, null);
+        panelSource.add(comboBoxDriverS, null);
         panelSource.add(labelDriverS, null);
         panelSource.add(tfDriverClassNameS, null);
         panelSource.add(tfURLS, null);
@@ -276,6 +323,9 @@ public class PanelConnection extends JPanel implements Observer {
         panelSource.add(labelURLS, null);
         panelSource.add(tfPasswordS, null);
         panelSource.add(buttonTestS, null);
+
+        panelDestination.add(labelDriverNameD, null);
+        panelDestination.add(comboBoxDriverD, null);
         panelDestination.add(labelDriverD, null);
         panelDestination.add(tfDriverClassNameD, null);
         panelDestination.add(tfURLD, null);
@@ -400,6 +450,36 @@ public class PanelConnection extends JPanel implements Observer {
             tfURLD.setBackground(Color.RED);
         }
     }
+    
+    void comboBoxDriverS_actionPerformed(ActionEvent e) {
+    	if (!comboBoxDriverS.getSelectedItem().equals("")) {
+    		Element driver = null;
+    		
+    		if (driversHashtable.containsKey(comboBoxDriverS.getSelectedItem())) {
+    			driver = (Element) driversHashtable.get(comboBoxDriverS.getSelectedItem());
+    			
+    			if (driver != null) {
+    				this.tfDriverClassNameS.setText(driver.getChild(XMLTags.CLASS).getAttributeValue(XMLTags.NAME));
+    				tfURLS.setText(driver.getChild(XMLTags.URL).getAttributeValue(XMLTags.VALUE));
+    			}
+    		} 
+     	}    	
+    }
+
+    void comboBoxDriverD_actionPerformed(ActionEvent e) {
+    	if (!comboBoxDriverD.getSelectedItem().equals("")) {
+    		Element driver = null;
+    		
+    		if (driversHashtable.containsKey(comboBoxDriverD.getSelectedItem())) {
+    			driver = (Element) driversHashtable.get(comboBoxDriverD.getSelectedItem());
+    			
+    			if (driver != null) {
+    				tfDriverClassNameD.setText(driver.getChild(XMLTags.CLASS).getAttributeValue(XMLTags.NAME));
+    				tfURLD.setText(driver.getChild(XMLTags.URL).getAttributeValue(XMLTags.VALUE));
+    			}
+    		}
+    	}    	
+    }
 }
 
 
@@ -487,4 +567,48 @@ class PanelConnection_buttonTestD_actionAdapter implements java.awt.event.Action
     public final void actionPerformed(ActionEvent e) {
         adaptee.buttonTestD_actionPerformed(e);
     }
+}
+
+class PanelConnection_comboBoxDriverS_actionAdapter implements java.awt.event.ActionListener {
+	PanelConnection adaptee;
+
+	/**
+	 * Creates a new PanelFilter_checkBoxTrim_actionAdapter object.
+	 *
+	 * @param adaptee DOCUMENT ME!
+	 */
+	PanelConnection_comboBoxDriverS_actionAdapter(PanelConnection adaptee) {
+		this.adaptee = adaptee;
+	}
+
+	/**
+	 * DOCUMENT ME!
+	 *
+	 * @param e DOCUMENT ME!
+	 */
+	public final void actionPerformed(ActionEvent e) {
+		adaptee.comboBoxDriverS_actionPerformed(e);
+	}
+}
+
+class PanelConnection_comboBoxDriverD_actionAdapter implements java.awt.event.ActionListener {
+	PanelConnection adaptee;
+
+	/**
+	 * Creates a new PanelFilter_checkBoxTrim_actionAdapter object.
+	 *
+	 * @param adaptee DOCUMENT ME!
+	 */
+	PanelConnection_comboBoxDriverD_actionAdapter(PanelConnection adaptee) {
+		this.adaptee = adaptee;
+	}
+
+	/**
+	 * DOCUMENT ME!
+	 *
+	 * @param e DOCUMENT ME!
+	 */
+	public final void actionPerformed(ActionEvent e) {
+		adaptee.comboBoxDriverD_actionPerformed(e);
+	}
 }

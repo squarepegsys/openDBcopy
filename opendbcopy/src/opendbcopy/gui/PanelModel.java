@@ -19,6 +19,9 @@
  * TITLE $Id$
  * ---------------------------------------------------------------------------
  * $Log$
+ * Revision 1.2  2004/01/09 18:21:24  iloveopensource
+ * updated header
+ *
  * Revision 1.1  2004/01/09 18:10:51  iloveopensource
  * first release
  *
@@ -565,7 +568,7 @@ public class PanelModel extends JPanel implements Observer {
             pm.getProjectModel().setDestinationCatalog((String) this.comboCatalogD.getSelectedItem());
             pm.getProjectModel().setDestinationSchema((String) this.comboSchemaD.getSelectedItem());
             pm.getProjectModel().setDestinationTablePattern(this.tfTablePatternD.getText());
-
+            
             Element operation = new Element(XMLTags.OPERATION);
             operation.setAttribute(XMLTags.NAME, OperationType.CAPTURE_DESTINATION_MODEL);
             operation.setAttribute(XMLTags.READ_PRIMARY_KEYS, Boolean.toString(checkBoxReadDestinationPrimaryKeys.isSelected()));

@@ -19,9 +19,6 @@
  * TITLE $Id$
  * ---------------------------------------------------------------------------
  * $Log$
- * Revision 1.1  2004/01/09 18:10:51  iloveopensource
- * first release
- *
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui;
 
@@ -444,18 +441,15 @@ public class PanelMappingColumn extends JPanel implements Observer {
             Element columnMapping = (Element) itMappingColumns.next();
             dataMapping[row][0] = columnMapping.getAttributeValue(XMLTags.SOURCE_DB);
 
-            if (columnMapping.getAttributeValue(XMLTags.DESTINATION_DB).length() == 0) {
-                // create a new JComboBox and editor for this row
-                List unmappedColumns = pm.getProjectModel().getUnmappedColumns(tableName);
+            // create a new JComboBox and editor for this row
+            JComboBox combo = getDestinationColumnsComboBox(sourceTable.getAttributeValue(XMLTags.DESTINATION_DB), columnMapping.getAttributeValue(XMLTags.DESTINATION_DB));
+            dce = new DefaultCellEditor(combo);
+            rm.addEditorForRow(row, dce);
 
-                if ((unmappedColumns != null) && (unmappedColumns.size() > 0)) {
-                    dce = new DefaultCellEditor(new JComboBox(createComboBoxVector(unmappedColumns)));
-                    rm.addEditorForRow(row, dce);
-                }
-            } else {
-                dataMapping[row][1]           = columnMapping.getAttributeValue(XMLTags.DESTINATION_DB);
-                dataProcessDualDb[row][0]     = new Boolean(true);
-            }
+            // set default selected item
+            dataMapping[row][1]     = combo.getSelectedItem();
+
+            dataProcessDualDb[row][0] = new Boolean(columnMapping.getAttributeValue(XMLTags.MAPPED));
 
             row++;
         }
@@ -502,26 +496,46 @@ public class PanelMappingColumn extends JPanel implements Observer {
     /**
      * DOCUMENT ME!
      *
-     * @param unmappedColumns DOCUMENT ME!
+     * @param destinationTableName DOCUMENT ME!
+     * @param destinationColumnName DOCUMENT ME!
      *
      * @return DOCUMENT ME!
+     *
+     * @throws Exception DOCUMENT ME!
      */
-    private Vector createComboBoxVector(List unmappedColumns) {
-        Vector unmappedColumnsComboBoxValues = new Vector();
+    private JComboBox getDestinationColumnsComboBox(String destinationTableName,
+                                                    String destinationColumnName) throws Exception {
+        JComboBox combo = null;
+
+        combo = new JComboBox(createComboBoxVector(pm.getProjectModel().getDestinationColumns(destinationTableName)));
+
+        // if destinationTableName is empty selects empty element as selected element
+        combo.setSelectedItem(destinationColumnName);
+
+        return combo;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param columns DOCUMENT ME!
+     */
+    private Vector createComboBoxVector(List columns) {
+        Vector destinationColumnsComboBoxValues = new Vector();
 
         // add empty element
-        unmappedColumnsComboBoxValues.add("");
+        destinationColumnsComboBoxValues.add("");
 
-        if (unmappedColumns.size() > 0) {
-            Iterator itUnmappedColumns = unmappedColumns.iterator();
+        if (columns.size() > 0) {
+            Iterator itColumns = columns.iterator();
 
-            while (itUnmappedColumns.hasNext()) {
-                Element unmappedColumn = (Element) itUnmappedColumns.next();
-                unmappedColumnsComboBoxValues.add(unmappedColumn.getAttributeValue(XMLTags.NAME));
+            while (itColumns.hasNext()) {
+                Element column = (Element) itColumns.next();
+                destinationColumnsComboBoxValues.add(column.getAttributeValue(XMLTags.NAME));
             }
         }
 
-        return unmappedColumnsComboBoxValues;
+        return destinationColumnsComboBoxValues;
     }
 
     /**

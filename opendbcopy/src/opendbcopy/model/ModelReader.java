@@ -19,6 +19,9 @@
  * TITLE $Id$
  * ---------------------------------------------------------------------------
  * $Log$
+ * Revision 1.2  2004/01/09 18:23:10  iloveopensource
+ * updated header
+ *
  * Revision 1.1  2004/01/09 18:11:52  iloveopensource
  * first release
  *
@@ -145,9 +148,10 @@ public abstract class ModelReader {
                 logger.warn("Driver does not support reading Identifier Quote String");
             }
 
+            Element catalog = null;
             // read catalogs
             try {
-                Element catalog = new Element(XMLTags.CATALOG);
+                catalog = new Element(XMLTags.CATALOG);
 
                 rs = meta.getCatalogs();
 
@@ -162,15 +166,12 @@ public abstract class ModelReader {
                 rs.close();
             } catch (Exception e) {
                 logger.warn("Driver does not support reading Catalogs");
-
-                if (rs != null) {
-                    rs.close();
-                }
             }
 
+            Element schema = null;
             // read schemas
             try {
-                Element schema = new Element(XMLTags.SCHEMA);
+                schema = new Element(XMLTags.SCHEMA);
 
                 rs = meta.getSchemas();
 
@@ -185,10 +186,7 @@ public abstract class ModelReader {
                 rs.close();
             } catch (Exception e) {
                 logger.warn("Driver does not support reading Schemas");
-
-                if (rs != null) {
-                    rs.close();
-                }
+                metadata.addContent(schema);
             }
 
             Element typeInfo = new Element(XMLTags.TYPE_INFO);

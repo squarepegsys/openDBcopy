@@ -1,0 +1,108 @@
+<!-- 
+	this file has originally been borrowed from Squirrel-SQL 
+	
+	you may change this file according to your needs, please order drivers alphabetically
+-->
+
+<drivers>
+    <driver name="Axion">
+        <class name="org.axiondb.jdbc.AxionDriver" />
+        <url value="jdbc:axiondb:&lt;database-name&gt;[:&lt;database-directory&gt;]" />
+    </driver>
+    <driver name="HSQLDB In-Memory">
+        <class name="org.hsqldb.jdbcDriver" />
+        <url value="jdbc:hsqldb:." />
+    </driver>
+    <driver name="HSQLDB Server">
+        <class name="org.hsqldb.jdbcDriver" />
+        <url value="jdbc:hsqldb:hsql://&lt;server&gt;[:&lt;1476&gt;]" />
+    </driver>
+    <driver name="HSQLDB Standalone">
+        <class name="org.hsqldb.jdbcDriver" />
+        <url value="jdbc:hsqldb:&lt;databaseName&gt;" />
+    </driver>
+    <driver name="HSQLDB Web Server">
+        <class name="org.hsqldb.jdbcDriver" />
+        <url value="jdbc:hsqldb:http://&lt;server&gt;[:&lt;1476&gt;]" />
+    </driver>
+    <driver name="IBM DB2 App Driver">
+        <class name="COM.ibm.db2.jdbc.app.DB2Driver" />
+        <url value="jdbc:db2:&lt;dbname&gt;" />
+    </driver>
+    <driver name="InstantDB">
+        <class name="org.enhydra.instantdb.jdbc.idbDriver" />
+        <url value="jdbc:idb:&lt;pathname&gt;" />
+    </driver>
+    <driver name="InterClient">
+        <class name="interbase.interclient.Driver" />
+        <url value="jdbc:interbase://&lt;server&gt;/&lt;full_db_path&gt;" />
+    </driver>
+    <driver name="JDBC ODBC Bridge">
+        <class name="sun.jdbc.odbc.JdbcOdbcDriver" />
+        <url value="jdbc:odbc:&lt;alias&gt;" />
+    </driver>
+    <driver name="jTDS">
+        <class name="com.internetcds.jdbc.tds.Driver" />
+        <url value="jdbc:freetds:sqlserver://&lt;hostname&gt;[:&lt;4100&gt;]/&lt;dbname&gt;[;&lt;property&gt;=&lt;value&gt;[;...]]" />
+    </driver>
+    <driver name="Mckoi">
+        <class name="com.mckoi.JDBCDriver" />
+        <url value="jdbc:mckoi://&lt;host&gt;[:9157][/&lt;schema&gt;]/" />
+    </driver>
+    <driver name="Microsoft MSSQL Server JDBC Driver">
+        <class name="com.microsoft.jdbc.sqlserver.SQLServerDriver" />
+        <url value="jdbc:microsoft:sqlserver://&lt;server_name&gt;:&lt;1433&gt;" />
+    </driver>
+    <driver name="Mimer SQL">
+        <class name="com.mimer.jdbc.Driver" />
+        <url value="jdbc:mimer:[//[&lt;user&gt;[:&lt;password&gt;]@]&lt;server&gt;[:&lt;1360&gt;]][/&lt;dbname&gt;][property-list]" />
+    </driver>
+    <driver name="MMMySQL Driver">
+        <class name="org.gjt.mm.mysql.Driver" />
+        <url value="jdbc:mysql://&lt;hostname&gt;[&lt;:3306&gt;]/&lt;dbname&gt;" />
+    </driver>
+    <driver name="MySQL Driver">
+        <class name="com.mysql.jdbc.Driver" />
+        <url value="jdbc:mysql://&lt;hostname&gt;[,&lt;failoverhost&gt;][&lt;:3306&gt;]/&lt;dbname&gt;[?&lt;param1&gt;=&lt;value1&gt;][&amp;&lt;param2&gt;=&lt;value2&gt;]" />
+    </driver>
+    <driver name="Oracle OCI Driver">
+        <class name="oracle.jdbc.driver.OracleDriver" />
+        <url value="jdbc:oracle:oci8:@&lt;database_name&gt;" />
+    </driver>
+    <driver name="Oracle Thin Driver">
+        <class name="oracle.jdbc.driver.OracleDriver" />
+        <url value="jdbc:oracle:thin:@&lt;server&gt;[:&lt;1521&gt;]:&lt;database_name&gt;" />
+    </driver>
+    <driver name="Pointbase Embedded">
+        <class name="com.pointbase.net.netJDBCDriver" />
+        <url value="jdbc:pointbase:embedded:&lt;dbname&gt;" />
+    </driver>
+    <driver name="Pointbase Server">
+        <class name="com.pointbase.net.netJDBCDriver" />
+        <url value="jdbc:pointbase:server://&lt;server_name&gt;/&lt;dbname&gt;" />
+    </driver>
+    <driver name="PostgreSQL">
+        <class name="org.postgresql.Driver" />
+        <url value="jdbc:postgresql:[&lt;//host&gt;[:&lt;5432&gt;/]]&lt;database&gt;" />
+    </driver>
+    <driver name="SAPDB">
+        <class name="com.sap.dbtech.jdbc.DriverSapDB" />
+        <url value="jdbc:sapdb:[//host/]dbname[?name=value[&amp;name=value]*]" />
+    </driver>
+    <driver name="Sunopsis XML">
+        <class name="com.sunopsis.jdbc.driver.xml.SnpsXmlDriver" />
+        <url value="jdbc:snps:xml?f=&lt;file-name&gt;&amp;ro=true" />
+    </driver>
+    <driver name="Sybase Adaptive Server Anywhere">
+        <class name="com.sybase.jdbc2.jdbc.SybDriver" />
+        <url value="jdbc:sybase:Tds:&lt;host&gt;:&lt;port&gt;?ServiceName=&lt;DBNAME&gt;" />
+    </driver>
+    <driver name="Sybase Adaptive Server Enterprise">
+        <class name="com.sybase.jdbc2.jdbc.SybDriver" />
+        <url value="jdbc:sybase:Tds:&lt;host&gt;:&lt;port&gt;/&lt;DBNAME&gt;" />
+    </driver>
+    <driver name="ThinkSQL">
+        <class name="uk.co.thinksql.ThinkSQLDriver" />
+        <url value="jdbc:thinksql://&lt;server&gt;:&lt;9075&gt;" />
+    </driver>
+</drivers>

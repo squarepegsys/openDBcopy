@@ -9,6 +9,17 @@ rem -------------------------------------------------------------------------
 set DIRNAME=.\
 if "%OS%" == "Windows_NT" set DIRNAME=%~dp0%
 
+rem Read all command line arguments
+
+set ARGS=
+:loop
+if [%1] == [] goto endloop
+        set ARGS=%ARGS% %1=%2
+        shift
+        shift
+        goto loop
+:endloop
+
 if not "%JAVA_HOME%" == "" goto ADD_TOOLS
 
 echo JAVA_HOME is not set.  Unexpected results may occur.
@@ -36,6 +47,8 @@ echo   opendbcopy Bootstrap Environment
 echo .
 echo   JAVA: %JAVA%
 echo .
+echo   ARGS: %ARGS%
+echo .
 echo   JAVA_OPTS: %JAVA_OPTS%
 echo .
 echo   CLASSPATH: %OPENDBCOPY_CLASSPATH%
@@ -43,9 +56,12 @@ echo .
 echo ===============================================================================
 echo .
 echo loading opendbcopy ...
+echo .
+echo java %JAVA_OPTS% -classpath "%OPENDBCOPY_CLASSPATH%" opendbcopy.controller.MainController %ARGS%
+echo .
 
 :RESTART
-java %JAVA_OPTS% -classpath "%OPENDBCOPY_CLASSPATH%" opendbcopy.controller.MainController
+java %JAVA_OPTS% -classpath "%OPENDBCOPY_CLASSPATH%" opendbcopy.controller.MainController %ARGS%
 IF ERRORLEVEL 10 GOTO RESTART
 
 :END

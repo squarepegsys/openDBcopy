@@ -19,6 +19,9 @@
  * TITLE $Id$
  * ---------------------------------------------------------------------------
  * $Log$
+ * Revision 1.1  2004/01/09 18:08:25  iloveopensource
+ * first release
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.config;
 
@@ -35,6 +38,7 @@ public final class APM {
     public static final String APPLICATION_WEBSITE = "application_website";
     public static final String APPLICATION_DEVELOPER_NAME = "application_developer_name";
     public static final String LOG4J_PROPERTIES_FILE = "log4j_properties_file";
+    public static final String DRIVERS_CONF_FILE = "drivers_conf_file";
     public static final String PLUGINS_CONF_FILE = "plugins_conf_file";
     public static final String ENCODING = "encoding";
     public static final String LOOK_AND_FEEL = "look_and_feel";

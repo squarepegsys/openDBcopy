@@ -1,0 +1,7 @@
+Version 0.41.1 (bugfixes)
+- start.sh modified classpath
+- ProjectModel special treatment when handling Qualified Table Names for PostgreSQL
+
+Version 0.41.2
+- simple selection for JDBC Connection
+- documentation

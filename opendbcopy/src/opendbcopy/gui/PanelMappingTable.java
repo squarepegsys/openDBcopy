@@ -19,9 +19,6 @@
  * TITLE $Id$
  * ---------------------------------------------------------------------------
  * $Log$
- * Revision 1.1  2004/01/09 18:10:51  iloveopensource
- * first release
- *
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui;
 
@@ -93,6 +90,7 @@ public class PanelMappingTable extends JPanel implements Observer {
     private MappingTableModel         mappingTableModel = null;
     private ProcessTableDualDbModel   processTableDualDbModel = null;
     private ProcessTableSingleDbModel processTableSingleDbModel = null;
+    private Vector                    destinationTablesComboBoxValues = new Vector();
 
     /**
      * Creates a new PanelMappingTable object.
@@ -263,19 +261,42 @@ public class PanelMappingTable extends JPanel implements Observer {
 
         while (itMappingTables.hasNext()) {
             Element tableMapping = (Element) itMappingTables.next();
-            dataMapping[row][0] = tableMapping.getAttributeValue(XMLTags.SOURCE_DB);
+            dataMapping[row][0]     = tableMapping.getAttributeValue(XMLTags.SOURCE_DB);
 
-            if (tableMapping.getAttributeValue(XMLTags.DESTINATION_DB).length() == 0) {
-                // create a new JComboBox and editor for this row
-                dce = new DefaultCellEditor(new JComboBox(createComboBoxVector(pm.getProjectModel().getUnmappedDestinationTables())));
-                rm.addEditorForRow(row, dce);
-            } else {
-                dataMapping[row][1] = tableMapping.getAttributeValue(XMLTags.DESTINATION_DB);
-            }
+            // create a new JComboBox and editor for this row
+            JComboBox combo = getDestinationTableComboBox(tableMapping.getAttributeValue(XMLTags.DESTINATION_DB));
+            dce = new DefaultCellEditor(combo);
+            rm.addEditorForRow(row, dce);
+            
+            // set default selected item
+            dataMapping[row][1] = combo.getSelectedItem();
 
             dataProcess[row][0] = new Boolean(tableMapping.getAttributeValue(XMLTags.PROCESS));
             row++;
         }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param destinationTableName DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws Exception DOCUMENT ME!
+     */
+    private JComboBox getDestinationTableComboBox(String destinationTableName) throws Exception {
+        JComboBox combo = null;
+
+        // initializes vector with destination tables if not already done
+        createComboBoxVector(pm.getProjectModel().getDestinationTables());
+
+        combo = new JComboBox(destinationTablesComboBoxValues);
+
+        // if destinationTableName is empty selects empty element as selected element
+        combo.setSelectedItem(destinationTableName);
+
+        return combo;
     }
 
     /**
@@ -321,22 +342,20 @@ public class PanelMappingTable extends JPanel implements Observer {
      *
      * @return DOCUMENT ME!
      */
-    private Vector createComboBoxVector(List unmappedTables) {
-        Vector unmappedTablesComboBoxValues = new Vector();
+    private void createComboBoxVector(List tables) {
+        if (destinationTablesComboBoxValues.size() == 0) {
+            // add empty element
+        	destinationTablesComboBoxValues.add("");
 
-        // add empty element
-        unmappedTablesComboBoxValues.add("");
+            if (tables.size() > 0) {
+                Iterator itTables = tables.iterator();
 
-        if (unmappedTables.size() > 0) {
-            Iterator itUnmappedTables = unmappedTables.iterator();
-
-            while (itUnmappedTables.hasNext()) {
-                Element unmappedTable = (Element) itUnmappedTables.next();
-                unmappedTablesComboBoxValues.add(unmappedTable.getAttributeValue(XMLTags.NAME));
+                while (itTables.hasNext()) {
+                    Element table = (Element) itTables.next();
+                    destinationTablesComboBoxValues.add(table.getAttributeValue(XMLTags.NAME));
+                }
             }
         }
-
-        return unmappedTablesComboBoxValues;
     }
 
     /**
@@ -479,7 +498,7 @@ public class PanelMappingTable extends JPanel implements Observer {
      * @version $Revision$
      */
     class MappingTableModel extends AbstractTableModel {
-        private String[]      columnNames = { "Source Table / View", "Destination Table / View" };
+        private String[]      columnNames = { "Source Table / View", "Destination Table / View (click to select)" };
         public final Object[] longValues = { "abcdefghijklmnopqrstuvwxyz", "abcdefghijklmnopqrstuvwxyz" };
 
         /**

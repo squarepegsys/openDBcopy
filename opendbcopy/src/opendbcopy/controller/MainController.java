@@ -19,9 +19,6 @@
  * TITLE $Id$
  * ---------------------------------------------------------------------------
  * $Log$
- * Revision 1.1  2004/01/09 18:09:36  iloveopensource
- * first release
- *
  * --------------------------------------------------------------------------*/
 package opendbcopy.controller;
 
@@ -42,6 +39,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 
 import java.io.IOException;
+
 import java.util.Observer;
 import java.util.Properties;
 
@@ -66,12 +64,12 @@ public class MainController {
      * @param args DOCUMENT ME!
      */
     public MainController(String[] args) {
-    	
         applicationProperties = loadApplicationProperties();
 
         setupLog4j(applicationProperties.getProperty(APM.LOG4J_PROPERTIES_FILE));
 
         Document plugins = null;
+        Document drivers = null;
         Document project = null;
 
         try {
@@ -85,17 +83,20 @@ public class MainController {
             // evaluate arguments
             project     = Arguments.process(args);
 
+            // read drivers file
+            drivers     = ImportFromXML.importFile(applicationProperties.getProperty(APM.DRIVERS_CONF_FILE));
+
             // read plugin file        
             plugins = ImportFromXML.importFile(applicationProperties.getProperty(APM.PLUGINS_CONF_FILE));
 
-            if ((plugins != null) && (project != null)) {
+            if ((plugins != null) && (drivers != null) && (project != null)) {
                 // in case operation is included to execute
                 if ((project.getRootElement().getChild(XMLTags.OPERATION) != null) && (project.getRootElement().getChild(XMLTags.PLUGIN) != null)) {
                     Element operation = project.getRootElement().getChild(XMLTags.OPERATION).detach();
                     Element plugin = project.getRootElement().getChild(XMLTags.PLUGIN).detach();
                     operation.addContent(plugin);
 
-                    initialiseMainController(plugins, project);
+                    initialiseMainController(plugins, drivers, project);
 
                     // now execute immediately
                     execute(operation);
@@ -103,7 +104,7 @@ public class MainController {
                     initialiseMainController(plugins, project);
                 }
             } else if ((plugins != null) && (project == null)) {
-                initialiseMainController(plugins);
+                initialiseMainController(plugins, drivers);
             }
         } catch (Exception e) {
             logger.error(e.toString());
@@ -116,14 +117,17 @@ public class MainController {
      * @param args DOCUMENT ME!
      */
     public static void main(String[] args) {
-    	try {
-    		ClasspathLoader.addLibDirectoryToClasspath();
-    		
-    		new MainController(args);
-    	} catch (IOException e) {
-    		System.err.println(e.getMessage());
-    		System.exit(0);
-    	}    	
+        try {
+            ClasspathLoader.addLibDirectoryToClasspath();
+
+            new MainController(args);
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+            System.exit(0);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+            System.exit(0);
+        }
     }
 
     /**
@@ -188,11 +192,12 @@ public class MainController {
      * @param project DOCUMENT ME!
      */
     private void initialiseMainController(Document plugins,
+                                          Document drivers,
                                           Document project) {
         try {
             String runlevel = project.getRootElement().getAttributeValue(XMLTags.RUNLEVEL);
 
-            pm = new ProjectManager(this, plugins, project);
+            pm = new ProjectManager(this, plugins, drivers, project);
 
             if (runlevel != null) {
                 if (runlevel.compareTo("5") == 0) {
@@ -215,8 +220,9 @@ public class MainController {
      *
      * @param plugins DOCUMENT ME!
      */
-    private void initialiseMainController(Document plugins) {
-        pm = new ProjectManager(this, plugins);
+    private void initialiseMainController(Document plugins,
+                                          Document drivers) {
+        pm = new ProjectManager(this, plugins, drivers);
 
         try {
             frameMain = new FrameMain(this, pm);

@@ -19,6 +19,9 @@
  * TITLE $Id$
  * ---------------------------------------------------------------------------
  * $Log$
+ * Revision 1.1  2004/01/09 18:08:25  iloveopensource
+ * first release
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.config;
 
@@ -157,4 +160,7 @@ public final class XMLTags {
     // application arguments
     public static final String ARGUMENTS = "arguments";
     public static final String RUNLEVEL = "runlevel";
+    
+    // SQLDriver tags
+    public static final String DRIVERS = "drivers";
 }

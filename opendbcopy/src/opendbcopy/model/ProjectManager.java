@@ -53,6 +53,7 @@ public class ProjectManager extends Observable {
     private ProjectModel   projectModel;
     private TaskExecute    taskExecute;
     private Document       plugins;
+    private Document       drivers;
     private Vector         operationsExecuted;
     private boolean        source_db_connection_successful = false;
     private boolean        destination_db_connection_successful = false;
@@ -64,9 +65,11 @@ public class ProjectManager extends Observable {
      * @param plugins DOCUMENT ME!
      */
     public ProjectManager(MainController controller,
-                          Document       plugins) {
+                          Document       plugins,
+                          Document       drivers) {
         this.controller             = controller;
         this.plugins                = plugins;
+        this.drivers                = drivers;
         this.projectModel           = new ProjectModel(controller.getApplicationProperties());
         this.operationsExecuted     = new Vector();
     }
@@ -82,9 +85,11 @@ public class ProjectManager extends Observable {
      */
     public ProjectManager(MainController controller,
                           Document       plugins,
+                          Document       drivers,
                           Document       project) throws Exception {
         this.controller             = controller;
         this.plugins                = plugins;
+        this.drivers                = drivers;
         this.projectModel           = new ProjectModel(controller.getApplicationProperties(), project);
         this.operationsExecuted     = new Vector();
 
@@ -121,7 +126,7 @@ public class ProjectManager extends Observable {
         // test destination connection
         if (operationString.compareTo(OperationType.TEST_DESTINATION) == 0) {
             destination_db_connection_successful = DBConnection.testConnection(projectModel.getDestinationConnection());
-			readDatabaseMetadata();
+            readDatabaseMetadata();
             broadcast();
         }
 
@@ -213,21 +218,26 @@ public class ProjectManager extends Observable {
             taskExecute = null;
         }
     }
-    
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @throws Exception DOCUMENT ME!
+     */
     private void readDatabaseMetadata() throws Exception {
-    	if (projectModel.getDbMode() == projectModel.DUAL_MODE) {
-    		if (projectModel.getSourceConnection().getAttributes().size() > 0 && projectModel.getDestinationConnection().getAttributes().size() > 0) {
-    			if (projectModel.getSourceMetadata().getChildren().size() == 0 && projectModel.getDestinationMetadata().getChildren().size() == 0) {
-    				ModelReader.readDatabasesMetaData(projectModel);
-    			}
-    		}
-    	} else {
-			if (projectModel.getSourceConnection().getAttributes().size() > 0) {
-				if (projectModel.getSourceMetadata().getChildren().size() == 0) {
-					ModelReader.readDatabasesMetaData(projectModel);
-				}
-			}
-    	}
+        if (projectModel.getDbMode() == projectModel.DUAL_MODE) {
+            if ((projectModel.getSourceConnection().getAttributes().size() > 0) && (projectModel.getDestinationConnection().getAttributes().size() > 0)) {
+                if ((projectModel.getSourceMetadata().getChildren().size() == 0) && (projectModel.getDestinationMetadata().getChildren().size() == 0)) {
+                    ModelReader.readDatabasesMetaData(projectModel);
+                }
+            }
+        } else {
+            if (projectModel.getSourceConnection().getAttributes().size() > 0) {
+                if (projectModel.getSourceMetadata().getChildren().size() == 0) {
+                    ModelReader.readDatabasesMetaData(projectModel);
+                }
+            }
+        }
     }
 
     /**
@@ -290,5 +300,14 @@ public class ProjectManager extends Observable {
      */
     public final Document getPlugins() {
         return this.plugins;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     */
+    public final Document getDrivers() {
+        return this.drivers;
     }
 }
