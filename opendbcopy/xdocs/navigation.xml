@@ -32,7 +32,7 @@
 		<menu name="Project Documentation">
 			<item href="/team-list.html" name="Project Team"></item>
 			<item href="/developer-manual.html" name="Developer Manual"></item>
-			<item href="/apidocs/index.html" name="Java Docs"></item>
+			<item href="/../apidocs/index.html" name="Java Docs"></item>
 			<item href="/mail-lists.html" name="Mailing Lists"></item>
 			<item href="/issue-tracking.html" name="Issue Tracking"></item>
 			<item href="/dependencies.html" name="Dependencies"></item>
