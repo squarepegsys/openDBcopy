@@ -28,6 +28,7 @@ import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 
@@ -41,23 +42,49 @@ public final class ImportFromXML {
     /**
      * DOCUMENT ME!
      *
-     * @param fileName DOCUMENT ME!
+     * @param pathFilename DOCUMENT ME!
      *
      * @return DOCUMENT ME!
      *
      * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws FileNotFoundException DOCUMENT ME!
      * @throws IOException DOCUMENT ME!
      * @throws JDOMException DOCUMENT ME!
      */
-    public static final Document importFile(String fileName) throws IllegalArgumentException, IOException, JDOMException {
-        if ((fileName == null) || (fileName.length() == 0)) {
-            throw new IllegalArgumentException("Missing fileName");
+    public static final Document importFile(String pathFilename) throws IllegalArgumentException, FileNotFoundException, IOException, JDOMException {
+        if ((pathFilename == null) || (pathFilename.length() == 0)) {
+            throw new IllegalArgumentException("Missing pathFilename");
         }
 
         Document   doc = null;
 
         SAXBuilder parser = new SAXBuilder();
-        doc = parser.build(new File(fileName));
+        doc = parser.build(FileHandling.getFile(pathFilename));
+
+        return doc;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param file DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws FileNotFoundException DOCUMENT ME!
+     * @throws IOException DOCUMENT ME!
+     * @throws JDOMException DOCUMENT ME!
+     */
+    public static final Document importFile(File file) throws IllegalArgumentException, FileNotFoundException, IOException, JDOMException {
+        if (file == null) {
+            throw new IllegalArgumentException("Missing file");
+        }
+
+        Document   doc = null;
+
+        SAXBuilder parser = new SAXBuilder();
+        doc = parser.build(file);
 
         return doc;
     }

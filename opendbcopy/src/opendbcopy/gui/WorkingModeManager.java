@@ -26,6 +26,10 @@ import opendbcopy.config.XMLTags;
 
 import opendbcopy.controller.MainController;
 
+import opendbcopy.model.exception.MissingAttributeException;
+import opendbcopy.model.exception.MissingElementException;
+import opendbcopy.model.exception.UnsupportedAttributeValueException;
+
 import org.jdom.Document;
 import org.jdom.Element;
 
@@ -33,6 +37,9 @@ import java.awt.event.MouseEvent;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Vector;
 
 import javax.swing.JTabbedPane;
@@ -44,49 +51,66 @@ import javax.swing.JTabbedPane;
  * @author Anthony Smith
  * @version $Revision$
  */
-public class WorkingModeManager {
-    private FrameMain      frame;
+public class WorkingModeManager extends Observable {
     private MainController controller;
     private HashMap        modes;
+    private HashMap        plugins;
     private Vector         modesNames;
     private WorkingMode    currentWorkingMode;
     private JTabbedPane    tab;
+    private int            frameWidth;
+    private int            frameHeight;
 
     /**
      * Creates a new WorkingModeManager object.
      *
-     * @param frame DOCUMENT ME!
      * @param controller DOCUMENT ME!
      * @param workingModeDocument DOCUMENT ME!
+     * @param frameWidth DOCUMENT ME!
+     * @param frameHeight DOCUMENT ME!
      *
      * @throws Exception DOCUMENT ME!
      */
-    public WorkingModeManager(FrameMain      frame,
-                              MainController controller,
-                              Document       workingModeDocument) throws Exception {
-        this.frame          = frame;
-        this.controller     = controller;
+    public WorkingModeManager(MainController controller,
+                              Document       workingModeDocument,
+                              int            frameWidth,
+                              int            frameHeight) throws Exception {
+        this.frameWidth      = frameWidth;
+        this.frameHeight     = frameHeight;
+        this.controller      = controller;
 
         // init containers
         modes          = new HashMap();
+        plugins        = new HashMap();
         modesNames     = new Vector();
 
         // now read the available working modes
-        readWorkingModes(workingModeDocument);
+        readStandardWorkingModes(workingModeDocument);
+
+        broadcast();
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
+    public final void broadcast() {
+        setChanged();
+        notifyObservers();
     }
 
     /**
      * DOCUMENT ME!
      *
-     * @param workingModeName DOCUMENT ME!
+     * @param workingModeTitle DOCUMENT ME!
      *
      * @return DOCUMENT ME!
      *
      * @throws Exception DOCUMENT ME!
      */
-    public final JTabbedPane loadWorkingMode(String workingModeName) throws Exception {
-        currentWorkingMode     = getWorkingMode(workingModeName);
-        tab                    = currentWorkingMode.loadDynamically(frame.getWidth(), frame.getHeight());
+    public final JTabbedPane loadWorkingMode(String workingModeTitle) throws Exception {
+        currentWorkingMode     = findWorkingMode(workingModeTitle);
+
+        tab = currentWorkingMode.loadDynamically(frameWidth, frameHeight);
         tab.addMouseListener(new TabManager_tab_mouseAdapter(this));
 
         return tab;
@@ -101,6 +125,8 @@ public class WorkingModeManager {
         if (currentWorkingMode != null) {
             currentWorkingMode.destroyDynamicPanels();
         }
+
+        broadcast();
     }
 
     /**
@@ -115,22 +141,212 @@ public class WorkingModeManager {
     /**
      * DOCUMENT ME!
      *
-     * @param workingModeName DOCUMENT ME!
-     *
      * @return DOCUMENT ME!
      */
-    private final WorkingMode getWorkingMode(String workingModeName) {
-        Iterator itWorkingModes = modes.values().iterator();
+    public final HashMap getPluginsForCurrentWorkingMode() {
+        return currentWorkingMode.getAvailablePlugins();
+    }
 
-        while (itWorkingModes.hasNext()) {
-            WorkingMode workingMode = (WorkingMode) itWorkingModes.next();
+    /**
+     * DOCUMENT ME!
+     *
+     * @param workingModeElement DOCUMENT ME!
+     * @param pluginIdentifier DOCUMENT ME!
+     * @param pluginDescription DOCUMENT ME!
+     *
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     */
+    public final void addWorkingModeForPlugin(Element workingModeElement,
+                                              String  pluginIdentifier,
+                                              String  pluginDescription) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException {
+        if ((workingModeElement == null) || (pluginIdentifier == null) || (pluginDescription == null)) {
+            throw new IllegalArgumentException("Missing arguments values: workingModeElement=" + workingModeElement + " pluginIdentifier=" + pluginIdentifier + " pluginDescription=" + pluginDescription);
+        }
 
-            if (workingMode.getTitle().compareTo(workingModeName) == 0) {
-                return workingMode;
+        if ((workingModeElement.getAttributeValue(XMLTags.IDENTIFIER) == null) || (workingModeElement.getAttributeValue(XMLTags.IDENTIFIER).length() == 0)) {
+            throw new MissingAttributeException(workingModeElement, XMLTags.IDENTIFIER);
+        }
+
+        String identifier = workingModeElement.getAttributeValue(XMLTags.IDENTIFIER);
+
+        // if plugin references a standard working mode, check availability
+        if (identifier.compareToIgnoreCase(XMLTags.STANDARD_WORKING_MODE_REFERENCE) == 0) {
+            List standardWorkingModes = workingModeElement.getChildren(XMLTags.STANDARD_WORKING_MODE);
+
+            if (standardWorkingModes.size() == 0) {
+                throw new MissingElementException(workingModeElement, XMLTags.STANDARD_WORKING_MODE);
+            }
+
+            Iterator itStandardWorkingModes = standardWorkingModes.iterator();
+
+            while (itStandardWorkingModes.hasNext()) {
+                Element standardWorkingMode = (Element) itStandardWorkingModes.next();
+
+                if ((standardWorkingMode.getAttributeValue(XMLTags.IDENTIFIER) == null) || (standardWorkingMode.getAttributeValue(XMLTags.IDENTIFIER).length() == 0)) {
+                    throw new MissingAttributeException(standardWorkingMode, XMLTags.IDENTIFIER);
+                }
+
+                if (!modes.containsKey(standardWorkingMode.getAttributeValue(XMLTags.IDENTIFIER))) {
+                    throw new UnsupportedAttributeValueException(standardWorkingMode, XMLTags.IDENTIFIER);
+                }
+
+                // add plugin information to available plugins of selected working mode
+                WorkingMode workingMode = (WorkingMode) modes.get(standardWorkingMode.getAttributeValue(XMLTags.IDENTIFIER));
+                workingMode.addPlugin(pluginIdentifier, pluginDescription);
+            }
+        }
+        // a new working mode must be registered
+        else {
+            addWorkingMode(workingModeElement);
+
+            WorkingMode workingMode = (WorkingMode) modes.get(workingModeElement.getAttributeValue(XMLTags.IDENTIFIER));
+            workingMode.addPlugin(pluginIdentifier, pluginDescription);
+        }
+
+        broadcast();
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param observer DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     */
+    public final void registerObserver(Observer observer) throws IllegalArgumentException {
+        if (observer == null) {
+            throw new IllegalArgumentException("Missing observer");
+        }
+
+        this.addObserver(observer);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param observer DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     */
+    public final void deleteObserver(Observer observer) throws IllegalArgumentException {
+        if (observer == null) {
+            throw new IllegalArgumentException("Missing observer");
+        }
+
+        this.deleteObserver(observer);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param workingModeElement DOCUMENT ME!
+     *
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     */
+    private void addWorkingMode(Element workingModeElement) throws MissingAttributeException, MissingElementException {
+        if (workingModeElement == null) {
+            throw new IllegalArgumentException("Missing workingModeElement");
+        }
+
+        if ((workingModeElement.getAttributeValue(XMLTags.IDENTIFIER) != null) && (workingModeElement.getAttributeValue(XMLTags.IDENTIFIER).length() > 0)) {
+            String identifier = null;
+            String titleWorkingMode = null;
+
+            identifier = workingModeElement.getAttributeValue(XMLTags.IDENTIFIER);
+
+            if (workingModeElement.getChild(XMLTags.TITLE) == null) {
+                throw new MissingElementException(workingModeElement, XMLTags.TITLE);
+            }
+
+            titleWorkingMode = workingModeElement.getChild(XMLTags.TITLE).getAttributeValue(XMLTags.VALUE);
+
+            if (titleWorkingMode == null) {
+                throw new MissingAttributeException(workingModeElement.getChild(XMLTags.TITLE), XMLTags.VALUE);
+            }
+
+            // add name to vector of available working modes
+            modesNames.add(titleWorkingMode);
+
+            WorkingMode workingMode = new WorkingMode(controller, identifier, titleWorkingMode);
+
+            // now retrieve requested panels
+            Iterator itPanels = workingModeElement.getChild(XMLTags.PANELS).getChildren(XMLTags.PANEL).iterator();
+
+            while (itPanels.hasNext()) {
+                Element dynamicPanelElement = (Element) itPanels.next();
+                String  titlePanel = dynamicPanelElement.getAttributeValue(XMLTags.TITLE);
+                String  className = dynamicPanelElement.getChild(XMLTags.CLASS).getAttributeValue(XMLTags.NAME);
+
+                boolean registerObserver = false;
+
+                if ((dynamicPanelElement.getChild(XMLTags.CLASS).getAttributeValue(XMLTags.REGISTER_AS_OBSERVER) != null) && (dynamicPanelElement.getChild(XMLTags.CLASS).getAttributeValue(XMLTags.REGISTER_AS_OBSERVER).compareToIgnoreCase("true") == 0)) {
+                    registerObserver = true;
+                } else {
+                    registerObserver = false;
+                }
+
+                workingMode.addDynamicPanelMetadata(new DynamicPanelMetadata(titlePanel, className, registerObserver));
+            }
+
+            modes.put(identifier, workingMode);
+        } else {
+            throw new MissingAttributeException(workingModeElement, XMLTags.IDENTIFIER);
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param workingModeIdentifier DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws RuntimeException DOCUMENT ME!
+     */
+    private WorkingMode getWorkingMode(String workingModeIdentifier) throws IllegalArgumentException {
+        if (workingModeIdentifier == null) {
+            throw new IllegalArgumentException("Missing workingModeIdentifier");
+        }
+
+        if (modes.containsKey(workingModeIdentifier)) {
+            return (WorkingMode) modes.get(workingModeIdentifier);
+        } else {
+            throw new RuntimeException("Working Mode with identifier " + workingModeIdentifier + " does not exist.");
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param workingModeTitle DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws Exception DOCUMENT ME!
+     * @throws RuntimeException DOCUMENT ME!
+     */
+    private WorkingMode findWorkingMode(String workingModeTitle) throws Exception {
+        WorkingMode workingMode = null;
+
+        if (modes.size() > 0) {
+            Iterator itWorkingModes = modes.values().iterator();
+
+            while (itWorkingModes.hasNext()) {
+                workingMode = (WorkingMode) itWorkingModes.next();
+
+                if (workingMode.getTitle().compareTo(workingModeTitle) == 0) {
+                    return workingMode;
+                }
             }
         }
 
-        return null;
+        throw new RuntimeException("Working Mode with title " + workingModeTitle + " does not exist.");
     }
 
     /**
@@ -138,46 +354,15 @@ public class WorkingModeManager {
      *
      * @param workingModeDocument DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    private void readWorkingModes(Document workingModeDocument) throws Exception {
+    private void readStandardWorkingModes(Document workingModeDocument) throws MissingAttributeException, MissingElementException {
         Iterator itWorkingModes = workingModeDocument.getRootElement().getChildren(XMLTags.WORKING_MODE).iterator();
 
         while (itWorkingModes.hasNext()) {
             Element workingModeElement = (Element) itWorkingModes.next();
-
-            if ((workingModeElement.getAttributeValue(XMLTags.IDENTIFIER) != null) && (workingModeElement.getAttributeValue(XMLTags.IDENTIFIER).length() > 0)) {
-                String identifier = workingModeElement.getAttributeValue(XMLTags.IDENTIFIER);
-                String titleWorkingMode = workingModeElement.getChild(XMLTags.TITLE).getAttributeValue(XMLTags.VALUE);
-
-                // add name to vector of available working modes
-                modesNames.add(titleWorkingMode);
-
-                WorkingMode workingMode = new WorkingMode(controller, identifier, titleWorkingMode);
-
-                // now retrieve requested panels
-                Iterator itPanels = workingModeElement.getChild(XMLTags.PANELS).getChildren(XMLTags.PANEL).iterator();
-
-                while (itPanels.hasNext()) {
-                    Element dynamicPanelElement = (Element) itPanels.next();
-                    String  titlePanel = dynamicPanelElement.getAttributeValue(XMLTags.TITLE);
-                    String  className = dynamicPanelElement.getChild(XMLTags.CLASS).getAttributeValue(XMLTags.NAME);
-
-                    boolean registerObserver = false;
-
-                    if ((dynamicPanelElement.getChild(XMLTags.CLASS).getAttributeValue(XMLTags.REGISTER_AS_OBSERVER) != null) && (dynamicPanelElement.getChild(XMLTags.CLASS).getAttributeValue(XMLTags.REGISTER_AS_OBSERVER).compareToIgnoreCase("true") == 0)) {
-                        registerObserver = true;
-                    } else {
-                        registerObserver = false;
-                    }
-
-                    workingMode.addDynamicPanelMetadata(new DynamicPanelMetadata(titlePanel, className, registerObserver));
-                }
-
-                modes.put(identifier, workingMode);
-            } else {
-                throw new Exception("Missing Identifier tag in working_mode element");
-            }
+            addWorkingMode(workingModeElement);
         }
     }
 

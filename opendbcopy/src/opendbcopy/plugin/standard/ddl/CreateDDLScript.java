@@ -22,31 +22,25 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin.standard.ddl;
 
-import opendbcopy.config.XMLTags;
-
-import opendbcopy.io.PropertiesToFile;
-import opendbcopy.io.Writer;
-
-import opendbcopy.model.ProjectModel;
-
-import opendbcopy.model.exception.MissingElementException;
-
-import opendbcopy.model.typeinfo.TypeMapping;
-
-import opendbcopy.plugin.ExecuteSkeleton;
-
-import opendbcopy.plugin.exception.PluginException;
-
-import opendbcopy.task.TaskExecute;
-
-import org.apache.log4j.Logger;
-
-import org.jdom.Element;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+
+import opendbcopy.config.XMLTags;
+import opendbcopy.controller.MainController;
+import opendbcopy.io.PropertiesToFile;
+import opendbcopy.io.Writer;
+import opendbcopy.model.ProjectModel;
+import opendbcopy.model.exception.MissingElementException;
+import opendbcopy.model.typeinfo.TypeMapping;
+import opendbcopy.plugin.DynamicPluginThread;
+import opendbcopy.plugin.PluginMetadata;
+import opendbcopy.plugin.exception.PluginException;
+import opendbcopy.task.TaskExecute;
+
+import org.apache.log4j.Logger;
+import org.jdom.Element;
 
 
 /**
@@ -55,23 +49,20 @@ import java.util.Properties;
  * @author Anthony Smith
  * @version $Revision$
  */
-public class CreateDDLScript extends ExecuteSkeleton {
+public class CreateDDLScript extends DynamicPluginThread {
     private static Logger logger = Logger.getLogger(CreateDDLScript.class.getName());
-    private TaskExecute   task;
-    private ProjectModel  projectModel;
     private TypeMapping   typeMapping;
-    StringBuffer          sb;
-    Element               conf;
-    String                path = "";
-    String                packageName = "";
-    String                newLine = "";
-    String                database = "";
-    String                identifierQuoteStringOut = "";
-
-    //char identifierQuoteStringOut = '';
+    private StringBuffer          sb;
+    private Element               conf;
+    private String                path = "";
+    private String                packageName = "";
+    private String                newLine = "";
+    private String                database = "";
+    private String                identifierQuoteStringOut = "";
     private boolean show_qualified_table_name = false;
     private int     counterRecords = 0;
     private int     counterTables = 0;
+    private List processTables;
 
     /**
      * Creates a new CopyMapping object.
@@ -79,37 +70,17 @@ public class CreateDDLScript extends ExecuteSkeleton {
      * @param task DOCUMENT ME!
      * @param projectModel DOCUMENT ME!
      *
-     * @throws IllegalArgumentException DOCUMENT ME!
      * @throws PluginException DOCUMENT ME!
      */
-    public CreateDDLScript(TaskExecute  task,
-                           ProjectModel projectModel) throws IllegalArgumentException, PluginException {
-        if ((task == null) || (projectModel == null)) {
-            throw new IllegalArgumentException("Missing arguments values: task=" + task + " projectModel=" + projectModel);
-        }
-
-        this.task             = task;
-        this.projectModel     = projectModel;
-
-        // execute unprocessed tables
-        doExecute(task, projectModel);
+    public CreateDDLScript(MainController controller, PluginMetadata plugin) throws PluginException {
+        super(controller, plugin);
     }
+    
+    protected void setUp() throws PluginException {
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param task DOCUMENT ME!
-     * @param projectModel DOCUMENT ME!
-     *
-     * @throws PluginException DOCUMENT ME!
-     */
-    public final void doExecute(TaskExecute  task,
-                                ProjectModel projectModel) throws PluginException {
-        List processTables = null;
-
-        try {
+    	try {
             // setup SQL Type -> Java Type Mapping up as HashMap for fast lookup
-            this.typeMapping     = new TypeMapping(task.getTypeMapping());
+            typeMapping     = new TypeMapping(getTypeMapping());
 
             newLine     = System.getProperty("line.separator");
 
@@ -134,15 +105,22 @@ public class CreateDDLScript extends ExecuteSkeleton {
             int nbrTables = processTables.size();
 
             // now set the number of tables that need to be copied
-            task.setLengthOfTaskTable(nbrTables);
+            setLengthProgressTable(nbrTables);
 
-            //stmSource = connSource.createStatement();
+    	} catch (Exception e) {
+    		throw new PluginException(e.getMessage());
+    	}
+    }
+
+    public final void run() {
+    	try {
             String   destinationTableName = "";
             String   tableName = "";
             String   fileName = "";
+
             Iterator itProcessTables = processTables.iterator();
 
-            while (itProcessTables.hasNext() && !task.isInterrupted()) {
+            while (itProcessTables.hasNext() && !isInterrupted()) {
                 Element tableProcess = (Element) itProcessTables.next();
                 List    processColumns = null;
                 counterRecords = 0;
@@ -159,9 +137,9 @@ public class CreateDDLScript extends ExecuteSkeleton {
 
                 Writer.write(sb, fileName);
 
-                task.setMessage(fileName + "written");
+                postMessage(fileName + " written");
 
-                task.setCurrentTable(++counterTables);
+                setCurrentProgressTable(++counterTables);
             }
 
             // create hibernate.properties file
@@ -188,12 +166,27 @@ public class CreateDDLScript extends ExecuteSkeleton {
             PropertiesToFile.exportPropertiesToFile(p, path + "hibernate.properties");
             logger.info("hibernate properties written to " + path + "hibernate.properties");
 
-            if (!task.isInterrupted()) {
-                logger.info(counterTables + " table(s) processed");
-                this.task.setTaskStatus(this.task.done);
-            } else {
-                this.task.setTaskStatus(this.task.interrupted);
+            if (!isInterrupted()) {
+                postMessage(counterTables + " table(s) processed");
+                setDone(true);
             }
+    	} catch (Exception e) {
+    		postException(e);
+    	}
+    }
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param task DOCUMENT ME!
+     * @param projectModel DOCUMENT ME!
+     *
+     * @throws PluginException DOCUMENT ME!
+     */
+    public final void doExecute(TaskExecute  task,
+                                ProjectModel projectModel) throws PluginException {
+
+        try {
         } catch (Exception e) {
             throw new PluginException(e.getMessage());
         }

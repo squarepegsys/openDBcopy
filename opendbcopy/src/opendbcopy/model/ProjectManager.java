@@ -43,6 +43,8 @@ import opendbcopy.model.exception.UnsupportedAttributeValueException;
 
 import opendbcopy.task.TaskExecute;
 
+import org.apache.log4j.Level;
+
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -65,7 +67,6 @@ public class ProjectManager extends Observable {
     private MainController controller;
     private ProjectModel   projectModel;
     private TaskExecute    taskExecute;
-    private Document       plugins;
     private Document       typeMapping;
     private Document       drivers;
     private Vector         operationsExecuted;
@@ -76,22 +77,19 @@ public class ProjectManager extends Observable {
      * Creates a new ProjectManager object.
      *
      * @param controller DOCUMENT ME!
-     * @param plugins DOCUMENT ME!
      * @param typeMapping DOCUMENT ME!
      * @param drivers DOCUMENT ME!
      *
      * @throws IllegalArgumentException DOCUMENT ME!
      */
     public ProjectManager(MainController controller,
-                          Document       plugins,
                           Document       typeMapping,
                           Document       drivers) throws IllegalArgumentException {
-        if ((controller == null) || (plugins == null) || (typeMapping == null) || (drivers == null)) {
-            throw new IllegalArgumentException("Missing arguments values: controller=" + controller + " plugins=" + plugins + " typeMapping=" + typeMapping + " drivers=" + drivers);
+        if ((controller == null) || (typeMapping == null) || (drivers == null)) {
+            throw new IllegalArgumentException("Missing arguments values: controller=" + controller + " typeMapping=" + typeMapping + " drivers=" + drivers);
         }
 
         this.controller             = controller;
-        this.plugins                = plugins;
         this.typeMapping            = typeMapping;
         this.drivers                = drivers;
         this.projectModel           = new ProjectModel(controller.getApplicationProperties());
@@ -102,7 +100,6 @@ public class ProjectManager extends Observable {
      * Creates a new ProjectManager object.
      *
      * @param controller DOCUMENT ME!
-     * @param plugins DOCUMENT ME!
      * @param typeMapping DOCUMENT ME!
      * @param drivers DOCUMENT ME!
      * @param project DOCUMENT ME!
@@ -113,16 +110,14 @@ public class ProjectManager extends Observable {
      * @throws MissingElementException DOCUMENT ME!
      */
     public ProjectManager(MainController controller,
-                          Document       plugins,
                           Document       typeMapping,
                           Document       drivers,
                           Document       project) throws IllegalArgumentException, UnsupportedAttributeValueException, MissingAttributeException, MissingElementException {
-        if ((controller == null) || (plugins == null) || (typeMapping == null) || (drivers == null) || (project == null)) {
-            throw new IllegalArgumentException("Missing arguments values: controller=" + controller + " plugins=" + plugins + " typeMapping=" + typeMapping + " drivers=" + drivers + " project=" + project);
+        if ((controller == null) || (typeMapping == null) || (drivers == null) || (project == null)) {
+            throw new IllegalArgumentException("Missing arguments values: controller=" + controller + " typeMapping=" + typeMapping + " drivers=" + drivers + " project=" + project);
         }
 
         this.controller             = controller;
-        this.plugins                = plugins;
         this.typeMapping            = typeMapping;
         this.drivers                = drivers;
         this.projectModel           = new ProjectModel(controller.getApplicationProperties(), project);
@@ -138,6 +133,26 @@ public class ProjectManager extends Observable {
     public final void broadcast() {
         setChanged();
         notifyObservers();
+    }
+
+    /**
+     * Used to post a message
+     *
+     * @param message DOCUMENT ME!
+     */
+    public final void postMessage(String message) {
+        controller.postMessage(message);
+    }
+
+    /**
+     * Used to post Exceptions given a general Exception and Log level to the controller
+     *
+     * @param e DOCUMENT ME!
+     * @param level DOCUMENT ME!
+     */
+    public final void postException(Exception e,
+                                    Level     level) {
+        controller.postException(e, level);
     }
 
     /**
@@ -341,15 +356,6 @@ public class ProjectManager extends Observable {
      */
     public final ProjectModel getProjectModel() {
         return projectModel;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     */
-    public final Document getPlugins() {
-        return this.plugins;
     }
 
     /**

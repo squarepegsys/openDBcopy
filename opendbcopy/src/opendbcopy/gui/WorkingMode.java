@@ -26,6 +26,7 @@ import opendbcopy.controller.MainController;
 
 import java.lang.reflect.Constructor;
 
+import java.util.HashMap;
 import java.util.Vector;
 
 import javax.swing.JTabbedPane;
@@ -41,6 +42,7 @@ public class WorkingMode {
     private MainController controller;
     private String         identifier;
     private String         title;
+    private HashMap        availablePlugins;
     private Vector         panelsMetadata;
     private Vector         panels;
     private JTabbedPane    tab;
@@ -58,6 +60,8 @@ public class WorkingMode {
         this.controller     = controller;
         this.identifier     = identifier;
         this.title          = title;
+
+        availablePlugins = new HashMap();
     }
 
     /**
@@ -214,6 +218,26 @@ public class WorkingMode {
      */
     public final String getIdentifier() {
         return identifier;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param pluginIdentifier DOCUMENT ME!
+     * @param pluginDescription DOCUMENT ME!
+     */
+    public final void addPlugin(String pluginIdentifier,
+                                String pluginDescription) {
+        availablePlugins.put(pluginIdentifier, pluginDescription);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     */
+    public final HashMap getAvailablePlugins() {
+        return availablePlugins;
     }
 
     /**

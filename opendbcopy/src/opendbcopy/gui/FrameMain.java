@@ -39,7 +39,6 @@ import opendbcopy.model.exception.UnsupportedAttributeValueException;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
@@ -77,13 +76,10 @@ import javax.swing.JTextPane;
  */
 public class FrameMain extends JFrame implements Observer {
     private static Logger          logger = Logger.getLogger(FrameMain.class.getName());
-    public static final int        FRAME_WIDTH = 800;
-    public static final int        FRAME_HEIGHT = 650;
     private static final Dimension SCREEN_SIZE = Toolkit.getDefaultToolkit().getScreenSize();
     private Menu                   menu;
     private MainController         controller;
     private ProjectManager         pm;
-    private WorkingModeManager     wmm;
     private PanelWorkingMode       panelWorkingMode;
     private String                 frameTitle;
     private String                 newLine;
@@ -97,13 +93,16 @@ public class FrameMain extends JFrame implements Observer {
     private JButton                buttonNext = new JButton();
     private JTabbedPane            tab;
     private DialogFile             dialogFile;
+    private int frameWidth;
+    private int frameHeight;
 
     //Construct the frame
     public FrameMain(MainController controller,
-                     Document       workingMode,
-                     ProjectManager projectManager) {
+                     ProjectManager projectManager, int frameWidth, int frameHeight) {
         this.controller     = controller;
         this.pm             = projectManager;
+        this.frameWidth = frameWidth;
+        this.frameHeight = frameHeight;
 
         // dialogFile must be setup before menu so that actions using dialogFile have a valid reference
         this.dialogFile     = new DialogFile(this);
@@ -113,7 +112,6 @@ public class FrameMain extends JFrame implements Observer {
         newLine         = System.getProperty("line.separator");
 
         try {
-            wmm = new WorkingModeManager(this, this.controller, workingMode);
             guiInit();
         } catch (Exception e) {
             postException(e, Level.ERROR);
@@ -176,7 +174,9 @@ public class FrameMain extends JFrame implements Observer {
     private void guiInit() throws Exception {
         JPanel contentPane = (JPanel) this.getContentPane();
 
-        panelWorkingMode = new PanelWorkingMode(this, wmm);
+        panelWorkingMode = new PanelWorkingMode(this, controller);
+        controller.getWorkingModeManager().registerObserver(panelWorkingMode);
+
         panelMain.add(panelWorkingMode);
 
         borderLayout.setHgap(10);
@@ -214,7 +214,7 @@ public class FrameMain extends JFrame implements Observer {
 
         this.setJMenuBar(this.menu);
         this.menu.setVisible(true);
-        this.setSize(new Dimension(FRAME_WIDTH, FRAME_HEIGHT));
+        this.setSize(new Dimension(frameWidth, frameHeight));
 
         centerDialog(this);
     }
@@ -291,9 +291,9 @@ public class FrameMain extends JFrame implements Observer {
             }
 
             // destroy currentWorkingMode if available
-            wmm.destroyCurrentWorkingMode();
+            controller.getWorkingModeManager().destroyCurrentWorkingMode();
 
-            tab = wmm.loadWorkingMode(workingMode);
+            tab = controller.getWorkingModeManager().loadWorkingMode(workingMode);
 
             // set working mode in Project Model
             pm.getProjectModel().setWorkingMode(workingMode);

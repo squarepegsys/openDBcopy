@@ -27,6 +27,8 @@ import opendbcopy.model.ProjectModel;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
+import org.jdom.Element;
+
 
 /**
  * class description
@@ -36,6 +38,7 @@ import org.apache.commons.lang.builder.ToStringStyle;
  */
 public class MissingElementException extends Exception {
     private ProjectModel projectModel;
+    private Element      element;
     private String       elementName;
 
     /**
@@ -48,6 +51,18 @@ public class MissingElementException extends Exception {
                                    String       elementName) {
         this.projectModel     = projectModel;
         this.elementName      = elementName;
+    }
+
+    /**
+     * Creates a new MissingElementException object.
+     *
+     * @param element DOCUMENT ME!
+     * @param elementName DOCUMENT ME!
+     */
+    public MissingElementException(Element element,
+                                   String  elementName) {
+        this.element         = element;
+        this.elementName     = elementName;
     }
 
     /**
@@ -74,6 +89,10 @@ public class MissingElementException extends Exception {
      * @return DOCUMENT ME!
      */
     public String getAvailableElements() {
-        return ToStringBuilder.reflectionToString(projectModel, ToStringStyle.MULTI_LINE_STYLE);
+        if (element == null) {
+            return ToStringBuilder.reflectionToString(projectModel, ToStringStyle.MULTI_LINE_STYLE);
+        } else {
+            return ToStringBuilder.reflectionToString(element, ToStringStyle.MULTI_LINE_STYLE);
+        }
     }
 }

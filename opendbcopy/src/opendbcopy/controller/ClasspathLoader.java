@@ -24,7 +24,6 @@ package opendbcopy.controller;
 
 import java.io.File;
 import java.io.IOException;
-
 import java.net.URL;
 
 
@@ -48,13 +47,26 @@ public final class ClasspathLoader {
         String[] libFiles = libDir.list();
 
         for (int i = 0; i < libFiles.length; i++) {
-            if (!checkIfInClassPath(classpath, libFiles[i])) {
-                if ((libFiles[i].compareToIgnoreCase("CVS") != 0) && (libFiles[i].compareToIgnoreCase("opendbcopy.jar") != 0)) {
-                    URL newLib = new URL(libDir.toURL() + libFiles[i]);
-                    ClassPathHacker.addURL(newLib);
-                    System.out.println("added " + newLib + " dynamically to your classpath");
-                }
+            if ((libFiles[i].compareToIgnoreCase("CVS") != 0) && (libFiles[i].compareToIgnoreCase("opendbcopy.jar") != 0)) {
+                URL newLib = new URL(libDir.toURL() + libFiles[i]);
+                addLibToClasspath(newLib);
             }
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param url DOCUMENT ME!
+     *
+     * @throws IOException DOCUMENT ME!
+     */
+    public static void addLibToClasspath(URL url) throws IOException {
+        String classpath = System.getProperty("java.class.path");
+
+        if (!checkIfInClassPath(classpath, url)) {
+            ClassPathHacker.addURL(url);
+            System.out.println("added " + url + " dynamically to your classpath");
         }
     }
 
@@ -69,6 +81,23 @@ public final class ClasspathLoader {
     private static boolean checkIfInClassPath(String classpath,
                                               String archive) {
         if (classpath.indexOf(archive) > -1) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param classpath DOCUMENT ME!
+     * @param url DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     */
+    private static boolean checkIfInClassPath(String classpath,
+                                              URL    url) {
+        if (classpath.indexOf(url.getFile()) > -1) {
             return true;
         } else {
             return false;

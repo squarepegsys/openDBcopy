@@ -165,6 +165,8 @@ public final class XMLTags {
     // Working Mode
     public static final String WORKING_MODE = "working_mode";
     public static final String WORKING_MODES = "working_modes";
+    public static final String STANDARD_WORKING_MODE_REFERENCE = "standard_working_mode_reference";
+    public static final String STANDARD_WORKING_MODE = "standard_working_mode";
     public static final String IDENTIFIER = "identifier";
     public static final String TITLE = "title";
     public static final String PANELS = "panels";

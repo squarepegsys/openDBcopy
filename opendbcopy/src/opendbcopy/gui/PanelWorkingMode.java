@@ -24,6 +24,8 @@ package opendbcopy.gui;
 
 import java.awt.BorderLayout;
 import java.awt.SystemColor;
+import java.util.Observable;
+import java.util.Observer;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -33,6 +35,8 @@ import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.TitledBorder;
 
+import opendbcopy.controller.MainController;
+
 
 /**
  * class description
@@ -40,13 +44,13 @@ import javax.swing.border.TitledBorder;
  * @author Anthony Smith
  * @version $Revision$
  */
-public class PanelWorkingMode extends JPanel {
+public class PanelWorkingMode extends JPanel implements Observer {
     private JPanel             panelMain = new JPanel();
     private JLabel             labelOpenProject = new JLabel();
     private JScrollPane        scrollPaneWorkingModes;
     private JList              listWorkingModes;
     private FrameMain          parentFrame;
-    private WorkingModeManager wmm;
+    private MainController controller;
 
     /**
      * Creates a new PanelConnection object.
@@ -57,10 +61,30 @@ public class PanelWorkingMode extends JPanel {
      * @throws Exception DOCUMENT ME!
      */
     public PanelWorkingMode(FrameMain          parentFrame,
-                            WorkingModeManager wmm) throws Exception {
+                            MainController controller) throws Exception {
         this.parentFrame     = parentFrame;
-        this.wmm             = wmm;
+        this.controller = controller;
         guiInit();
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param o DOCUMENT ME!
+     * @param obj DOCUMENT ME!
+     */
+    public void update(Observable o,
+                       Object     obj) {
+
+    	if (controller.getWorkingModeManager().getAvailableWorkingModes().size() > 0) {
+        	scrollPaneWorkingModes.removeAll();
+        	listWorkingModes = new JList(controller.getWorkingModeManager().getAvailableWorkingModes());
+            listWorkingModes.setLayoutOrientation(JList.VERTICAL);
+            listWorkingModes.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            listWorkingModes.setSelectedIndex(0);
+            scrollPaneWorkingModes.add(listWorkingModes);
+            scrollPaneWorkingModes.updateUI();
+    	}
     }
 
     /**
@@ -88,11 +112,13 @@ public class PanelWorkingMode extends JPanel {
         labelOpenProject.setText("To open an existing project click on 'Project -> Import Project ...'");
 
         // initialise the list of available working modes
-        listWorkingModes = new JList(wmm.getAvailableWorkingModes());
-        listWorkingModes.setLayoutOrientation(JList.VERTICAL);
-        listWorkingModes.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        listWorkingModes.setSelectedIndex(0);
-        listWorkingModes.setToolTipText("Select a working mode and click Next");
+    	if (controller.getWorkingModeManager().getAvailableWorkingModes().size() > 0) {
+        	listWorkingModes = new JList(controller.getWorkingModeManager().getAvailableWorkingModes());
+            listWorkingModes.setLayoutOrientation(JList.VERTICAL);
+            listWorkingModes.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            listWorkingModes.setSelectedIndex(0);
+            listWorkingModes.setToolTipText("Select a working mode and click Next");
+    	}
 
         scrollPaneWorkingModes = new JScrollPane(listWorkingModes);
 

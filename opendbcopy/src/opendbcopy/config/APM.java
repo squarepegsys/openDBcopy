@@ -35,11 +35,16 @@ public final class APM {
     public static final String APPLICATION_WEBSITE = "application_website";
     public static final String APPLICATION_DEVELOPER_NAME = "application_developer_name";
     public static final String LOG4J_PROPERTIES_FILE = "log4j_properties_file";
+    public static final String STANDARD_WORKING_MODES_CONF_FILE = "standard_working_modes_conf_file";
     public static final String WORKING_MODE_CONF_FILE = "working_mode_conf_file";
     public static final String DRIVERS_CONF_FILE = "drivers_conf_file";
+    public static final String PLUGINS_DIRECTORY = "plugins_directory";
     public static final String PLUGINS_CONF_FILE = "plugins_conf_file";
     public static final String SQL_TYPE_MAPPING_CONF_FILE = "sql_type_mapping_conf_file";
     public static final String ENCODING = "encoding";
     public static final String LOOK_AND_FEEL = "look_and_feel";
     public static final String SYSTEM = "system";
+    public static final String SHOW_GUI = "show_gui";
+    public static final String FRAME_WIDTH = "frame_width";
+    public static final String FRAME_HEIGHT = "frame_height";
 }

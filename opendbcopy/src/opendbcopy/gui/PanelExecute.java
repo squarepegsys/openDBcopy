@@ -218,7 +218,7 @@ public class PanelExecute extends DynamicPanel {
      */
     private void retrievePlugins() {
         try {
-            Iterator itPlugins = pm.getPlugins().getRootElement().getChildren(XMLTags.PLUGIN).iterator();
+            Iterator itPlugins = null; // = pm.getPlugins().getRootElement().getChildren(XMLTags.PLUGIN).iterator();
 
             pluginsHashtable = new Hashtable();
 
