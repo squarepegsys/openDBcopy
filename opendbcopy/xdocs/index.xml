@@ -2,8 +2,8 @@
 <document>
 
   <properties>
-    <author email="smith@puzzle.ch">Anthony Smith</author>
-    <title>opendbcopy - an open-source database migration utility (Java),database migration,open-source,dbcopy,db,copy 
+    <author email="smith[at]puzzle.ch">Anthony Smith</author>
+    <title>openDBcopy - an open-source database migration utility (Java),database migration,open-source,dbcopy,db,copy 
 		any database,jdbc,migrate databases,online migration,open-source software GPL,Puzzle ITC</title>
   </properties>
   
@@ -12,13 +12,19 @@
 <body>
 
 
-  <section name="Overview opendbcopy">
+  <section name="openDBcopy Overview">
 	<p>
-		<b>by Anthony Smith</b>
+		<b>Designed and developed by Anthony Smith, published under the terms of the <a href="license.html">GNU General Public License</a></b>
+	</p>
+	<p>
+	  <ul>
+		<li><a href="user-manual.pdf">openDBcopy User Manual (PDF, ~800 KB)</a></li>
+		<li><a href="developer-manual.pdf">openDBcopy Developer Manual (PDF, ~500 KB)</a></li>
+	  </ul>
 	</p>
 	<br/>
 	<p>
-		opendbcopy is a universal database utility to migrate data 
+		openDBcopy is a universal database utility to migrate data 
 		from and to any database given a JDBC driver.
 	</p>
 
@@ -32,7 +38,7 @@
 	<br/><br/>
 		
 	<center>
-		<img border="0px" src="images/screens/intro_column_mapping.gif"/>
+		<img border="0px" src="images/captures/general_demo.gif" />
 			<p>Select columns to process and map columns which were not automatically mapped</p>
 	</center>
   </section>

@@ -1,23 +1,26 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <document>
     <properties>
-    	<author email="smith@puzzle.ch">Anthony Smith</author>
+    	<author email="smith[at]puzzle.ch">Anthony Smith</author>
         <title>About</title>
     </properties>
     <body>
-        <section name="About">
+        <section name="About openDBcopy">
         	<p>
-				opendbcopy is an open-source project by Anthony Smith, published under the terms of the GNU General Public License. 
+				openDBcopy is an open-source project by Anthony Smith, published under the terms of the GNU General Public License, see <a href="license.html">GPL License</a>. 
 				<br/><br/>
-				opendbcopy core component can be seen as an application framework providing 
+				openDBcopy core component can be seen as an application framework providing 
 				everything required to run a plugin. Configure a database migration project
-				using the opendbcopy graphical user interface.
+				using the openDBcopy graphical user interface.
 				<br/><br/>
 
 				<subsection name="Special Thanks to">
 					<p>
 						I would like to specially thank Mr Blatter (Swiss Department for Defence, Civil Protection, Sports) for
-						allowing me to publish opendbcopy as open-source software @sourceforge.
+						allowing me to publish openDBcopy as open-source software @sourceforge.
+					</p>
+					<p>
+						Thanks to all taking the time to test, use and improve openDBcopy.
 					</p>
 				</subsection>
 				
@@ -40,7 +43,7 @@
 						<br/><br/>
 						So I began looking for a database migration utility which was able to fulfill my special requirements.
 						It became obvious that I either have to develop a lot of PL/SQL transformation scripts or develop
-						a new utility - opendbcopy.
+						a new utility - openDBcopy.
 						<br/><br/>
 						I first tried to use Oracle's Migration Workbench, which, at first glance, looks brilliant. But, but, but ...
 						soon I got an answer from their staff that this migration workbench does not support DB2 on OS390. I tried
@@ -50,23 +53,22 @@
 						Even if you have a migration tool that can copy data from DB2 to Oracle, you still need to modify your data 
 						according to the new requirements.
 						<br/><br/>
-						So the idea of opendbcopy began on a Saturday afternoon, when I was waiting for a tram... and 17 
-						hours later I had my first implementation of opendbcopy. No GUI, just running from a shell.
+						So the idea of openDBcopy began on a Saturday afternoon, when I was waiting for a tram... and 17 
+						hours later I had my first implementation of openDBcopy. No GUI, just running from a shell.
 						<br/><br/>
 						Two weeks later a front end and further features were implemented, so that I was a able to make a 
 						first successful database migration.
 						<br/><br/>
-						At the end of 2003 we made the final migration. I was quite happy that I had developed opendbcopy
+						At the end of 2003 we made the final migration. I was quite happy that I had developed openDBcopy
 						to avoid too much repeated work. Think about how much manpower you need if you choose the 
 						conventional way ... extracting data into files, convert the files, write loading and transformation scripts.
 						<br/><br/>
-						Since then I have used opendbcopy on several other projects. Some of them were again DB2 to Oracle.
+						Since then I have used openDBcopy on several other projects. Some of them were again DB2 to Oracle.
 						Others were MySQL to PostgreSQL, MySQL to MySQL, MS Access to MS Access (using jdbc:odbc bridge).
 						<br/><br/>
-						opendbcopy comes with a handful of plugins which can be configured using the plugins.xml. See the 
-						plugins section for more details.
+						openDBcopy comes with a handful of plugins which can be configured with a comfortable graphical user interface.
 						<br/><br/>
-						Special requirements can easily be developed. See the <a href="developer-manual.html">developer manual</a> for more details.
+						Special requirements can easily be developed. See the <a href="developer-manual.pdf">developer manual</a> for more details.
 						<br/><br/>
 					</p>
 				</subsection>
@@ -84,18 +86,17 @@
 						</ul>
 						<br/><br/>
 						So far I have said nothing about generating the new database DDL. In my eyes this is something
-						which requires interaction. It would be very simple using opendbcopy or other migration utilities
-						to create the CREATE TABLE scripts plain ... but ... have you ever seen a utility, commercial or not, which
-						was able to do this for any database system without errors and optimal settings? Next to the CREATE TABLE
-						you need PRIMARY KEYS, FOREIGN KEYS, INDEXES, ... 
+						which requires interaction. openDBcopy provides a schema migration utility which can generate Hibernate Mapping Files.
+						Hibernate is a Object/Relational Mapping Framework. Its structure to store a database model using XML files is very 
+						sophisticated. Based upon these XML mapping files Java source code and also the appropriate DDL can be generated and 
+						executed. Using Hibernate as "universal" database model has the advantage that the generated XML files and Java code 
+						can be used for one owns projects. Hibernate is well known and documented. Using the schema migration utility of 
+						openDBcopy allows to migrate tables, primary keys, compound keys, foreign keys and indexes.
 						<br/><br/>
-						I hope to be able to provide soon a plugin which
-						is able to do part of this list. If you have any ideas please tell me. An idea I have is creating XDOCLET classes
-						with hibernate tags ... and then generate Hibernate mapping files automatically as well as the required DDL.
 					</p>
 				</subsection>
 
-				<subsection name="About the opendbcopy logo">
+				<subsection name="About the openDBcopy logo">
 					<p>
 						An "open" tin is a silent protest against these commercial database symbols looking like "closed" oil 
 						barrels ;-)
@@ -105,7 +106,7 @@
 				<subsection name="Other Database Migration Utilities">
 					<p>
 						<ul>
-							<li><a href="http://dbcopy.sourceforge.net/">dbcopy (Open Source, Eclipse Plugin)</a></li>
+							<li><a href="http://dbcopy.sourceforge.net/en/dbcopy/index.html">dbcopy (Open Source, Eclipse Plugin)</a></li>
 							<li><a href="http://octopus.enhydra.org/index.html">Octopus (Open Source)</a></li>
 							<li><a href="http://otn.oracle.com/tech/migration/workbench/index.html">Oracle Migration Workbench</a></li>
 						</ul>

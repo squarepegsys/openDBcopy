@@ -20,17 +20,6 @@ This XSLT Style Sheet can be used to convert OOo documents to compliant XDocs XM
 -->
 
 <xsl:stylesheet version="1.0"
-                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:fo="http://www.w3.org/1999/XSL/Format"
-                xmlns:xlink="http://www.w3.org/1999/xlink"
-                xmlns:svg="http://www.w3.org/2000/svg"
-                xmlns:office="http://openoffice.org/2000/office"
-                xmlns:meta="http://openoffice.org/2000/meta"
-                xmlns:style="http://openoffice.org/2000/style"
-                xmlns:text="http://openoffice.org/2000/text"
-                xmlns:table="http://openoffice.org/2000/table"
-                xmlns:draw="http://openoffice.org/2000/drawing"
-                xmlns:dc="http://purl.org/dc/elements/1.1/"
 		   exclude-result-prefixes="draw fo office meta style svg table text xlink dc">
 
 <!-- 
