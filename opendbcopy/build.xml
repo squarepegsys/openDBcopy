@@ -11,11 +11,11 @@
    <property name="build.sysclasspath" value="ignore"/>
 
    <property name="name" value="opendbcopy"/>
-   <property name="version" value="1.1"/>
+   <property name="version" value="0.41"/>
 
    <property name="sources" value="${basedir}/src"/>
    <property name="lib" value="${basedir}/lib"/>
-   <property name="build" value="${basedir}/build"/>
+   <property name="build" value="${basedir}/classes"/>
    <property name="javadoc" value="${basedir}/docs/javadoc"/>
 
    <property name="packages" value="opendbcopy.*"/>
