@@ -1,0 +1,255 @@
+ChangeLog of JSch
+====================================================================
+Last modified: Wed Mar 24 17:33:34 UTC 2004
+
+
+Changes since version 0.1.13:		
+- added 'setClientVersion' method to Session class.
+- fixed hung-up problem on SftpChannel in connecting to
+  the sshd, which does not support sftp.
+- fixed OutOfMemory exception problem in decrypting a private key
+  with bad passphrase.
+- fixed hung-up problem in communicating with the sshd,
+  whose window size is small.
+- RuntimeExceptions will be thrown from jsch APIs.
+- SSH_MSG_CHANNEL_SUCCESS and SSH_MSG_CHANNEL_FAILURE requests
+  have been supported.
+  	
+	
+Changes since version 0.1.12:	
+- added the partial authentication support.
+- allowing to change the passphrase of a private key file
+  instead of creating a new private key.
+- added 'examples/ChangePassphrase.java' 	
+- the interface 'UIKeyboardInteractive' has been modified.
+
+	
+Changes since version 0.1.11:	
+- RSA keypair generation.
+- added the method 'getFingerPrint' to KeyPair class,
+  which will return the finger print of the public key.
+- fixed a bug in generating non-ciphered private key.
+
+	
+Changes since version 0.1.10:	
+- fixed a bug in the password authentication, sneaked in
+  0.1.9. By this bug, the password authentication had failed every time.
+
+	
+Changes since version 0.1.9:	
+- username and password can be in UTF-8 encoding.
+- DSA keypair generation.
+- added 'examples/KeyGen.java', which demonstrates
+  the DSA keypair generation.
+
+	
+Changes since version 0.1.8:	
+- fixed crash problems on the local port forwarding.
+- fixed crash problems on the remote port forwarding.
+- added setErrStream() and getErrStream() to ChannelExec.
+- added keyboard-interactive authentication support.
+- modified TripleDESCBC to support IBM's JDK 1.4.1.
+- added 'examples/UserAuthKI.java', which demonstrates keyboard-interactive
+  authentication.
+
+	
+Changes since version 0.1.7:	
+- added APIs for sftp resume downloads and uploads.
+  The author greatly appreciates 
+	elpernotador(webmaster at unlix dot com dot ar),
+  who motivated him to hack this functionality.
+- 'examples/Sftp.java' demonstrates sftp resume functionality.
+  Please refer to "put-resume", "put-append", "get-resume" and
+  "get-append" command.
+- added the support of 'window-change' request.
+- fixed a freeze bug in 'Inputstream get(String src)' method of 'ChannelSftp'
+  class.
+
+	
+Changes since version 0.1.6:	
+- added 'int getExitStatus()' method to 'Channel' class.
+- fixed crash bugs in closing channels for port forwarding.
+- fixed glitches in managing forwarded ports.
+
+	
+Changes since version 0.1.5:	
+- fixed crash bugs in port forwarding.
+- modified to use "ssh-rsa" for key-exchanging by the default.
+- the port forwarding setting can be canceled dynamically.
+- fixed a freeze bug in getting an empty file on sftp channel.
+
+	
+Changes since version 0.1.4:	
+- fixed a bug in managing local window size.
+  The local window should be consumed by CHANNEL_EXTENDED_DATA packet.
+- checking the availability of the ssh session in opening channels.
+  In some case, ssh session had been freezed.	
+- java.io.File.separator will be refereed in generating local pathname
+  on sftp channel.
+- absolute local pathname will be handled correctly on sftp channel.
+
+	
+Changes since version 0.1.3:	
+- fixed a serious bug, which had leaked resources related to
+  ChannelExec.	
+- added the older SFTP protocol(version 0, 1, 2) support.
+- fixed a problem in the authentication step for FSecure's sshd.
+- fixed a bug, which had broken Diffie-Hellman key exchange in some case.
+- implemented the file name globbing for local files on sftp session. 
+- fixed a bug in the file name globbing.
+- added an interface 'SftpProgressMonitor'.
+- modified 'examples/Sftp.java' to demonstrate displaying progress-bar
+  in transferring files. 	 
+	
+	
+Changes since version 0.1.2:	
+- modified 'build.xml' to allow Ant users to compile jsch with debug
+  support (i.e. line-number tables) by overriding the property
+  javac.debug on the command line.
+- added a property 'StrictHostKeyChecking'.
+- added 'UserAuthNone' class to request a list of authentication methods on
+  remote sshd.	 
+- channels will be managed in each sessions.
+- added 'ChannelSubsystem', which allows users to use their own
+  implementations for subsystems.
+- added 'isEOF()' method to 'Channel' class.
+- supported key pair files in DOS file format.
+
+	
+Changes since version 0.1.1:	
+- added the file name globbing support on sftp session.
+- fixed a bug in the public key authentication.
+  When there was not a public key in ~/.ssh/, that problem occurred.
+- improved the 'setTimeout' method.
+- fixed a typo in 'LICENSE.txt'
+
+	
+Changes since version 0.1.0:	
+- added 'rekey' method to 'Session' class for key re-exchanging.
+- added 'rekey' and 'compression' command to 'examples/Sftp.java'.
+- added new 'get' and 'put' methods to 'ChannelSftp'.
+  Those methods will operate I/O streams.
+- methods in 'ChannelSftp' will throw 'SftpException'	
+- 'ChannelSftp.Ssh_exp_name' is added for the output of 'ls'.
+  Thanks to Graeme Vetterlein.
+- added 'setTimeout' and 'getTimeout' methods to 'Session' class.
+- guess will be done in the algorithm negotiation step.
+- FSecure's DSA private key has been supported partially.
+- hostkeys will be saved into 'known_hosts' file.
+- fixed a bug in 'Util.toBase64' method.	
+- 'Identity' will reject unrecognized keys.
+- 'build.xml' will check if jzlib is available or not. 
+  Thanks to Stefan Bodewig.	
+- added javadoc target in 'build.xml'.
+  Thanks to Robert Anderson.
+	
+	
+Changes since version 0.0.13:	
+- fixed a bug in connecting to Fsecure's sshd on Windows.
+- the license is changed to BSD style.	
+
+
+Changes since version 0.0.12:	
+- fixed a bug in verifying DAS signatures.
+- added 'SftpATTR' class, which allow you to get attributes of remote files on 
+  sftp channel, and 'stat', 'lstat' method are added to 'ChannelSftp' class.
+- added 'getInputStream' and 'getOutputStream' methods Channel class, which 
+  return passive I/O streams.	 
+- 'setIdentity' method is deleted from 'Session' class and
+  'addIdentity' method is added to 'JSch' class
+- 'setUserName' method is deleted from 'Session' class and
+  'getSession' method of 'JSch' class is changed.
+- 'isConnected' method is added to 'Session' class.
+- 'UserInfo' interface is changed.
+
+	
+Changes since version 0.0.11:	
+- taking care of remote window size.
+- adding 'disconnect' method to 'Channel' and 'Session' classes.
+- signal sending support.
+- 'mkdir' command for sftp.
+- 'fromBase64' method has been moved to Util class and 'toBase64' method has
+   also been added to that class.
+- 'KnownHosts' class for checking host-key in 'known_host' file.
+- 'examples/KnownHosts.java' has been added.
+- 'setUserName' and 'setPassword' methods have been added to Session class.
+- 'UserInfo' interface has been changed.
+- The implementation of compression has moved to 'com.jcraft.jsch.jcraft'
+  package.
+- fixed a bug in handling 'SSH_MSG_CHANNEL_REQUET' request.
+- fixed a bug in sending multiple requests on a single session.
+	
+	
+Changes since version 0.0.10:	
+- Diffie-Hellman key exchange 'diffie-hellman-group1-sha1' is supported.
+  Refer to 'src/com/jcraft/jsch/jce/DHG1.java'.
+  Thanks to Mitsugu Kitano, whose feedback was very helpful.
+- By the default, 'diffie-hellman-group1-sha1' will be used in the
+  key exchange step.
+- The file attribute on 'SSH File Transfer Protocol' is supported.
+  Now, we can say JSch supports 'SSH File Transfer Protocol'.
+- 'examples/Sftp.java' is updated.
+  'chgrp','chown','chmod' commands are supported.
+
+	
+Changes since version 0.0.9:	
+- SSH File Transfer Protocol is supported partially.
+- 'examples/Sftp.java' is added.
+  This example is a tiny sftp command and supports 'cd','put','get','rm',etc.
+- 'close' method is added to Channel interface.	
+- build.xml for examples is added.
+  Thanks to Ronald Broberg.
+
+	
+Changes since version 0.0.8:	
+- the tunneling through a SOCKS5 proxy is supported.
+- 'examples/ScpFrom.java' is added.
+- 'com.jcraft.jsch.UserInfo' interface is modified.
+
+	
+Changes since version 0.0.7:	
+- Packet comression is supported.
+- 'examples/Compression.java' is added.
+- JZlib is included.
+
+	
+Changes since version 0.0.6:	
+- RSA host key is supported.
+- RSA public key authentication is supported.
+
+
+Changes since version 0.0.5:	
+- DSA public key authentication is supported.
+- examples/UserAuthPubKey.java is added.
+- examples/ScpTo.java is added.
+	
+
+Changes since version 0.0.4:	
+- 3des-cbc is supported.
+- hmac-sha1 is supported.
+- hmac-md5-96 is supported.
+- hmac-sha1-96 is supported.	
+	
+
+Changes since version 0.0.3:	
+- port forwarding, similar to the -L option of SSH.
+- examples/PortForwardingL.java is added.
+- examples/StreamForwarding.java is added.
+- examples/Exec.java is renamed as examples/Shell.java
+- stream forwarding is added.
+- ChannelSftp class is added for implementing filexfer.
+- interfaces for jsch users are changed.
+	
+
+Changes since version 0.0.2:	
+- remote exec is supported.	
+- examples/Exec.java is added.
+- build.xml and some scripts for Ant are added. (lbruand)
+- Const class is added. (lbruand)
+
+	
+Changes since version 0.0.1:
+- the tunneling via HTTP proxy is supported.
+- port forwarding like option -R of ssh command.
+  the given port on the remote host will be forwarded to the given host
+  and port on the local side.	

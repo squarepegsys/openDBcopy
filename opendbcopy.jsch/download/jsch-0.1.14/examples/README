@@ -1,0 +1,149 @@
+
+README of example directory
+====================================================================
+Last modified: Wed Oct 16 13:53:12 UTC 2002
+
+This directory contains some examples, which demonstrate how to use JSch
+
+- Shell.java
+  This program enables you to connect to sshd server and get the shell prompt.
+  $ CLASSPATH=.:../src javac Shell.java 
+  $ CLASSPATH=.:../src java Shell
+  You will be asked username, hostname and passwd. 
+  If everything works fine, you will get the shell prompt. Output will
+  be ugly because of lacks of terminal-emulation, but you can issue commands.
+
+- X11Forwarding.java
+  This program will demonstrate X11 forwarding.
+  $ CLASSPATH=.:../src javac X11Forwarding.java 
+  $ CLASSPATH=.:../src java X11Forwarding
+  You will be asked username, hostname, displayname and passwd. 
+  If your X server does not run at 127.0.0.1, please enter correct
+  displayname. If everything works fine, you will get the shell prompt.
+  Try X applications; for example, xlogo.
+
+- Exec.java
+  This program will demonstrate remote exec.
+  $ CLASSPATH=.:../src javac Exec.java 
+  $ CLASSPATH=.:../src java Exec
+  You will be asked username, hostname, displayname, passwd and command.
+  If everything works fine, given command will be invoked 
+  on the remote side and outputs will be printed out. In this sample,
+  X forwarding is enabled, so you can give an X client as a command.
+
+- ViaHTTP.java
+  This program will demonstrate the ssh session via HTTP proxy.
+  $ CLASSPATH=.:../src javac ViaHTTP.java 
+  $ CLASSPATH=.:../src java ViaHTTP
+  You will be asked username, hostname, proxy-server and passwd. 
+  If everything works fine, you will get the shell prompt.
+
+- PortForwardingR.java
+  This program will demonstrate the port forwarding like option -R of
+  ssh command; the given port on the remote host will be forwarded to
+  the given host and port  on the local side.
+  $ CLASSPATH=.:../src javac PortForwardingR.java
+  $ CLASSPATH=.:../src java PortForwardingR
+  You will be asked username, hostname, port:host:hostport and passwd. 
+  If everything works fine, you will get the shell prompt.
+  Try the port on remote host.
+
+- PortForwardingL.java
+  This program will demonstrate the port forwarding like option -L of
+  ssh command; the given port on the local host will be forwarded to
+  the given remote host and port on the remote side.
+  $ CLASSPATH=.:../src javac PortForwardingL.java
+  $ CLASSPATH=.:../src java PortForwardingL
+  You will be asked username, hostname, port:host:hostport and passwd. 
+  If everything works fine, you will get the shell prompt.
+  Try the port on localhost.
+
+- StreamForwarding.java
+  This program will demonstrate the stream forwarding. The given Java
+  I/O streams will be forwared to the given remote host and port on
+  the remote side.  It is simmilar to the -L option of ssh command,
+  but you don't have to assign and open a local tcp port.
+  $ CLASSPATH=.:../src javac StreamForwarding.java
+  $ CLASSPATH=.:../src java StreamForwarding
+  You will be asked username, hostname, host:hostport and passwd. 
+  If everything works fine, System.in and System.out streams will be
+  forwared to remote port and you can send messages from command line.
+
+- UserAuthPubKey.java
+  This program will demonstrate the user authentification by public key.
+  $ CLASSPATH=.:../src javac UserAuthPubKey.java
+  $ CLASSPATH=.:../src java UserAuthPubKey
+  You will be asked username, hostname, privatekey(id_dsa) and passphrase. 
+  If everything works fine, you will get the shell prompt
+
+- Compression.java
+  This program will demonstrate the packet compression.
+  $ CLASSPATH=.:../src javac Compression.java
+  $ CLASSPATH=.:../src java Compression
+  You will be asked username, hostname and passwd. 
+  If everything works fine, you will get the shell prompt. 
+  In this program, all data from sshd server to jsch will be
+  compressed.
+
+- ScpTo.java
+  This program will demonstrate the file transfer from local to remote.
+  $ CLASSPATH=.:../src javac ScpTo.java
+  $ CLASSPATH=.:../src java ScpTo file1 user@remotehost:file2
+  You will be asked passwd. 
+  If everything works fine, a local file 'file1' will copied to
+  'file2' on 'remotehost'.
+
+- ScpFrom.java
+  This program will demonstrate the file transfer from remote to local
+  $ CLASSPATH=.:../src javac ScpFrom.java
+  $ CLASSPATH=.:../src java ScpFrom user@remotehost:file1 file2
+  You will be asked passwd. 
+  If everything works fine, a file 'file1' on 'remotehost' will copied to
+  local 'file1'.
+
+- Sftp.java
+  This program will demonstrate the sftp protocol support.
+  $ CLASSPATH=.:../src javac Sftp.java
+  $ CLASSPATH=.:../src java Sftp
+  You will be asked username, host and passwd. 
+  If everything works fine, you will get a prompt 'sftp>'. 
+  'help' command will show available command.
+  In current implementation, the destination path for 'get' and 'put'
+  commands must be a file, not a directory.
+
+- KnownHosts.java
+  This program will demonstrate the 'known_hosts' file handling.
+  $ CLASSPATH=.:../src javac KnownHosts.java
+  $ CLASSPATH=.:../src java KnownHosts
+  You will be asked username, hostname, a path for 'known_hosts' and passwd. 
+  If everything works fine, you will get the shell prompt.
+  In current implementation, jsch only reads 'known_hosts' for checking
+  and does not modify it.
+
+- UserAuthKI.java
+  This program will demonstrate the keyboard-interactive authentication.
+  $ CLASSPATH=.:../src javac UserAuthKI.java
+  $ CLASSPATH=.:../src java UserAuthKI
+  If the remote sshd supports keyboard-interactive authentication,
+  you will be prompted.
+
+- KeyGen.java
+  This progam will demonstrate the DSA keypair generation. 
+  $ CLASSPATH=.:../src javac KeyGen.java
+  $ CLASSPATH=.:../src java KeyGen rsa output_keyfile comment
+or
+  $ CLASSPATH=.:../src java KeyGen dsa output_keyfile comment
+  You will be asked a passphrase for output_keyfile.
+  If everything works fine, you will get the DSA or RSA keypair, 
+  output_keyfile and output_keyfile+".pub".
+  The private key and public key are in the OpenSSH format.
+
+- ChangePassphrase.java
+  This program will demonstrate to change the passphrase for a
+  private key file instead of creating a new private key.
+  $ CLASSPATH=.:../src javac ChangePassphrase.java
+  $ CLASSPATH=.:../src java ChangePassphrase private-key
+  A passphrase will be prompted if the given private-key has been
+  encrypted.  After successfully loading the content of the
+  private-key, the new passphrase will be prompted and the given
+  private-key will be re-encrypted with that new passphrase.
