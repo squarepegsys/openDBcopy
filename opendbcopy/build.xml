@@ -11,7 +11,7 @@
    	<property name="build.sysclasspath" value="ignore"/>
 
    	<property name="name" value="opendbcopy"/>
-   	<property name="version" value="0.41"/>
+   	<property name="version" value="0.41.1"/>
 
    	<property name="sources.dir" value="${basedir}/src"/>
    	<property name="lib.dir" value="${basedir}/lib"/>

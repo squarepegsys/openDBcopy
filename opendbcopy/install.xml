@@ -8,7 +8,7 @@
 
     <info>
         <appname>opendbcopy</appname>
-        <appversion>0.41</appversion>
+        <appversion>0.41.1</appversion>
         <authors>
             <author name="Anthony Smith" email="smith@puzzle.ch"/>
         </authors>

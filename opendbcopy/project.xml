@@ -3,7 +3,7 @@
 <project>
   <pomVersion>3</pomVersion>
   <groupId>opendbcopy</groupId>
-  <currentVersion>0.41</currentVersion>
+  <currentVersion>0.41.1</currentVersion>
   <logo>/images/opendbcopy_logo.gif</logo>
   <organization>
     <name>Puzzle ITC GmbH</name>
@@ -46,9 +46,9 @@
     </mailingList>
     <mailingList>
       <name>Opendbcopy Developer List</name>
-      <subscribe>opendbcopy-general-dev-request@lists.sourceforge.net?body=subscribe</subscribe>
-      <unsubscribe>opendbcopy-general-dev-request@lists.sourceforge.net?body=unsubscribe</unsubscribe>
-      <archive>http://sourceforge.net/mailarchive/forum.php?forum=opendbcopy-general-dev-request</archive>
+      <subscribe>opendbcopy-dev-request@lists.sourceforge.net?body=subscribe</subscribe>
+      <unsubscribe>opendbcopy-dev-request@lists.sourceforge.net?body=unsubscribe</unsubscribe>
+      <archive>http://sourceforge.net/mailarchive/forum.php?forum=opendbcopy-dev-request</archive>
     </mailingList>
   </mailingLists>
   
@@ -117,10 +117,10 @@
   <reports>
     <report>maven-jdepend-plugin</report>
     <!--report>maven-checkstyle-plugin</report-->
-    <!--report>maven-changes-plugin</report-->
-    <!--report>maven-changelog-plugin</report-->
-    <!--report>maven-file-activity-plugin</report-->
-    <!--report>maven-developer-activity-plugin</report-->
+    <report>maven-changes-plugin</report>
+    <report>maven-changelog-plugin</report>
+    <report>maven-file-activity-plugin</report>
+    <report>maven-developer-activity-plugin</report>
     <report>maven-javadoc-plugin</report>
     <report>maven-jxr-plugin</report>
     <!--report>maven-junit-report-plugin</report-->
