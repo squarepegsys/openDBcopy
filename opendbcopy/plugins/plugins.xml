@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <plugin-config>
 	<plugin db_mode="dual">
 		<class name="opendbcopy.plugin.standard.copy.CopyMapping" />
@@ -72,6 +72,16 @@
 			
 			<!-- qualified table name or not, e.g. catalog.table, schema.table or just table -->
 			<show_qualified_table_name value="true" />
+		</conf>
+	</plugin>
+	<plugin db_mode="dual">
+		<class name="opendbcopy.plugin.standard.ddl.CreateDDLScript" />
+		<description value="Create Hibernate Mapping Files" />
+		<author name="Anthony Smith" />
+		<conf>
+			<!-- path may be relative or absolute -->
+			<path value="hbm/" />
+			<package_name value="schema.persistence" />
 		</conf>
 	</plugin>
 </plugin-config>
