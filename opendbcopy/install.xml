@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="iso-8859-1" standalone="yes" ?>
+
+<!-- 
+    Installation configuration for opendbcopy us IzPack
+-->
+
+<installation version="1.0">
+
+    <info>
+        <appname>opendbcopy</appname>
+        <appversion>0.41</appversion>
+        <authors>
+            <author name="Anthony Smith" email="smith@puzzle.ch"/>
+        </authors>
+        <url>http://opendbcopy.sourceforge.net/</url>
+    </info>
+    
+    <guiprefs width="640" height="480" resizable="yes"/>
+
+    <native type="izpack" name="ShellLink.dll"/>
+    
+    <locale>
+        <langpack iso3="eng"/>
+	    <langpack iso3="deu"/>
+        <langpack iso3="fra"/>
+    </locale>
+    
+    <!-- 
+        The resources section.
+        The ids must be these ones if you want to use the LicencePanel and/or the InfoPanel.
+    -->
+    <resources>
+        <res id="LicencePanel.licence" src="LICENCE.txt"/>
+        <res id="InfoPanel.info" src="README.txt"/>
+	  <res src="c:\opendbcopy\shortcutSpec.xml" id="shortcutSpec.xml"/>    
+    </resources>
+    
+    <!-- 
+        The panels section.
+        We indicate here which panels we want to use. The order will be respected.
+    -->
+    <panels>
+        <panel classname="HelloPanel"/>
+        <panel classname="InfoPanel"/>
+        <panel classname="LicencePanel"/>
+        <panel classname="TargetPanel"/> 
+        <panel classname="PacksPanel"/>
+        <panel classname="InstallPanel"/>
+        <panel classname="FinishPanel"/>
+  	    <panel classname="ShortcutPanel"/>
+    </panels>
+    
+    <packs>
+        <pack name="Base" required="yes" preselected="yes">
+            <description>The base files</description>
+            <file src="README.txt" targetdir="$INSTALL_PATH"/>
+            <file src="LICENCE.txt" targetdir="$INSTALL_PATH"/>
+            <file src="WHATSNEW.txt" targetdir="$INSTALL_PATH"/>
+            <file src="AUTHORS.txt" targetdir="$INSTALL_PATH"/>
+            <file src="KNOWNBUGS.txt" targetdir="$INSTALL_PATH"/>
+            <file src="ChangeLog.txt" targetdir="$INSTALL_PATH"/>
+            <file src="Start.bat" targetdir="$INSTALL_PATH"/>
+            <file src="build" targetdir="$INSTALL_PATH"/>
+            <file src="log" targetdir="$INSTALL_PATH"/>
+            <file src="config" targetdir="$INSTALL_PATH"/>
+            <file src="plugins" targetdir="$INSTALL_PATH"/>
+        </pack>
+        <pack name="Libraries" required="yes" preselected="yes">
+            <description>External Libraries</description>
+            <file src="lib" targetdir="$INSTALL_PATH"/> <!-- Reccursive adding -->
+        </pack>
+
+        <pack name="Sources" required="no">
+            <description>The sources</description>
+            <file src="src" targetdir="$INSTALL_PATH"/>
+        </pack>
+    </packs>
+    
+</installation>

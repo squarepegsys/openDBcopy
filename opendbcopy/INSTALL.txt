@@ -1,0 +1,37 @@
+HOW TO INSTALL OPENDBCOPY
+*************************
+If you are using JDK 1.4.2 you can directly extract the binary distribution into a local folder.
+
+To run opendbcopy using ANT (see README) enter the following command
+
+USING ANT:
+ant run
+
+USING JAVA directly:
+java opendbcopy.controller.MainController
+
+Please note that the ANT BUILD file contained in this distribution already contains an extra
+JVM parameter to set the maximum memory allocation size higher than the standard. This is 
+required if you want to read and then copy large tables in your database.
+
+If you get exceptions such as cannot load JDBC driver XYZ please ensure that the appropriate 
+JDBC driver is in your environments classpath or within the lib directory of opendbcopy.
+
+
+HOW TO COMPILE OPENDBCOPY
+*************************
+
+In order to compile or to run the application, the Ant build tool is required.
+Ant can be found at: http://jakarta.apache.org. The binaries included in the distribution
+are compile using JDK 1.4.2 (http://java.sun.com).
+
+using ANT:
+ant rebuild (to clean and then compile)
+
+or 
+
+ant compile (to compile)
+
+
+For further ANT Tasks please refer to the ANT BUILD file build.xml.
+

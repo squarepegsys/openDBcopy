@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<plugin-config>
+	<plugin db_mode="dual">
+		<class name="opendbcopy.plugin.standard.copy.CopyMapping" />
+		<description value="Copy Tables according to defined Mapping" />
+		<author name="Anthony Smith" />
+		<conf>
+			<!-- path may be relative or absolute -->
+			<path value="log/" />
+			
+			<file_type value="csv" />
+			
+			<!-- for a tab delimiter enter \n as value -->
+			<delimiter value=";" />
+
+			<log_error value="true" />
+		</conf>
+	</plugin>
+	<plugin db_mode="both">
+		<class name="opendbcopy.plugin.standard.statistics.WriteStatisticsToFile" />
+		<description value="Write Record Statistics to File" />
+		<author name="Anthony Smith" />
+		<conf>
+			<!-- path may be relative or absolute -->
+			<path value="log/" />
+			<file value="statistics" />			
+			<file_type value="csv" />
+			
+			<!-- for a tab delimiter enter \n as value -->
+			<delimiter value=";" />
+		</conf>
+	</plugin>
+	<plugin db_mode="both">
+		<class name="opendbcopy.plugin.standard.statistics.ReadStatistics" />
+		<description value="Count Number of Records" />
+		<author name="Anthony Smith" />
+	</plugin>
+	<plugin db_mode="dual">
+		<class name="opendbcopy.plugin.standard.delete.DeleteDestinationTable" />
+		<description value="Delete all records in destination table(s) that are marked with PROCESS on the Table Mapping tab" />
+		<author name="Anthony Smith" />
+	</plugin>
+	<plugin db_mode="single">
+		<class name="opendbcopy.plugin.standard.dump.DumpToFileDelimited" />
+		<description value="Dump data into file (columns delimited, no string filtering)" />
+		<author name="Anthony Smith" />
+		<conf>
+			<!-- path may be relative or absolute -->
+			<path value="log/" />
+			
+			<file_type value="csv" />
+			
+			<!-- for a tab delimiter enter \n as value -->
+			<delimiter value=";" />
+			
+			<!-- shall the delimiter be placed after or before the data -->
+			<delimiter_position value="after" />
+			<show_header value="true" />
+			<show_null_values value="false" />
+			
+			<!-- depends on your local memory and width of your tables / views you extract  -->
+			<append_file_after_records value="500" />
+		</conf>
+	</plugin>
+	<plugin db_mode="both">
+		<class name="opendbcopy.plugin.standard.script.CreateDataScript" />
+		<description value="Create insert SQL Scripts for selected tables (no string filtering)" />
+		<author name="Anthony Smith" />
+		<conf>
+			<!-- path may be relative or absolute -->
+			<path value="log/" />
+			
+			<!-- qualified table name or not, e.g. catalog.table, schema.table or just table -->
+			<show_qualified_table_name value="true" />
+		</conf>
+	</plugin>
+</plugin-config>

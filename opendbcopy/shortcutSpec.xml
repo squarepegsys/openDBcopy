@@ -1,0 +1,16 @@
+<shortcuts>
+   <programGroup defaultName="opendbcopy" location="applications/startMenu"/>
+   <shortcut
+      name="opendbcopy"
+      target="$INSTALL_PATH\start.bat"
+      commandLine=""
+      workingDirectory="$INSTALL_PATH"
+      description="start opendbcopy"
+      initialState="normal"
+      programGroup="no"
+      desktop="yes"
+      applications="yes"
+      startMenu="no"
+      startup="no">
+   </shortcut>
+</shortcuts>
