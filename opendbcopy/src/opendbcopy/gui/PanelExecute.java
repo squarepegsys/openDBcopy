@@ -22,32 +22,13 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui;
 
-import opendbcopy.config.OperationType;
-import opendbcopy.config.XMLTags;
-
-import opendbcopy.controller.MainController;
-
-import opendbcopy.log4j.gui.TextAreaAppender;
-
-import opendbcopy.plugin.PluginManager;
-
-import opendbcopy.plugin.model.Model;
-
-import org.apache.log4j.Category;
-import org.apache.log4j.PatternLayout;
-import org.apache.log4j.Priority;
-
-import org.jdom.Element;
-
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Rectangle;
 import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Observable;
@@ -61,6 +42,18 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
+
+import opendbcopy.config.OperationType;
+import opendbcopy.config.XMLTags;
+import opendbcopy.controller.MainController;
+import opendbcopy.log4j.gui.TextAreaAppender;
+import opendbcopy.plugin.PluginManager;
+import opendbcopy.plugin.model.Model;
+
+import org.apache.log4j.Category;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.Priority;
+import org.jdom.Element;
 
 
 /**
@@ -88,30 +81,26 @@ public class PanelExecute extends DynamicPanel {
     private JProgressBar     progressBarTable = null;
     private JProgressBar     progressBarRecord = null;
     private JButton          buttonControl = null;
+    private boolean registeredAsObserverOfPluginManager;
 
     /**
      * Creates a new PanelExecute object.
      *
      * @param controller DOCUMENT ME!
-     * @param workingMode DOCUMENT ME!
+     * @param pluginGui DOCUMENT ME!
      * @param registerAsObserver DOCUMENT ME!
      *
      * @throws Exception DOCUMENT ME!
      */
     public PanelExecute(MainController controller,
-                        WorkingMode    workingMode,
+                        PluginGui    workingMode,
                         Boolean        registerAsObserver) throws Exception {
         super(controller, workingMode, registerAsObserver);
-
-        pluginManager     = pm.getPluginManager();
 
         currentModel = super.model;
 
         guiInit();
         retrievePlugins();
-
-        // register this panel as observer of PluginManager
-        pluginManager.registerObserver(this);
     }
 
     /**
@@ -122,36 +111,38 @@ public class PanelExecute extends DynamicPanel {
      */
     public final void update(Observable o,
                              Object     obj) {
-        if (pluginManager.isDone() || pluginManager.isInterrupted() || pluginManager.isExceptionOccured()) {
-            timer.stop();
+    	if (timer != null && timer.isRunning()) {
+            if (pluginManager.isDone() || pluginManager.isInterrupted() || pluginManager.isExceptionOccured()) {
+                timer.stop();
 
-            // retrieve latest progress information
-            if (progressBarTable.getMaximum() < currentModel.getLengthProgressTable()) {
-                progressBarTable.setMaximum(currentModel.getLengthProgressTable());
+                // retrieve latest progress information
+                if (progressBarTable.getMaximum() < currentModel.getLengthProgressTable()) {
+                    progressBarTable.setMaximum(currentModel.getLengthProgressTable());
+                }
+
+                if (progressBarRecord.getMaximum() < currentModel.getLengthProgressRecord()) {
+                    progressBarRecord.setMaximum(currentModel.getLengthProgressRecord());
+                }
+
+                progressBarTable.setValue(currentModel.getCurrentProgressTable());
+                progressBarRecord.setValue(currentModel.getCurrentProgressRecord());
+
+                if ((currentModel.getProgressMessage() != null) && (currentModel.getProgressMessage().length() > 0)) {
+                    progressBarTable.setString(currentModel.getProgressMessage());
+                }
+
+                if (pluginManager.isDone()) {
+                    postMessage(rm.getString("text.execute.done"));
+                    buttonControl.setText(OperationType.EXECUTE);
+                    buttonControl.setActionCommand(OperationType.EXECUTE);
+
+                    // disable text area appender
+                    taa.setEnabled(false);
+                } else if (pluginManager.isInterrupted()) {
+                    postMessage(rm.getString("text.execute.interrupted"));
+                }
             }
-
-            if (progressBarRecord.getMaximum() < currentModel.getLengthProgressRecord()) {
-                progressBarRecord.setMaximum(currentModel.getLengthProgressRecord());
-            }
-
-            progressBarTable.setValue(currentModel.getCurrentProgressTable());
-            progressBarRecord.setValue(currentModel.getCurrentProgressRecord());
-
-            if ((currentModel.getProgressMessage() != null) && (currentModel.getProgressMessage().length() > 0)) {
-                progressBarTable.setString(currentModel.getProgressMessage());
-            }
-
-            if (pluginManager.isDone()) {
-                postMessage(rm.getString("text.execute.done"));
-                buttonControl.setText(OperationType.EXECUTE);
-                buttonControl.setActionCommand(OperationType.EXECUTE);
-
-                // disable text area appender
-                taa.setEnabled(false);
-            } else if (pluginManager.isInterrupted()) {
-                postMessage(rm.getString("text.execute.interrupted"));
-            }
-        }
+    	}
     }
 
     /**
@@ -212,7 +203,7 @@ public class PanelExecute extends DynamicPanel {
         panelControl.add(buttonControl, BorderLayout.EAST);
 
         scrollPane = new JScrollPane(textAreaLog);
-        scrollPane.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.black, 1), " " + rm.getString("text.execute.log") + " "));
+        scrollPane.setBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.black, 1), " " + rm.getString("text.execute.log") + " "));
 
         panelMain.add(scrollPane, BorderLayout.CENTER);
 
@@ -225,7 +216,7 @@ public class PanelExecute extends DynamicPanel {
      * DOCUMENT ME!
      */
     private void retrievePlugins() {
-        availablePluginThreads = workingMode.getAvailablePluginThreads();
+        availablePluginThreads = pluginGui.getAvailablePluginThreads();
 
         Iterator itAvailablePlugins = availablePluginThreads.values().iterator();
 
@@ -263,6 +254,15 @@ public class PanelExecute extends DynamicPanel {
      * @param e DOCUMENT ME!
      */
     void buttonControl_actionPerformed(ActionEvent e) {
+    	
+    	// if openDBcopy is loaded from an existing project the reference to pluginManager cannot be loaded before here
+    	if (pluginManager == null) {
+    		pluginManager     = controller.getProjectManager().getPluginManager();
+
+    		// register this panel as observer of PluginManager
+            pluginManager.registerObserver(this);
+    	}
+
         // Execute
         if (buttonControl.getActionCommand().compareTo(OperationType.EXECUTE) == 0) {
             try {

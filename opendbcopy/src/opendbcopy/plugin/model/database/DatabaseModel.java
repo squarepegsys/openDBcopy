@@ -31,6 +31,8 @@ import opendbcopy.connection.exception.CloseConnectionException;
 import opendbcopy.connection.exception.DriverNotFoundException;
 import opendbcopy.connection.exception.OpenConnectionException;
 
+import opendbcopy.controller.MainController;
+
 import opendbcopy.plugin.model.*;
 import opendbcopy.plugin.model.database.dependency.Dependency;
 import opendbcopy.plugin.model.database.dependency.Mapper;
@@ -80,17 +82,14 @@ public class DatabaseModel extends Model {
     private Element  destinationModel;
     private Element  mapping;
     private Element  filter;
-    private Element  stringFilterTrim;
-    private Element  stringFilterRemoveIntermediateWhitespaces;
-    private Element  stringFilterSetNull;
     private boolean  source_db_connection_successful = false;
     private boolean  destination_db_connection_successful = false;
 
     /**
      * Creates a new DatabasePluginModel object.
      *
+     * @param controller DOCUMENT ME!
      * @param pluginElement DOCUMENT ME!
-     * @param encoding DOCUMENT ME!
      *
      * @throws UnsupportedAttributeValueException DOCUMENT ME!
      * @throws MissingAttributeException DOCUMENT ME!
@@ -98,9 +97,9 @@ public class DatabaseModel extends Model {
      * @throws JDOMException DOCUMENT ME!
      * @throws IOException DOCUMENT ME!
      */
-    public DatabaseModel(Element pluginElement,
-                         String  encoding) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, JDOMException, IOException {
-        super(pluginElement, encoding);
+    public DatabaseModel(MainController controller,
+                         Element        pluginElement) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, JDOMException, IOException {
+        super(controller, pluginElement);
 
         loadExistingElements();
     }
@@ -201,7 +200,7 @@ public class DatabaseModel extends Model {
      * @throws CloseConnectionException DOCUMENT ME!
      * @throws SQLException DOCUMENT ME!
      */
-    private void readDatabaseMetadata() throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, SQLException {
+    public void readDatabaseMetadata() throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, SQLException {
         if (getDbMode() == DUAL_MODE) {
             if ((getSourceConnection().getAttributes().size() > 0) && (getDestinationConnection().getAttributes().size() > 0)) {
                 if ((getSourceMetadata().getChildren().size() == 0) && (getDestinationMetadata().getChildren().size() == 0)) {
@@ -253,7 +252,7 @@ public class DatabaseModel extends Model {
      * @throws UnsupportedAttributeValueException DOCUMENT ME!
      */
     public final int getDbMode() throws MissingElementException, MissingAttributeException, UnsupportedAttributeValueException {
-        if ((sourceDb != null) && (destinationDb != null)) {
+        if (destinationDb != null) {
             return DUAL_MODE;
         } else {
             return SINGLE_MODE;
@@ -1146,7 +1145,14 @@ public class DatabaseModel extends Model {
      * @throws MissingElementException DOCUMENT ME!
      */
     public final Element getStringFilterRemoveIntermediateWhitespaces() throws MissingElementException {
-        return getElement(stringFilterRemoveIntermediateWhitespaces, "stringFilterRemoveIntermediateWhitespaces");
+    	Iterator itStringFilters = getElement(filter, "filter").getChildren(XMLTags.STRING).iterator();
+        while (itStringFilters.hasNext()) {
+        	Element stringFilter = (Element) itStringFilters.next();
+        	if (stringFilter.getAttributeValue(XMLTags.NAME).compareTo(XMLTags.REMOVE_INTERMEDIATE_WHITESPACES) == 0) {
+        		return stringFilter;
+        	}
+        }
+        return null;
     }
 
     /**
@@ -1168,7 +1174,14 @@ public class DatabaseModel extends Model {
      * @throws MissingElementException DOCUMENT ME!
      */
     public final Element getStringFilterSetNull() throws MissingElementException {
-        return getElement(stringFilterSetNull, "stringFilterSetNull");
+    	Iterator itStringFilters = getElement(filter, "filter").getChildren(XMLTags.STRING).iterator();
+        while (itStringFilters.hasNext()) {
+        	Element stringFilter = (Element) itStringFilters.next();
+        	if (stringFilter.getAttributeValue(XMLTags.NAME).compareTo(XMLTags.SET_NULL) == 0) {
+        		return stringFilter;
+        	}
+        }
+        return null;
     }
 
     /**
@@ -1179,7 +1192,14 @@ public class DatabaseModel extends Model {
      * @throws MissingElementException DOCUMENT ME!
      */
     public final Element getStringFilterTrim() throws MissingElementException {
-        return getElement(stringFilterTrim, "stringFilterTrim");
+    	Iterator itStringFilters = getElement(filter, "filter").getChildren(XMLTags.STRING).iterator();
+        while (itStringFilters.hasNext()) {
+        	Element stringFilter = (Element) itStringFilters.next();
+        	if (stringFilter.getAttributeValue(XMLTags.NAME).compareTo(XMLTags.TRIM) == 0) {
+        		return stringFilter;
+        	}
+        }
+        return null;
     }
 
     /**
@@ -1745,14 +1765,7 @@ public class DatabaseModel extends Model {
                 Element table = (Element) itTables.next();
 
                 if (table.getAttributeValue(XMLTags.PROCESS).compareTo("true") == 0) {
-                    // required in case project has not been saved with this tag or is running for first time
-                    if (table.getAttributeValue(XMLTags.PROCESSED) == null) {
-                        table.setAttribute(XMLTags.PROCESSED, "false");
-                    }
-
-                    if (table.getAttributeValue(XMLTags.PROCESSED).compareTo("false") == 0) {
-                        treeMap.put(Integer.valueOf(table.getAttributeValue(XMLTags.PROCESS_ORDER)), table);
-                    }
+                    treeMap.put(Integer.valueOf(table.getAttributeValue(XMLTags.PROCESS_ORDER)), table);
                 }
             }
 
@@ -1764,14 +1777,7 @@ public class DatabaseModel extends Model {
                 Element table = (Element) itTables.next();
 
                 if (table.getAttributeValue(XMLTags.PROCESS).compareTo("true") == 0) {
-                    // required in case project has not been saved with this tag or is running for first time
-                    if (table.getAttributeValue(XMLTags.PROCESSED) == null) {
-                        table.setAttribute(XMLTags.PROCESSED, "false");
-                    }
-
-                    if (table.getAttributeValue(XMLTags.PROCESSED).compareTo("false") == 0) {
-                        treeMap.put(Integer.valueOf(table.getAttributeValue(XMLTags.PROCESS_ORDER)), table);
-                    }
+                    treeMap.put(Integer.valueOf(table.getAttributeValue(XMLTags.PROCESS_ORDER)), table);
                 }
             }
 
@@ -1855,6 +1861,10 @@ public class DatabaseModel extends Model {
 
         if (root.getChild(XMLTags.MAPPING) != null) {
             mapping = root.getChild(XMLTags.MAPPING);
+        }
+
+        if (root.getChild(XMLTags.FILTER) != null) {
+            filter = root.getChild(XMLTags.FILTER);
         }
     }
 }

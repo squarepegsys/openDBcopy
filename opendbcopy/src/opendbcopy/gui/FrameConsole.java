@@ -22,23 +22,13 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui;
 
-import opendbcopy.controller.MainController;
-import opendbcopy.controller.TaskLauncher;
-
-import opendbcopy.io.FileHandling;
-import opendbcopy.io.Reader;
-
-import opendbcopy.resource.ResourceManager;
-
 import java.awt.BorderLayout;
-import java.awt.Color;
+import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
-
 import java.io.File;
 import java.io.IOException;
-
 import java.util.Observable;
 import java.util.Observer;
 
@@ -53,6 +43,12 @@ import javax.swing.JTextArea;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+
+import opendbcopy.controller.MainController;
+import opendbcopy.controller.TaskLauncher;
+import opendbcopy.io.FileHandling;
+import opendbcopy.io.Reader;
+import opendbcopy.resource.ResourceManager;
 
 
 /**
@@ -179,11 +175,11 @@ public class FrameConsole extends JFrame implements Observer {
     private void guiInit() throws Exception {
         this.setTitle(rm.getString("title.controller.console"));
         panelMain = new JPanel(new BorderLayout(20, 20));
-        panelMain.setBackground(Color.WHITE);
+        panelMain.setBackground(SystemColor.WHITE);
 
         // panel info
         panelInfo = new JPanel(new BorderLayout(20, 20));
-        panelInfo.setBackground(Color.WHITE);
+        panelInfo.setBackground(SystemColor.WHITE);
 
         ImageIcon icon = new ImageIcon(pathFilenameLogo);
 
@@ -199,8 +195,8 @@ public class FrameConsole extends JFrame implements Observer {
         textAreaConsoleOutLog.setText(Reader.read(consoleOut).toString());
 
         scrollPaneConsoleOut = new JScrollPane(textAreaConsoleOutLog);
-        scrollPaneConsoleOut.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.black, 1), " " + rm.getString("text.controller.console.log") + " (" + consoleOut.getAbsolutePath() + ") "));
-        scrollPaneConsoleOut.setBackground(Color.WHITE);
+        scrollPaneConsoleOut.setBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.black, 1), " " + rm.getString("text.controller.console.log") + " (" + consoleOut.getAbsolutePath() + ") "));
+        scrollPaneConsoleOut.setBackground(SystemColor.WHITE);
 
         panelMain.setBorder(new EmptyBorder(5, 5, 5, 5));
         panelMain.add(panelInfo, BorderLayout.NORTH);
@@ -240,7 +236,7 @@ public class FrameConsole extends JFrame implements Observer {
                     lastModifiedConsoleOut     = consoleOut.lastModified();
                     lengthConsoleOut           = consoleOut.length();
                     textAreaConsoleOutLog.setText(Reader.read(consoleOut).toString());
-                    textAreaConsoleOutLog.setBackground(Color.WHITE);
+                    textAreaConsoleOutLog.setBackground(SystemColor.WHITE);
                 }
             } catch (IOException e) {
                 // do nothing as it is possible that user deleted log or whatever ...

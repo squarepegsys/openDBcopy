@@ -40,9 +40,13 @@ public class ResourceManager {
      * Creates a new ResourceManager object.
      *
      * @param defaultResourceName DOCUMENT ME!
+     * @param resourceBundleDir DOCUMENT ME!
+     * @param resourceBundleLoadAdditional DOCUMENT ME!
      * @param defaultLanguage DOCUMENT ME!
      */
     public ResourceManager(String defaultResourceName,
+                           String resourceBundleDir,
+                           String resourceBundleLoadAdditional,
                            String defaultLanguage) {
         this.defaultResourceName = defaultResourceName;
 
@@ -51,9 +55,16 @@ public class ResourceManager {
             Locale.setDefault(new Locale(defaultLanguage));
         }
 
-        // add available language packs
-        addResourceBundle(defaultResourceName);
-        addResourceBundle(defaultResourceName + "_de");
+        // load default language resources
+        addResourceBundle(resourceBundleDir + defaultResourceName);
+
+        // add additional language resources
+        StringTokenizer st = new StringTokenizer(resourceBundleLoadAdditional, ",");
+
+        while (st.hasMoreElements()) {
+            String languageAppendix = ((String) st.nextElement()).trim();
+            addResourceBundle(resourceBundleDir + defaultResourceName + "_" + languageAppendix);
+        }
     }
 
     /**

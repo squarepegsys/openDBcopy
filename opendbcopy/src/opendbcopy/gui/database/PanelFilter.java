@@ -22,22 +22,10 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui.database;
 
-import opendbcopy.config.XMLTags;
-
-import opendbcopy.controller.MainController;
-
-import opendbcopy.gui.DynamicPanel;
-import opendbcopy.gui.WorkingMode;
-
-import opendbcopy.plugin.model.database.DatabaseModel;
-
-import org.jdom.Element;
-
-import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.Rectangle;
+import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
-
 import java.util.Iterator;
 import java.util.Observable;
 
@@ -45,6 +33,14 @@ import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
+
+import opendbcopy.config.XMLTags;
+import opendbcopy.controller.MainController;
+import opendbcopy.gui.DynamicPanel;
+import opendbcopy.gui.PluginGui;
+import opendbcopy.plugin.model.database.DatabaseModel;
+
+import org.jdom.Element;
 
 
 /**
@@ -65,13 +61,13 @@ public class PanelFilter extends DynamicPanel {
      * Creates a new PanelConfiguration object.
      *
      * @param controller DOCUMENT ME!
-     * @param workingMode DOCUMENT ME!
+     * @param pluginGui DOCUMENT ME!
      * @param registerAsObserver DOCUMENT ME!
      *
      * @throws Exception DOCUMENT ME!
      */
     public PanelFilter(MainController controller,
-                       WorkingMode    workingMode,
+                       PluginGui    workingMode,
                        Boolean        registerAsObserver) throws Exception {
         super(controller, workingMode, registerAsObserver);
         model = (DatabaseModel) super.model;
@@ -121,7 +117,7 @@ public class PanelFilter extends DynamicPanel {
         gridLayout.setRows(1);
         gridLayout.setVgap(10);
         this.setLayout(gridLayout);
-        panelStringFilter.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(Color.black, 1), " String Filters "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        panelStringFilter.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.BLACK, 1), " String Filters "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
         panelStringFilter.setLayout(null);
 
         checkBoxTrim.setText(rm.getString("text.filter.trim"));

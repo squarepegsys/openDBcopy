@@ -29,6 +29,8 @@ import opendbcopy.plugin.model.exception.MissingAttributeException;
 
 import org.apache.log4j.Level;
 
+import org.jdom.Element;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
@@ -102,15 +104,20 @@ public class PluginScheduler implements Observer {
                             // check if next plugin requires input and if so, get it from previous plugin
                             if (plugin.isInputRequired()) {
                                 if (currentModel.getOutput() != null) {
-                                    plugin.setInput(currentModel.getOutput());
+                                    plugin.setInput((Element) currentModel.getOutput().clone());
                                 } else {
                                     plugin.setProgressMessage("Missing input from previous plugin!");
                                     pluginManager.setExceptionOccured(true);
                                 }
+                            } else {
+                                // if output of previous plugin is not null, pass it to next plugin
+                                if (currentModel.getOutput() != null) {
+                                    plugin.setInput((Element) currentModel.getOutput().clone());
+                                }
                             }
 
                             currentModel = plugin;
-                            pluginManager.incrementCurrentIndex();
+                            pluginManager.incrementCurrentExecuteIndex();
 
                             try {
                                 executePlugin(currentModel);
@@ -177,8 +184,8 @@ public class PluginScheduler implements Observer {
     }
 
     /**
-     * Returns the next PluginModel that wants to be executed. Removes returned PluginModel from list of plugins to execute Registers observer and
-     * sets it as default in PluginManager 2!
+     * Returns the next PluginListModel that wants to be executed. Removes returned PluginListModel from list of plugins to execute Registers
+     * observer and sets it as default in PluginManager 2!
      *
      * @return DOCUMENT ME!
      */
@@ -207,11 +214,29 @@ public class PluginScheduler implements Observer {
      * @throws IllegalAccessException DOCUMENT ME!
      * @throws InstantiationException DOCUMENT ME!
      */
-    protected void executePlugin(Model model) throws MissingAttributeException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, InstantiationException {
+    protected void executeSinglePlugin(Model model) throws MissingAttributeException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, InstantiationException {
         executeSinglePlugin     = true;
 
         currentModel = model;
         currentModel.registerObserver(this);
+
+        currentPluginThread = (DynamicPluginThread) dynamicallyLoadPlugin();
+        currentPluginThread.start();
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param model DOCUMENT ME!
+     *
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws ClassNotFoundException DOCUMENT ME!
+     * @throws InvocationTargetException DOCUMENT ME!
+     * @throws IllegalAccessException DOCUMENT ME!
+     * @throws InstantiationException DOCUMENT ME!
+     */
+    private void executePlugin(Model model) throws MissingAttributeException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, InstantiationException {
+        currentModel     = model;
 
         currentPluginThread = (DynamicPluginThread) dynamicallyLoadPlugin();
         currentPluginThread.start();

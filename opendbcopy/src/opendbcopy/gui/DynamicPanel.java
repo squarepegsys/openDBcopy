@@ -60,7 +60,7 @@ import javax.swing.JPanel;
  */
 public class DynamicPanel extends JPanel implements Observer {
     protected MainController  controller;
-    protected WorkingMode     workingMode;
+    protected PluginGui       pluginGui;
     protected ProjectManager  pm;
     protected ResourceManager rm;
     protected Model           model;
@@ -69,17 +69,17 @@ public class DynamicPanel extends JPanel implements Observer {
      * Creates a new DynamicPanel object.
      *
      * @param controller DOCUMENT ME!
-     * @param workingMode DOCUMENT ME!
+     * @param pluginGui DOCUMENT ME!
      * @param registerAsObserver DOCUMENT ME!
      */
     public DynamicPanel(MainController controller,
-                        WorkingMode    workingMode,
+                        PluginGui      pluginGui,
                         Boolean        registerAsObserver) {
-        this.controller      = controller;
-        this.rm              = controller.getResourceManager();
-        this.pm              = controller.getProjectManager();
-        this.workingMode     = workingMode;
-        this.model           = workingMode.getModel();
+        this.controller     = controller;
+        this.rm             = controller.getResourceManager();
+        this.pm             = controller.getProjectManager();
+        this.pluginGui      = pluginGui;
+        this.model          = pluginGui.getModel();
 
         if (registerAsObserver.booleanValue()) {
             model.registerObserver(this);
@@ -121,7 +121,7 @@ public class DynamicPanel extends JPanel implements Observer {
      */
     protected final void execute(Element operation,
                                  String  messageSuccessful) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, JDOMException, SQLException, IOException, Exception {
-        workingMode.execute(operation, messageSuccessful);
+        pluginGui.execute(operation, messageSuccessful);
     }
 
     /**
@@ -130,7 +130,7 @@ public class DynamicPanel extends JPanel implements Observer {
      * @param message DOCUMENT ME!
      */
     protected final void postMessage(String message) {
-        workingMode.postMessage(message);
+        pluginGui.postMessage(message);
     }
 
     /**
@@ -139,6 +139,6 @@ public class DynamicPanel extends JPanel implements Observer {
      * @param e DOCUMENT ME!
      */
     protected void postException(Exception e) {
-        workingMode.postException(e, Level.ERROR);
+        pluginGui.postException(e, Level.ERROR);
     }
 }

@@ -23,7 +23,6 @@
 package opendbcopy.gui;
 
 import opendbcopy.config.APM;
-import opendbcopy.config.OperationType;
 
 import opendbcopy.connection.exception.CloseConnectionException;
 import opendbcopy.connection.exception.DriverNotFoundException;
@@ -45,15 +44,16 @@ import org.apache.log4j.Logger;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
-import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.SystemColor;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 
+import java.io.File;
 import java.io.IOException;
 
 import java.sql.SQLException;
@@ -63,11 +63,14 @@ import java.util.Observer;
 import java.util.Properties;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
+import javax.swing.JScrollPane;
+import javax.swing.border.TitledBorder;
 
 
 /**
@@ -77,28 +80,28 @@ import javax.swing.JTabbedPane;
  * @version $Revision$
  */
 public class FrameMain extends JFrame implements Observer {
-    private static final ImageIcon openIcon = new ImageIcon("resource/images/Open16.gif");
-    private static final ImageIcon saveAsIcon = new ImageIcon("resource/images/SaveAs16.gif");
-    private static final ImageIcon newIcon = new ImageIcon("resource/images/New16.gif");
-    private static final ImageIcon historyIcon = new ImageIcon("resource/images/History16.gif");
-    private static Logger          logger = Logger.getLogger(FrameMain.class.getName());
-    private static final Dimension SCREEN_SIZE = Toolkit.getDefaultToolkit().getScreenSize();
-    private Menu                   menu;
-    private MainController         controller;
-    private ResourceManager        rm;
-    private ProjectManager         pm;
-    private String                 frameTitle;
-    private String                 newLine;
-    private JPanel                 contentPane;
-    private BorderLayout           borderLayout = new BorderLayout();
-    private JPanel                 panelMain = new JPanel();
-    private GridLayout             gridLayout = new GridLayout();
-    private JTabbedPane            tabPluginModel;
-    private DialogFile             dialogFile;
-    private FramePluginChain       framePluginChain;
-    private FrameShowFile          frameExecutionLog;
-    private int                    frameWidth;
-    private int                    frameHeight;
+    private static final ImageIcon       openIcon = new ImageIcon("resource/images/Open16.gif");
+    private static final ImageIcon       saveAsIcon = new ImageIcon("resource/images/SaveAs16.gif");
+    private static final ImageIcon       newIcon = new ImageIcon("resource/images/New16.gif");
+    private static final ImageIcon       historyIcon = new ImageIcon("resource/images/History16.gif");
+    private static Logger                logger = Logger.getLogger(FrameMain.class.getName());
+    private static final Dimension       SCREEN_SIZE = Toolkit.getDefaultToolkit().getScreenSize();
+    private Menu                         menu;
+    private MainController               controller;
+    private ResourceManager              rm;
+    private ProjectManager               pm;
+    private String                       frameTitle;
+    private String                       newLine;
+    private JPanel                       contentPane;
+    private JPanel                       panelCurrentPluginGui;
+    private TitledBorder                 titledBorderPluginGui;
+    private DialogFile                   dialogFile;
+    private PanelPluginChain             panelPluginChain;
+    private PanelShutdownAfterCompletion panelShutdown;
+    private FrameShowFile                frameExecutionLog;
+    private FrameShowRTF                 frameShowUserManual;
+    private int                          frameWidth;
+    private int                          frameHeight;
 
     /**
      * Creates a new FrameMain object.
@@ -122,18 +125,19 @@ public class FrameMain extends JFrame implements Observer {
         this.dialogFile     = new DialogFile(this);
         this.menu           = new Menu(this, controller, pm);
 
-        contentPane     = (JPanel) this.getContentPane();
-        newLine         = System.getProperty("line.separator");
+        contentPane = (JPanel) this.getContentPane();
 
         try {
             guiInit();
 
-            framePluginChain = new FramePluginChain(this, controller);
-            locateDialogUpperRight(framePluginChain);
-            framePluginChain.show();
-
             frameExecutionLog = new FrameShowFile(controller, 600, 300, controller.getExecutionLogFile(), rm.getString("menu.show.executionLog"));
             locateDialogLowerRight(frameExecutionLog);
+
+            //frameShowUserManual = new FrameShowRTF(controller, 800, 800, new File(controller.getApplicationProperties().getProperty(APM.APPLICATION_WEBSITE_USER_MANUAL)), rm.getString("menu.help.userManual"));
+
+            // i like to be informed about changes
+            controller.getPluginGuiManager().registerObserver(this);
+            controller.getProjectManager().getPluginManager().registerObserver(this);
         } catch (Exception e) {
             postException(e, Level.ERROR);
         }
@@ -147,12 +151,15 @@ public class FrameMain extends JFrame implements Observer {
      */
     public final void update(Observable o,
                              Object     obj) {
-        if (controller.getProjectManager().getCurrentOperation().compareTo(OperationType.IMPORT_PROJECT) == 0) {
-            try {
-                //loadWorkingMode(controller.getProjectManager().getCurrentModel().getWorkingMode());
-            } catch (Exception e) {
-                postException(e, Level.ERROR);
-            }
+        // update plugin gui shown
+        if ((controller.getProjectManager().getPluginManager().getCurrentModel() != null) && (controller.getPluginGuiManager().getCurrentPluginGui() != null)) {
+            panelCurrentPluginGui.removeAll();
+            panelCurrentPluginGui.add(new JScrollPane(controller.getPluginGuiManager().getCurrentPluginGui().getPanelPluginGui(), JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
+            titledBorderPluginGui.setTitle(" " + controller.getPluginGuiManager().getCurrentPluginGui().getTitle() + " ");
+            panelCurrentPluginGui.updateUI();
+        } else {
+            panelCurrentPluginGui.removeAll();
+            titledBorderPluginGui.setTitle(" " + rm.getString("text.pluginChain.noPluginLoadedHelp") + " ");
         }
     }
 
@@ -192,6 +199,7 @@ public class FrameMain extends JFrame implements Observer {
      */
     public final void postMessage(String message) {
         logger.info(message);
+        JOptionPane.showMessageDialog(this, message, "Info", JOptionPane.INFORMATION_MESSAGE);
     }
 
     /**
@@ -219,26 +227,44 @@ public class FrameMain extends JFrame implements Observer {
      * @throws Exception DOCUMENT ME!
      */
     private void guiInit() throws Exception {
+        JPanel panelMain = new JPanel();
+        panelMain.setLayout(new BoxLayout(panelMain, BoxLayout.Y_AXIS));
+        panelMain.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        panelShutdown = new PanelShutdownAfterCompletion(pm, rm);
+        panelShutdown.setPreferredSize(new Dimension(frameWidth, 50));
+        pm.addObserver(panelShutdown);
+
+        panelPluginChain = new PanelPluginChain(this, controller);
+        panelPluginChain.setPreferredSize(new Dimension(frameWidth, 150));
+
+        panelCurrentPluginGui = new JPanel(new GridLayout(1, 1));
+        panelCurrentPluginGui.setPreferredSize(new Dimension(frameWidth, frameHeight));
+
+        if (controller.getPluginGuiManager().getCurrentPluginGui() != null) {
+            titledBorderPluginGui = new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1), " " + controller.getPluginGuiManager().getCurrentPluginGui().getTitle() + " ");
+            panelCurrentPluginGui.setBorder(BorderFactory.createCompoundBorder(titledBorderPluginGui, BorderFactory.createRaisedBevelBorder()));
+            panelCurrentPluginGui.add(new JScrollPane(controller.getPluginGuiManager().getCurrentPluginGui().getPanelPluginGui(), JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
+        } else {
+            titledBorderPluginGui = new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1), " " + rm.getString("text.pluginChain.noPluginLoadedHelp") + " ");
+            panelCurrentPluginGui.setBorder(BorderFactory.createCompoundBorder(titledBorderPluginGui, BorderFactory.createRaisedBevelBorder()));
+        }
+
+        panelMain.add(panelShutdown);
+        panelMain.add(Box.createRigidArea(new Dimension(0, 10)));
+        panelMain.add(panelPluginChain);
+        panelMain.add(Box.createRigidArea(new Dimension(0, 10)));
+        panelMain.add(panelCurrentPluginGui);
+
         JPanel contentPane = (JPanel) this.getContentPane();
+        contentPane.setLayout(new GridLayout(1, 1));
+        contentPane.add(panelMain);
 
-        panelMain.add(controller.getWorkingModeManager().getTabModelsLoaded());
-
-        borderLayout.setHgap(10);
-        borderLayout.setVgap(10);
-
+        // finally
         Properties p = this.controller.getApplicationProperties();
 
         this.frameTitle = p.getProperty(APM.APPLICATION_NAME) + " " + p.getProperty(APM.APPLICATION_VERSION) + " - " + p.getProperty(APM.APPLICATION_COPYRIGHT);
         super.setTitle(this.frameTitle);
-
-        panelMain.setLayout(gridLayout);
-        gridLayout.setColumns(1);
-        gridLayout.setHgap(0);
-        panelMain.setBorder(BorderFactory.createEmptyBorder());
-
-        contentPane.setLayout(borderLayout);
-        contentPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        contentPane.add(panelMain, BorderLayout.CENTER);
 
         this.setJMenuBar(this.menu);
         this.menu.setVisible(true);
@@ -376,10 +402,10 @@ public class FrameMain extends JFrame implements Observer {
     /**
      * DOCUMENT ME!
      *
-     * @return Returns the framePluginChain.
+     * @return Returns the panelPluginChain.
      */
-    public final FramePluginChain getFramePluginChain() {
-        return framePluginChain;
+    public final PanelPluginChain getPanelPluginChain() {
+        return panelPluginChain;
     }
 
     /**
@@ -389,6 +415,15 @@ public class FrameMain extends JFrame implements Observer {
      */
     public final FrameShowFile getFrameExecutionLog() {
         return frameExecutionLog;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the frameShowUserManual.
+     */
+    public final FrameShowRTF getFrameShowUserManual() {
+        return frameShowUserManual;
     }
 }
 

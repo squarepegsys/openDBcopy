@@ -29,7 +29,7 @@ import opendbcopy.config.FileType;
 import opendbcopy.config.OperationType;
 import opendbcopy.controller.MainController;
 import opendbcopy.gui.FrameMain;
-import opendbcopy.gui.WorkingModeManager;
+import opendbcopy.gui.PluginGuiManager;
 import opendbcopy.plugin.ProjectManager;
 
 
@@ -42,7 +42,7 @@ import opendbcopy.plugin.ProjectManager;
 public class Actions implements Observer {
     private FrameMain          parentFrame;
     private MainController     controller;
-    private WorkingModeManager wmm;
+    private PluginGuiManager wmm;
     private ProjectManager     pm;
 
     // project actions
@@ -53,7 +53,6 @@ public class Actions implements Observer {
     // plugin actions
     public SaveFileAction pluginExportAction;
     public OpenFileAction pluginImportAction;
-    public SimpleAction   pluginExecuteAction;
 
     /**
      * Constructor
@@ -67,7 +66,7 @@ public class Actions implements Observer {
                    ProjectManager projectManager) {
         this.parentFrame     = parentFrame;
         this.controller      = controller;
-        this.wmm             = controller.getWorkingModeManager();
+        this.wmm             = controller.getPluginGuiManager();
         this.pm              = projectManager;
 
         // register itself as observer
@@ -83,7 +82,6 @@ public class Actions implements Observer {
         // plugin actions
         pluginExportAction      = new SaveFileAction(OperationType.EXPORT_PLUGIN, controller.getResourceManager().getString("menu.plugin.export"), parentFrame.getSaveAsIcon(), FileType.XML_FILE, controller.getPersonalPluginsDir(), parentFrame, controller);
         pluginImportAction      = new OpenFileAction(OperationType.IMPORT_PLUGIN, controller.getResourceManager().getString("menu.plugin.import"), parentFrame.getOpenIcon(), FileType.XML_FILE, controller.getPersonalPluginsDir(), parentFrame, controller);
-        pluginExecuteAction     = new SimpleAction(OperationType.EXECUTE, controller.getResourceManager().getString("menu.plugin.executePluginChain"), null, parentFrame, controller);
 
         // enable / disable actions
         projectNewAction.setEnabled(true);
@@ -101,16 +99,10 @@ public class Actions implements Observer {
      */
     public void update(Observable o,
                        Object     obj) {
-        if (wmm.getCurrentWorkingMode() != null) {
+        if (wmm.getCurrentPluginGui() != null) {
             pluginExportAction.setEnabled(true);
         } else {
             pluginExportAction.setEnabled(false);
-        }
-
-        if (pm.getPluginManager().getNbrPluginsToExecute() > 0) {
-            pluginExecuteAction.setEnabled(true);
-        } else {
-            pluginExecuteAction.setEnabled(false);
         }
     }
 }

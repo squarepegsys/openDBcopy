@@ -53,6 +53,7 @@ public final class XMLTags {
     public static final String VIEW = "view";
     public static final String COLUMN = "column";
     public static final String STRING = "string";
+    public static final String BOOLEAN = "boolean";
     public static final String EXPORTED_KEY = "exported_key";
     public static final String IMPORTED_KEY = "imported_key";
     public static final String PRIMARY_KEY = "primary_key";
@@ -99,6 +100,12 @@ public final class XMLTags {
     public static final String READ_FOREIGN_KEYS = "read_foreign_keys";
     public static final String READ_INDEXES = "read_indexes";
     public static final String NUMBER = "number";
+    public static final String INOUT = "inout"; // default input / output directory for plugins
+    public static final String REQUIRED = "required";
+    public static final String EDITABLE = "editable";
+    public static final String SHOW_QUALIFIED_TABLE_NAME = "show_qualified_table_name";
+    public static final String UNICODE = "unicode";
+    public static final String SHUTDOWN_ON_COMPLETION = "shutdown_on_completion";
 
     // primary key attributes
     public static final String TABLE_CAT = "table_cat"; // String => table catalog (may be null)
@@ -163,6 +170,8 @@ public final class XMLTags {
     public static final String DIRSET = "dirset";
     public static final String FILESET = "fileset";
     public static final String FILELIST = "filelist";
+    public static final String FILELISTS = "filelists";
+    public static final String FILE_DIR_FILELISTS_SELECTION = "file_dir_filelists_selection";
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
     public static final String DIR = "dir";
@@ -174,6 +183,11 @@ public final class XMLTags {
     public static final String DELETE = "delete";
     public static final String OVERWRITE = "overwrite";
     public static final String UNKNOWN = "unknown";    
+    public static final String INT = "int";
+    public static final String HIBERNATE_DIALECT = "hibernate_dialect";
+    public static final String HIBERNATE_DIALECT_PACKAGE_PREFIX = "net.sf.hibernate.dialect";
+    public static final String HIBERNATE_DIALECT_CLASS_SUFFIX = "Dialect";
+    public static final String PACKAGE_NAME = "package_name";
     
     // application arguments
     public static final String ARGUMENTS = "arguments";
@@ -183,9 +197,8 @@ public final class XMLTags {
     public static final String DRIVERS = "drivers";
     public static final String DEFAULT = "default";
 
-    // Working Mode
-    public static final String WORKING_MODE = "working_mode";
-    public static final String WORKING_MODES = "working_modes";
+    // Plugin Gui
+    public static final String GUI = "gui";
     public static final String DISPLAY_ORDER = "display_order";
     public static final String IDENTIFIER = "identifier";
     public static final String TITLE = "title";

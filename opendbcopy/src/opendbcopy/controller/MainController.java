@@ -23,6 +23,7 @@
 package opendbcopy.controller;
 
 import opendbcopy.config.APM;
+import opendbcopy.config.OperationType;
 import opendbcopy.config.SQLDriverManager;
 import opendbcopy.config.XMLTags;
 
@@ -32,7 +33,7 @@ import opendbcopy.connection.exception.OpenConnectionException;
 
 import opendbcopy.gui.FrameConsole;
 import opendbcopy.gui.FrameMain;
-import opendbcopy.gui.WorkingModeManager;
+import opendbcopy.gui.PluginGuiManager;
 
 import opendbcopy.io.FileHandling;
 import opendbcopy.io.ImportFromXML;
@@ -40,6 +41,7 @@ import opendbcopy.io.PropertiesToFile;
 
 import opendbcopy.plugin.ProjectManager;
 
+import opendbcopy.plugin.model.Model;
 import opendbcopy.plugin.model.exception.MissingAttributeException;
 import opendbcopy.plugin.model.exception.MissingElementException;
 import opendbcopy.plugin.model.exception.PluginException;
@@ -83,30 +85,30 @@ import javax.swing.UIManager;
  * @version $Revision$
  */
 public class MainController {
-    public static final String        fileSep = System.getProperty("file.separator");
-    public static final String        lineSep = System.getProperty("line.separator");
-    private static Logger             logger = Logger.getLogger(MainController.class.getName());
-    private static Properties         applicationProperties;
-    private static File               opendbcopyUserHomeDir;
-    private static File               logDir;
-    private static File               inoutDir;
-    private static File               personalProjectsDir;
-    private static File               personalPluginsDir;
-    private static File               personalConfDir;
-    private static File               personalSQLDriversFile;
-    private static File               executionLogFile;
-    private static String             pathFilenameConsoleOut;
-    private static ProjectManager     pm;
-    private static ResourceManager    rm;
-    private static FrameMain          frameMain;
-    private static FrameConsole       frameConsole;
-    private static WorkingModeManager workingModeManager;
-    private static SQLDriverManager   sqlDriverManager;
-    private static TaskLauncher       taskLauncher;
-    private static HashMap            resourcesDynamicallyLoaded;
-    private static boolean            isGuiEnabled = false;
-    private static int                frameWidth = 0;
-    private static int                frameHeight = 0;
+    public static final String      fileSep = System.getProperty("file.separator");
+    public static final String      lineSep = System.getProperty("line.separator");
+    private static Logger           logger = Logger.getLogger(MainController.class.getName());
+    private static Properties       applicationProperties;
+    private static File             opendbcopyUserHomeDir;
+    private static File             logDir;
+    private static File             inoutDir;
+    private static File             personalProjectsDir;
+    private static File             personalPluginsDir;
+    private static File             personalConfDir;
+    private static File             personalSQLDriversFile;
+    private static File             executionLogFile;
+    private static String           pathFilenameConsoleOut;
+    private static ProjectManager   pm;
+    private static ResourceManager  rm;
+    private static FrameMain        frameMain;
+    private static FrameConsole     frameConsole;
+    private static PluginGuiManager pluginGuiManager;
+    private static SQLDriverManager sqlDriverManager;
+    private static TaskLauncher     taskLauncher;
+    private static HashMap          resourcesDynamicallyLoaded;
+    private static boolean          isGuiEnabled = false;
+    private static int              frameWidth = 0;
+    private static int              frameHeight = 0;
 
     /**
      * default Constructor args may be null or contain parameters
@@ -140,7 +142,6 @@ public class MainController {
         Document project = null;
         Document typeMapping = null;
         Document workingMode = null;
-        Document standardModels = null;
 
         try {
             // set the look and feel. If not existing, set default crossplatform look and feel
@@ -167,13 +168,13 @@ public class MainController {
                 frameHeight     = 650;
             }
 
-            workingModeManager = new WorkingModeManager(this, frameWidth, frameHeight);
+            pluginGuiManager = new PluginGuiManager(this, frameWidth, frameHeight);
         }
 
         addMessage(rm.getString("text.controller.workingModeManagerDone"));
 
         // read drivers file
-        sqlDriverManager = new SQLDriverManager(personalSQLDriversFile, applicationProperties.getProperty(APM.ENCODING));
+        sqlDriverManager = new SQLDriverManager(personalSQLDriversFile);
         addMessage(rm.getString("text.controller.sqlDriversDone"));
 
         // read SQL types mapping
@@ -181,9 +182,9 @@ public class MainController {
         addMessage(rm.getString("text.controller.sqlJavaMappingDone"));
 
         if (project == null) {
-            pm = new ProjectManager(this, typeMapping, standardModels, applicationProperties.getProperty(APM.PLUGINS_DIRECTORY), applicationProperties.getProperty(APM.PLUGINS_CONF_FILE), applicationProperties.getProperty(APM.WORKING_MODE_CONF_FILE), applicationProperties.getProperty(APM.ENCODING));
+            pm = new ProjectManager(this, typeMapping, applicationProperties.getProperty(APM.PLUGINS_DIRECTORY), applicationProperties.getProperty(APM.PLUGINS_CONF_FILE), applicationProperties.getProperty(APM.PLUGINS_GUI_CONF_FILE));
         } else {
-            pm = new ProjectManager(this, typeMapping, standardModels, project, applicationProperties.getProperty(APM.PLUGINS_DIRECTORY), applicationProperties.getProperty(APM.PLUGINS_CONF_FILE), applicationProperties.getProperty(APM.WORKING_MODE_CONF_FILE), applicationProperties.getProperty(APM.ENCODING));
+            pm = new ProjectManager(this, typeMapping, project, applicationProperties.getProperty(APM.PLUGINS_DIRECTORY), applicationProperties.getProperty(APM.PLUGINS_CONF_FILE), applicationProperties.getProperty(APM.PLUGINS_GUI_CONF_FILE));
         }
 
         addMessage(rm.getString("text.controller.readingPluginDone"));
@@ -197,21 +198,21 @@ public class MainController {
             pm.addObserver(frameMain);
 
             // add observer for working mode
-            workingModeManager.registerObserver(frameMain);
+            pluginGuiManager.registerObserver(frameMain);
 
             frameMain.setVisible(true);
         }
 
         // execute project immediately
         if (project != null) {
-            // load project, working mode in gui
-            if (isGuiEnabled()) {
-                if (pm.getCurrentModel().getWorkingMode() != null) {
-                    //frameMain.loadWorkingMode(pm.getCurrentModel().getWorkingMode());
-                }
-            }
-
             Element operation = new Element(XMLTags.OPERATION);
+            operation.setAttribute(XMLTags.NAME, OperationType.EXECUTE);
+
+            try {
+                execute(operation);
+            } catch (Exception e) {
+                postException(e, Level.ERROR);
+            }
         }
     }
 
@@ -225,7 +226,7 @@ public class MainController {
             applicationProperties = loadApplicationProperties();
 
             System.out.println("reading language specific resources");
-            rm = new ResourceManager("resources", applicationProperties.getProperty(APM.LANGUAGE));
+            rm = new ResourceManager(applicationProperties.getProperty(APM.OPENDBCOPY_RESOURCE_NAME), applicationProperties.getProperty(APM.OPENDBCOPY_RESOURCE_BUNDLE_DIR), applicationProperties.getProperty(APM.OPENDBCOPY_RESOURCE_LOAD_ADDITIONAL), applicationProperties.getProperty(APM.LANGUAGE));
 
             setupDirectoriesAndCreateLocalFiles();
             System.out.println(rm.getString("text.controller.checkingDirectoriesDone"));
@@ -262,7 +263,7 @@ public class MainController {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
-            System.exit(0);
+            System.exit(9);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -341,7 +342,7 @@ public class MainController {
             } else if (level.isGreaterOrEqual(Level.ERROR)) {
                 logger.error(e);
             } else if (level.isGreaterOrEqual(Level.WARN)) {
-                logger.error(e);
+                logger.warn(e);
             }
         }
     }
@@ -362,24 +363,24 @@ public class MainController {
     /**
      * DOCUMENT ME!
      *
-     * @param workingModeElement DOCUMENT ME!
+     * @param pluginGuiElement DOCUMENT ME!
      * @param pluginElement DOCUMENT ME!
      *
      * @throws UnsupportedAttributeValueException DOCUMENT ME!
      * @throws MissingAttributeException DOCUMENT ME!
      * @throws MissingElementException DOCUMENT ME!
      */
-    public final void addWorkingModeForPlugin(Element workingModeElement,
-                                              Element pluginElement) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException {
+    public final void addPluginGuiForPlugin(Element pluginGuiElement,
+                                            Element pluginElement) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException {
         if (isGuiEnabled()) {
-            workingModeManager.addWorkingMode(workingModeElement, pluginElement);
+            pluginGuiManager.addPluginGui(pluginGuiElement, pluginElement);
         }
     }
 
     /**
      * DOCUMENT ME!
      *
-     * @param workingModeIdentifier DOCUMENT ME!
+     * @param pluginIdentifier DOCUMENT ME!
      * @param isExecutableModel DOCUMENT ME!
      *
      * @throws MissingAttributeException DOCUMENT ME!
@@ -390,10 +391,41 @@ public class MainController {
      * @throws IllegalAccessException DOCUMENT ME!
      * @throws PluginException DOCUMENT ME!
      */
-    public final void loadWorkingModeForPlugin(String  workingModeIdentifier,
-                                               boolean isExecutableModel) throws MissingAttributeException, MissingElementException, ClassNotFoundException, InstantiationException, InvocationTargetException, IllegalAccessException, PluginException {
+    public final void loadPluginGuiForPlugin(String  pluginIdentifier,
+                                             boolean isExecutableModel) throws MissingAttributeException, MissingElementException, ClassNotFoundException, InstantiationException, InvocationTargetException, IllegalAccessException, PluginException {
         if (isGuiEnabled()) {
-            workingModeManager.loadWorkingMode(workingModeIdentifier, isExecutableModel);
+            pluginGuiManager.loadPluginGui(pluginIdentifier, isExecutableModel);
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param model DOCUMENT ME!
+     * @param modelToExecute DOCUMENT ME!
+     *
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws ClassNotFoundException DOCUMENT ME!
+     * @throws InstantiationException DOCUMENT ME!
+     * @throws InvocationTargetException DOCUMENT ME!
+     * @throws IllegalAccessException DOCUMENT ME!
+     * @throws PluginException DOCUMENT ME!
+     */
+    public final void loadPluginGuiFromModel(Model   model,
+                                             boolean modelToExecute) throws MissingAttributeException, MissingElementException, ClassNotFoundException, InstantiationException, InvocationTargetException, IllegalAccessException, PluginException {
+        if (isGuiEnabled()) {
+            pluginGuiManager.loadPluginGuiFromModel(model, modelToExecute);
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
+    public final void shutdownOpendbcopy() {
+        if (!isGuiEnabled()) {
+            logger.info(rm.getString("text.controller.shutdown"));
+            System.exit(0);
         }
     }
 
@@ -520,6 +552,15 @@ public class MainController {
      *
      * @return DOCUMENT ME!
      */
+    public static final String getEncoding() {
+        return applicationProperties.getProperty(APM.ENCODING);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     */
     public final FrameMain getFrame() {
         return frameMain;
     }
@@ -555,10 +596,10 @@ public class MainController {
     /**
      * DOCUMENT ME!
      *
-     * @return Returns the workingModeManager.
+     * @return Returns the pluginGuiManager.
      */
-    public WorkingModeManager getWorkingModeManager() {
-        return workingModeManager;
+    public PluginGuiManager getPluginGuiManager() {
+        return pluginGuiManager;
     }
 
     /**
@@ -663,5 +704,32 @@ public class MainController {
      */
     public final File getExecutionLogFile() {
         return executionLogFile;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the inoutDir.
+     */
+    public final File getInoutDir() {
+        return inoutDir;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the fileSep.
+     */
+    public final String getFileSep() {
+        return fileSep;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the lineSep.
+     */
+    public final String getLineSep() {
+        return lineSep;
     }
 }

@@ -26,7 +26,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
 import java.util.Properties;
 
 
@@ -54,6 +53,7 @@ public final class PropertiesToFile {
             throw new IllegalArgumentException("missing Properties or fileName to export");
         }
 
+        
         File             outputFile = new File(fileName);
         FileOutputStream myFileOutputStream = new FileOutputStream(outputFile);
         p.store(myFileOutputStream, null);

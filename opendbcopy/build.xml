@@ -6,37 +6,28 @@
 
 <project name="opendbcopy" default="deployjar2plugins" basedir=".">
 
+	<property file="build.properties"/>
+
    	<property name="basedir" value="."/>
-   	<property name="build.compiler" value="modern"/>
-   	<property name="build.sysclasspath" value="ignore"/>
 
-   	<property name="name" value="opendbcopy"/>
-   	<property name="version" value="0.50"/>
-
-   	<property name="sources.dir" value="${basedir}/src"/>
-   	<property name="lib.dir" value="${basedir}/lib"/>
-   	<property name="log.dir" value="${basedir}/log"/>
    	<property name="hbm.dir" value="${basedir}/hbm"/>
-   	<property name="dist.dir" value="${basedir}/dist"/>
-   	<property name="build.dir" value="${basedir}/classes"/>
-   	<property name="javadoc.dir" value="${basedir}/apidocs"/>
-
-   	<property name="packages" value="opendbcopy.*"/>
-   
 
    	<!-- ============================================================= -->
    	<!-- Classpath with libraries needed to compile this application   -->
    	<!-- ============================================================= -->
-   	<path id="opendbcopy.classpath">
-      	<fileset dir="${lib.dir}">
+   	<path id="build.classpath">
+      	<fileset dir="${build.dir}">
          	<include name="**/*.zip"/>
          	<include name="**/*.jar"/>
+         	<include name="**/*.properties"/>
       	</fileset>
    	</path>
 
-   	<path id="hibernate.classpath">
-      	<fileset dir="${hbm.dir}/classes">
-         	<include name="**/*.class"/>
+   	<path id="lib.classpath">
+      	<fileset dir="${lib.dir}">
+         	<include name="**/*.zip"/>
+         	<include name="**/*.jar"/>
+         	<include name="**/*.properties"/>
       	</fileset>
    	</path>
 
@@ -47,24 +38,23 @@
       	<mkdir dir="${build.dir}"/>
       	<mkdir dir="${lib.dir}"/>
       	<mkdir dir="${dist.dir}"/>
-      	<mkdir dir="${log.dir}"/>
-   	</target>
-
-   	<target name="preparehbm">
-      	<mkdir dir="${hbm.dir}"/>
-      	<mkdir dir="${hbm.dir}/src"/>
-      	<mkdir dir="${hbm.dir}/classes"/>
    	</target>
 
    	<!-- ============================================================= -->
    	<!-- Compiles the source code                                      -->
    	<!-- ============================================================= -->
    	<target name="compile" depends="prepare">
+   		<!-- copy resource dir into build dir -->
+	   	<copy todir="${build.dir}/resource">
+    		<fileset dir="${resource.dir}"/>
+		</copy>
+   	
     	<javac srcdir="${sources.dir}"
          	destdir="${build.dir}"
          	debug="on"
          	optimize="on">
-         	<classpath refid="opendbcopy.classpath"/>
+         	<classpath refid="build.classpath"/>
+         	<classpath refid="lib.classpath"/>
       	</javac>
    	</target>
 
@@ -73,15 +63,11 @@
    	<!-- ============================================================= -->
    	<target name="clean">
       	<delete quiet="true" dir="${build.dir}"/>
-   	</target>
-   	
-   	<target name="cleanhbm" depends="preparehbm">
-      	<delete quiet="true">
-           	<fileset dir="${hbm.dir}">
-               <include name="**/*.java"/>
-               <include name="**/*.class"/>
-           </fileset>
-      	</delete>
+      	
+      	<!-- delete standard jars in plugin directories -->
+      	<delete>
+		    <fileset dir="plugins" includes="**/opendbcopy.jar, **/jdom.jar, **/log4j-1.2.8.jar, **/commons-lang-2.0.jar, **/xerces.jar"/>
+		</delete>
    	</target>
 
    	<!-- ============================================================= -->
@@ -95,8 +81,8 @@
    	<!-- ============================================================= -->
    	<!-- Create the jar file                                           -->
    	<!-- ============================================================= -->
-   	<target name="jar" depends="compile">
-      	<jar jarfile="${lib.dir}/${name}.jar">
+   	<target name="jar" depends="rebuild">
+      	<jar jarfile="${lib.dir}/${application.jar}">
          	<fileset dir="${build.dir}"/>
       	</jar>
    	</target>
@@ -105,32 +91,30 @@
    	<!-- Create the zip file                                           -->
    	<!-- ============================================================= -->
    	<target name="zip">
-      	<zip zipfile="opendbcopy.zip" basedir="."/>
+      	<zip zipfile="${application.zip}" basedir="."/>
    	</target>
    
 	<target name="deployjar2plugins" depends="jar">
-   		<copy file="${lib.dir}/${name}.jar" todir="../opendbcopy-plugins/opendbcopy.copy/lib"/>
-   		<copy file="${lib.dir}/${name}.jar" todir="../opendbcopy-plugins/opendbcopy.delete/lib"/>
-   		<copy file="${lib.dir}/${name}.jar" todir="../opendbcopy-plugins/opendbcopy.dump/lib"/>
-   		<copy file="${lib.dir}/${name}.jar" todir="../opendbcopy-plugins/opendbcopy.schemageneration/lib"/>
-   		<copy file="${lib.dir}/${name}.jar" todir="../opendbcopy-plugins/opendbcopy.script/lib"/>
-   		<copy file="${lib.dir}/${name}.jar" todir="../opendbcopy-plugins/opendbcopy.statistics/lib"/>
-   		<copy file="${lib.dir}/${name}.jar" todir="../opendbcopy-plugins/opendbcopy.zip/lib"/>
+   		<copy file="${lib.dir}/${application.jar}" todir="../opendbcopy-plugins/opendbcopy.copy/lib"/>
+   		<copy file="${lib.dir}/${application.jar}" todir="../opendbcopy-plugins/opendbcopy.delete/lib"/>
+   		<copy file="${lib.dir}/${application.jar}" todir="../opendbcopy-plugins/opendbcopy.dump/lib"/>
+   		<copy file="${lib.dir}/${application.jar}" todir="../opendbcopy-plugins/opendbcopy.schemageneration/lib"/>
+   		<copy file="${lib.dir}/${application.jar}" todir="../opendbcopy-plugins/opendbcopy.script/lib"/>
+   		<copy file="${lib.dir}/${application.jar}" todir="../opendbcopy-plugins/opendbcopy.statistics/lib"/>
+   		<copy file="${lib.dir}/${application.jar}" todir="../opendbcopy-plugins/opendbcopy.zip/lib"/>
+   		<copy file="${lib.dir}/${application.jar}" todir="../opendbcopy-plugins/opendbcopy.jsch/lib"/>
    	</target>
    
 	<!-- ============================================================= -->
    	<!-- Execute opendbcopy                                      	    -->
    	<!-- ============================================================= -->
-   	<target name="run" depends="compile">
+   	<target name="run">
       	<java classname="opendbcopy.controller.MainController" fork="true">
          	<sysproperty key="ant_opts" value="mx512m"/>
          	<classpath>
+         		<path refid="build.classpath" />
+         		<path refid="lib.classpath" />
             	<pathelement location="./"/>
-            	<pathelement location="${build.dir}"/>
-            	<fileset dir="${lib.dir}">
-               		<include name="**/*.jar"/>
-			   		<include name="**/*.zip"/>
-            	</fileset>
          	</classpath>
       	</java>
    	</target>
@@ -143,13 +127,9 @@
 		<taskdef name="izpack" classpath="${basedir}/tools/IzPack/lib/compiler.jar"
 			classname="com.izforge.izpack.ant.IzPackTask"/>	
 		
-		<!-- as there may be test files in log.dir which should not be in distribution -->
-		<delete quiet="true" dir="${log.dir}"/>
-		<mkdir dir="${log.dir}"/>
-		
-		<izpack input="install.xml"
-			output="${dist.dir}/${name}-${version}-install.jar"
-			installerType="standard-kunststoff"
+		<izpack input="${install.file}"
+			output="${dist.dir}/${installable.jar}"
+			installerType="${install.type}"
 			basedir="${basedir}"
 			izPackDir="${basedir}/tools/IzPack"/>		
 		<echo>Please ensure that maven generated site documentation before installer and</echo>
@@ -166,9 +146,9 @@
          	destdir="${javadoc.dir}"
          	author="true"
          	version="true"
-         	windowtitle="opendbcopy API"
-         	doctitle="opendbcopy"
-         	bottom="Copyright &#169; 2004 by Anthony Smith, Puzzle ITC GmbH"
+         	windowtitle="${application.name}-${application.version} API"
+         	doctitle="${application.name}-${application.version}"
+         	bottom="${application.copyright}"
         />
    </target>
    
@@ -185,9 +165,9 @@
 		<property name="checkstyle.report.file" location="${checkstyle.data.dir}/checkstyle.html"/>
 		<property name="checkstyle.xsl.file" location="${checkstyle.dir}/contrib/checkstyle-noframes.xsl"/>
         <mkdir dir="${checkstyle.data.dir}"/>
-		<taskdef resource="checkstyletask.properties" classpath="${checkstyle.dir}/checkstyle-all-3.1.jar"/>
+		<taskdef resource="checkstyletask.properties" classpath="${checkstyle.dir}/${checkstyle.jar}"/>
 		<checkstyle
-			config="${checkstyle.dir}/check_config.xml" 
+			config="${checkstyle.dir}/${checkstyle.file}" 
 			failOnViolation="false"
 			failureProperty="checkstyle.failure">
             <fileset dir="src">
@@ -200,97 +180,4 @@
 		</checkstyle>
         <xslt in="${checkstyle.data.file}" out="${checkstyle.report.file}" style="${checkstyle.xsl.file}"/>
 	</target>
-
-   	<target name="hbm2java" depends="cleanhbm">        
-        <taskdef name="hbm2java"
-            classname="net.sf.hibernate.tool.hbm2java.Hbm2JavaTask">
-            <classpath>
-                <path refid="opendbcopy.classpath" />
-                <path refid="hibernate.classpath" />                
-            </classpath>
-		</taskdef>            
-      
-        <hbm2java 
-    	    output="${hbm.dir}/src">
-           	<fileset dir="${hbm.dir}">
-               <include name="**/*.hbm.xml"/>
-           </fileset>
-        </hbm2java>
-        
-        <!-- compile classes -->
-        <javac srcdir="${hbm.dir}/src"
-         	destdir="${hbm.dir}/classes"
-         	debug="on"
-         	optimize="on">
-         	<classpath>
-                <path refid="opendbcopy.classpath" />
-                <path refid="hibernate.classpath" />                
-            </classpath>
-      	</javac>
-      	
-      	<!-- generate jar file of classes and copy it to standard build dir -->
-      	<jar jarfile="${lib.dir}/schema.jar">
-         	<fileset dir="${hbm.dir}/classes"/>
-      	</jar>     	
-        
-    </target>
-   
-   <target name="schema-create" depends="hbm2java">        
-        <taskdef name="schema-create"
-            classname="net.sf.hibernate.tool.hbm2ddl.SchemaExportTask">
-            <classpath>
-                <path refid="opendbcopy.classpath" />
-            </classpath>
-		</taskdef>            
-      
-        <schema-create 
-        	properties="${hbm.dir}/hibernate.properties"
-        	quiet="no" 
-	        text="no" 
-    	    drop="no"
-    	    delimiter=";" 
-    	    output="${hbm.dir}/schema-export.sql">
-           	<fileset dir="${hbm.dir}">
-               <include name="**/*.hbm.xml"/>
-	        </fileset>
-        </schema-create>
-    </target>
-        
-	<target name="schema-update" depends="hbm2java">
-	    <taskdef name="schema-update"
-	        classname="net.sf.hibernate.tool.hbm2ddl.SchemaUpdateTask">
-            <classpath>
-                <path refid="opendbcopy.classpath" />
-                <path refid="hibernate.classpath" />                
-            </classpath>
-		</taskdef>            
-	    
-	    <schema-update
-        	properties="${hbm.dir}/hibernate.properties"
-	        quiet="no">
-           	<fileset dir="${hbm.dir}">
-               <include name="**/*.hbm.xml"/>
-           </fileset>
-	    </schema-update>
-	</target>        
-
-   <target name="schema-drop" depends="hbm2java">        
-        <taskdef name="schemaexport"
-            classname="net.sf.hibernate.tool.hbm2ddl.SchemaExportTask">
-            <classpath>
-                <path refid="opendbcopy.classpath" />
-                <path refid="hibernate.classpath" />                
-            </classpath>
-		</taskdef>            
-      
-        <schemaexport 
-        	properties="${hbm.dir}/hibernate.properties"
-        	quiet="no" 
-	        text="no" 
-    	    drop="yes">
-           	<fileset dir="${log.dir}">
-               <include name="**/*.hbm.xml"/>
-           </fileset>
-        </schemaexport>
-    </target>
 </project>

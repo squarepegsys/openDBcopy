@@ -8,7 +8,7 @@
 
     <info>
         <appname>opendbcopy</appname>
-        <appversion>0.50</appversion>
+        <appversion>0.5alpha</appversion>
         <authors>
             <author name="Anthony Smith" email="smith@puzzle.ch"/>
         </authors>
@@ -53,7 +53,7 @@
     
     <packs>
         <pack name="Base" required="yes" preselected="yes">
-            <description>Opendbcopy</description>
+            <description>Opendbcopy 0.5 including Plugin Binaries as is</description>
             <file src="README" targetdir="$INSTALL_PATH"/>
             <file src="COPYING" targetdir="$INSTALL_PATH"/>
             <file src="NEWS" targetdir="$INSTALL_PATH"/>
@@ -68,16 +68,16 @@
             <file src="lib/jdom.jar" targetdir="$INSTALL_PATH/lib"/>
             <file src="lib/xerces.jar" targetdir="$INSTALL_PATH/lib"/>
             <file src="lib/log4j-1.2.8.jar" targetdir="$INSTALL_PATH/lib"/>
-	    <file src="lib/commons-lang-2.0.jar" targetdir="$INSTALL_PATH/lib"/>
+			<file src="lib/commons-lang-2.0.jar" targetdir="$INSTALL_PATH/lib"/>
         </pack>
 
         <pack name="Documentation" required="no" preselected="yes">
-            <description>The complete documentation (see http://opendbcopy.sourceforge.net/</description>
+            <description>NOTE Version 0.41 The complete documentation (see http://opendbcopy.sourceforge.net/)</description>
             <file src="docs" targetdir="$INSTALL_PATH"/>
         </pack>
 
         <pack name="Sources" required="no" preselected="no">
-            <description>Source Codes (for developers only)</description>
+            <description>0.5 Source Codes (for developers only)</description>
             <file src="src" targetdir="$INSTALL_PATH"/>
             <file src=".project" targetdir="$INSTALL_PATH"/>
             <file src=".classpath" targetdir="$INSTALL_PATH"/>
@@ -86,7 +86,7 @@
         </pack>
 
         <pack name="API Docs" required="no" preselected="no">
-            <description>API Docs (for developers only)</description>
+            <description>0.5 API Docs (for developers only)</description>
             <file src="apidocs" targetdir="$INSTALL_PATH"/>
         </pack>
     </packs>

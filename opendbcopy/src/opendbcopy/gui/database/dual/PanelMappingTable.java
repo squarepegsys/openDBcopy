@@ -27,7 +27,7 @@ import opendbcopy.config.XMLTags;
 import opendbcopy.controller.MainController;
 
 import opendbcopy.gui.DynamicPanel;
-import opendbcopy.gui.WorkingMode;
+import opendbcopy.gui.PluginGui;
 
 import opendbcopy.plugin.model.database.DatabaseModel;
 import opendbcopy.plugin.model.exception.MissingElementException;
@@ -65,7 +65,7 @@ import javax.swing.table.TableColumn;
  * @version $Revision$
  */
 public class PanelMappingTable extends DynamicPanel {
-    private DatabaseModel     model;
+	private DatabaseModel model;
     private Object[][]        dataMapping;
     private Object[][]        dataProcess;
     private RowEditorModel    rowModel;
@@ -91,18 +91,14 @@ public class PanelMappingTable extends DynamicPanel {
      * Creates a new PanelMappingTable object.
      *
      * @param controller DOCUMENT ME!
-     * @param workingMode DOCUMENT ME!
-     * @param registerAsObserver DOCUMENT ME!
      *
-     * @throws MissingElementException DOCUMENT ME!
+     * @throws Exception DOCUMENT ME!
      */
-    public PanelMappingTable(MainController controller,
-                             WorkingMode    workingMode,
-                             Boolean        registerAsObserver) throws MissingElementException {
+    public PanelMappingTable(MainController controller, PluginGui workingMode, Boolean registerAsObserver) throws MissingElementException {
         super(controller, workingMode, registerAsObserver);
-
-        model     = (DatabaseModel) super.model;
-
+        
+        model = (DatabaseModel) super.model;
+        
         rowModel = new RowEditorModel();
         guiInit();
     }
@@ -135,12 +131,13 @@ public class PanelMappingTable extends DynamicPanel {
      */
     public final void initTable() throws MissingElementException {
         if (model.isMappingSetup()) {
-            // means tables have already been loaded once
-            if (panelTables != null) {
-                scrollPane.removeAll();
-                panelMain.remove(scrollPane);
-            }
-
+        	
+        	// means tables have already been loaded once
+        	if (panelTables != null) {
+        		scrollPane.removeAll();
+        		panelMain.remove(scrollPane);
+        	}
+        	
             mappingTableModel     = new MappingTableModel();
             processTableModel     = new ProcessTableModel();
 
@@ -170,14 +167,14 @@ public class PanelMappingTable extends DynamicPanel {
             panelTables.add(panelProcessTable, BorderLayout.EAST);
 
             scrollPane = new JScrollPane(panelTables);
-
+            
             panelMain.add(scrollPane, BorderLayout.CENTER);
-
+            
             buttonSelect.setEnabled(true);
-
+            
             panelMain.updateUI();
         } else {
-            buttonSelect.setEnabled(false);
+        	buttonSelect.setEnabled(false);
         }
     }
 

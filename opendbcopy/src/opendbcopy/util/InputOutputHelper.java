@@ -48,7 +48,7 @@ public final class InputOutputHelper {
     /**
      * DOCUMENT ME!
      *
-     * @param file may be a single file or directory. If it is a directory, all files  and only files within this directory are returned inside the
+     * @param file may be a single file or directory. If it is a directory, all files and only files within this directory are returned inside the
      *        filelist element
      * @param identifier DOCUMENT ME!
      *
@@ -56,14 +56,14 @@ public final class InputOutputHelper {
      *
      * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public static Element createFileList(File   file,
-                                         String identifier) {
+    public static Element createFileListElement(File   file,
+                                                String identifier) {
         if (file == null) {
             throw new IllegalArgumentException("Missing file or directory");
         }
 
         if (file.isDirectory()) {
-            return createFileList(file.listFiles(), identifier);
+            return createFileListElement(file.listFiles(), identifier);
         } else {
             Element filelist = new Element(XMLTags.FILELIST);
 
@@ -83,6 +83,46 @@ public final class InputOutputHelper {
     /**
      * DOCUMENT ME!
      *
+     * @param file DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     */
+    public static Element createFileElement(File file) {
+        if (file == null) {
+            throw new IllegalArgumentException("Missing file");
+        }
+
+        Element fileElement = new Element(XMLTags.FILE);
+        fileElement.setAttribute(XMLTags.VALUE, file.getAbsolutePath());
+
+        return fileElement;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param file DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     */
+    public static Element createDirElement(File file) {
+        if (file == null) {
+            throw new IllegalArgumentException("Missing directory");
+        }
+
+        Element fileElement = new Element(XMLTags.DIR);
+        fileElement.setAttribute(XMLTags.VALUE, file.getAbsolutePath());
+
+        return fileElement;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
      * @param files DOCUMENT ME!
      * @param identifier DOCUMENT ME!
      *
@@ -90,8 +130,8 @@ public final class InputOutputHelper {
      *
      * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public static Element createFileList(File[] files,
-                                         String identifier) {
+    public static Element createFileListElement(File[] files,
+                                                String identifier) {
         if ((files == null) || (files.length == 0)) {
             throw new IllegalArgumentException("Missing files / directories");
         }
@@ -156,6 +196,35 @@ public final class InputOutputHelper {
     }
 
     /**
+     * Given a file or dir element retrieves the File which can be a file or directory. If file does not exist a FileNotFoundException is thrown
+     *
+     * @param file DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws FileNotFoundException DOCUMENT ME!
+     */
+    public static File getFile(Element file) throws MissingAttributeException, MissingElementException, FileNotFoundException {
+        if (file == null) {
+            throw new MissingElementException(new Element(XMLTags.FILE), XMLTags.FILE);
+        }
+
+        if (file.getAttributeValue(XMLTags.VALUE) == null) {
+            throw new MissingAttributeException(file, XMLTags.VALUE);
+        }
+
+        File realFile = new File(file.getAttributeValue(XMLTags.VALUE));
+
+        if (realFile.exists()) {
+            return realFile;
+        } else {
+            throw new FileNotFoundException("File " + realFile.getAbsolutePath() + " does not exist");
+        }
+    }
+
+    /**
      * Returns String array containing absolute path and file names
      *
      * @param files DOCUMENT ME!
@@ -176,6 +245,23 @@ public final class InputOutputHelper {
         }
 
         return (String[]) fileNames.toArray();
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param file DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     */
+    public static String getFilePathName(File file) {
+        if (file == null) {
+            throw new IllegalArgumentException("Missing file");
+        }
+
+        return file.getAbsolutePath();
     }
 
     /**

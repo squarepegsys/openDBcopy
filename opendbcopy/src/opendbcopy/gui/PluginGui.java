@@ -76,8 +76,8 @@ import javax.swing.JTextArea;
  * @author Anthony Smith
  * @version $Revision$
  */
-public class WorkingMode {
-    private static Logger   logger = Logger.getLogger(WorkingMode.class.getName());
+public class PluginGui {
+    private static Logger   logger = Logger.getLogger(PluginGui.class.getName());
     private MainController  controller;
     private ResourceManager rm;
     private PluginManager   pluginManager;
@@ -91,7 +91,7 @@ public class WorkingMode {
     private Vector          panelsMetadata;
     private Vector          panels;
     private JTabbedPane     tab;
-    private JPanel          panelMain;
+    private JPanel          panelPluginGui;
     private JPanel          panelControl;
     private JTextArea       statusBar;
     private JButton         buttonNext;
@@ -100,30 +100,30 @@ public class WorkingMode {
      * Creates a new Mode object.
      *
      * @param controller DOCUMENT ME!
-     * @param workingModeElement DOCUMENT ME!
+     * @param pluginGuiElement DOCUMENT ME!
      * @param pluginElement DOCUMENT ME!
      *
      * @throws MissingAttributeException DOCUMENT ME!
      * @throws MissingElementException DOCUMENT ME!
      * @throws IllegalArgumentException DOCUMENT ME!
      */
-    WorkingMode(MainController controller,
-                Element        workingModeElement,
-                Element        pluginElement) throws MissingAttributeException, MissingElementException {
+    PluginGui(MainController controller,
+              Element        pluginGuiElement,
+              Element        pluginElement) throws MissingAttributeException, MissingElementException {
         if (controller == null) {
             throw new IllegalArgumentException("Missing controller");
         }
 
-        if (workingModeElement == null) {
-            throw new IllegalArgumentException("Missing workingModeElement");
+        if (pluginGuiElement == null) {
+            throw new IllegalArgumentException("Missing pluginGuiElement");
         }
 
         if (pluginElement == null) {
             throw new IllegalArgumentException("Missing pluginElement");
         }
 
-        if ((workingModeElement.getAttributeValue(XMLTags.IDENTIFIER) != null) && (workingModeElement.getAttributeValue(XMLTags.IDENTIFIER).length() == 0)) {
-            throw new MissingAttributeException(workingModeElement, XMLTags.IDENTIFIER);
+        if ((pluginGuiElement.getAttributeValue(XMLTags.IDENTIFIER) != null) && (pluginGuiElement.getAttributeValue(XMLTags.IDENTIFIER).length() == 0)) {
+            throw new MissingAttributeException(pluginGuiElement, XMLTags.IDENTIFIER);
         }
 
         this.controller        = controller;
@@ -132,22 +132,22 @@ public class WorkingMode {
 
         availablePluginThreads     = new HashMap();
 
-        identifier = workingModeElement.getAttributeValue(XMLTags.IDENTIFIER);
+        identifier = pluginGuiElement.getAttributeValue(XMLTags.IDENTIFIER);
 
-        if (workingModeElement.getChild(XMLTags.TITLE) == null) {
-            throw new MissingElementException(workingModeElement, XMLTags.TITLE);
+        if (pluginGuiElement.getChild(XMLTags.TITLE) == null) {
+            throw new MissingElementException(pluginGuiElement, XMLTags.TITLE);
         }
 
-        title = workingModeElement.getChild(XMLTags.TITLE).getAttributeValue(XMLTags.VALUE);
+        title = pluginGuiElement.getChild(XMLTags.TITLE).getAttributeValue(XMLTags.VALUE);
 
         if (title == null) {
-            throw new MissingAttributeException(workingModeElement.getChild(XMLTags.TITLE), XMLTags.VALUE);
+            throw new MissingAttributeException(pluginGuiElement.getChild(XMLTags.TITLE), XMLTags.VALUE);
         } else {
             title = rm.getString(title);
         }
 
         loadPlugins(pluginElement);
-        loadPanels(workingModeElement);
+        loadPanels(pluginGuiElement);
     }
 
     /**
@@ -171,8 +171,8 @@ public class WorkingMode {
                              int   height) throws MissingAttributeException, ClassNotFoundException, InstantiationException, InvocationTargetException, IllegalAccessException, PluginException {
         this.model     = model;
 
-        panelMain        = new JPanel(new BorderLayout());
-        panelControl     = new JPanel(new BorderLayout(10, 10));
+        panelPluginGui     = new JPanel(new BorderLayout());
+        panelControl       = new JPanel(new BorderLayout(10, 10));
 
         statusBar = new JTextArea();
         statusBar.setEditable(false);
@@ -183,8 +183,8 @@ public class WorkingMode {
         buttonNext.addActionListener(new WorkingMode_buttonNext_actionAdapter(this));
 
         panelControl.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 10));
-        panelControl.setMinimumSize(new Dimension(600, 60));
-        panelControl.setPreferredSize(new Dimension(600, 60));
+        panelControl.setMinimumSize(new Dimension(600, 40));
+        panelControl.setPreferredSize(new Dimension(600, 45));
 
         panelControl.add(statusBar, BorderLayout.CENTER);
         panelControl.add(buttonNext, BorderLayout.EAST);
@@ -192,10 +192,10 @@ public class WorkingMode {
         JTabbedPane tab = loadDynamically(width, height);
         tab.addMouseListener(new WorkingMode_tab_mouseAdapter(this));
 
-        panelMain.add(tab, BorderLayout.CENTER);
-        panelMain.add(panelControl, BorderLayout.SOUTH);
+        panelPluginGui.add(tab, BorderLayout.CENTER);
+        panelPluginGui.add(panelControl, BorderLayout.SOUTH);
 
-        return panelMain;
+        return panelPluginGui;
     }
 
     /**
@@ -219,11 +219,12 @@ public class WorkingMode {
             DynamicPanelMetadata dynPanelMetadata = getDynamicPanelMetadata(i);
 
             DynamicPanel         dynPanel = (DynamicPanel) dynamicallyLoadPanel(dynPanelMetadata);
-            dynPanel.setSize(width, height);
 
+            //dynPanel.setSize(width, height - 400);
             tab.add(dynPanel, controller.getResourceManager().getString(dynPanelMetadata.getTitle()));
         }
 
+        tab.setPreferredSize(new Dimension(width - 50, height / 2));
         return tab;
     }
 
@@ -448,6 +449,15 @@ public class WorkingMode {
     /**
      * DOCUMENT ME!
      *
+     * @return Returns the panelPluginGui.
+     */
+    public JPanel getPanelPluginGui() {
+        return panelPluginGui;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
      * @param index DOCUMENT ME!
      *
      * @return DOCUMENT ME!
@@ -626,14 +636,14 @@ public class WorkingMode {
  * @version $Revision$
  */
 class WorkingMode_buttonNext_actionAdapter implements java.awt.event.ActionListener {
-    WorkingMode adaptee;
+    PluginGui adaptee;
 
     /**
      * Creates a new WorkingMode_buttonNext_actionAdapter object.
      *
      * @param adaptee DOCUMENT ME!
      */
-    WorkingMode_buttonNext_actionAdapter(WorkingMode adaptee) {
+    WorkingMode_buttonNext_actionAdapter(PluginGui adaptee) {
         this.adaptee = adaptee;
     }
 
@@ -655,14 +665,14 @@ class WorkingMode_buttonNext_actionAdapter implements java.awt.event.ActionListe
  * @version $Revision$
  */
 class WorkingMode_tab_mouseAdapter extends java.awt.event.MouseAdapter {
-    WorkingMode adaptee;
+    PluginGui adaptee;
 
     /**
      * Creates a new WorkingMode_tab_mouseAdapter object.
      *
      * @param adaptee DOCUMENT ME!
      */
-    WorkingMode_tab_mouseAdapter(WorkingMode adaptee) {
+    WorkingMode_tab_mouseAdapter(PluginGui adaptee) {
         this.adaptee = adaptee;
     }
 

@@ -24,6 +24,8 @@ package opendbcopy.plugin.model;
 
 import opendbcopy.config.XMLTags;
 
+import opendbcopy.controller.MainController;
+
 import opendbcopy.io.ExportToXML;
 
 import opendbcopy.plugin.model.exception.MissingAttributeException;
@@ -48,40 +50,40 @@ import java.util.Observer;
  * @version $Revision$
  */
 public class Model extends Observable {
-    protected HashMap registeredObservers;
-    protected Element root;
-    protected Element conf;
-    protected Element threads;
-    protected Element input;
-    protected Element output;
-    private String    title;
-    private String    identifier;
-    private String    encoding;
-    private String    threadClassName;
-    private String    modelClassName;
-    private String    pluginStatus;
-    private int       processIndex;
-    private int       lengthProgressTable = 0;
-    private int       lengthProgressRecord = 0;
-    private int       currentProgressTable = 0;
-    private int       currentProgressRecord = 0;
-    private String    progressMessage;
-    private HashMap   threadsMap;
+    private MainController controller;
+    protected HashMap      registeredObservers;
+    protected Element      root;
+    protected Element      conf;
+    protected Element      threads;
+    protected Element      input;
+    protected Element      output;
+    private String         title;
+    private String         identifier;
+    private String         threadClassName;
+    private String         modelClassName;
+    private String         pluginStatus;
+    private int            processIndex;
+    private int            lengthProgressTable = 0;
+    private int            lengthProgressRecord = 0;
+    private int            currentProgressTable = 0;
+    private int            currentProgressRecord = 0;
+    private String         progressMessage;
+    private HashMap        threadsMap;
 
     /**
      * Creates a new PluginMetadata object.
      *
+     * @param controller DOCUMENT ME!
      * @param root DOCUMENT ME!
-     * @param encoding DOCUMENT ME!
      *
      * @throws UnsupportedAttributeValueException DOCUMENT ME!
      * @throws MissingAttributeException DOCUMENT ME!
      * @throws MissingElementException DOCUMENT ME!
      */
-    public Model(Element root,
-                 String  encoding) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException {
-        this.root         = root;
-        this.encoding     = encoding;
+    public Model(MainController controller,
+                 Element        root) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException {
+        this.controller     = controller;
+        this.root           = root;
 
         processIndex = -1; // to denote that processIndex is not yet set
 
@@ -126,7 +128,19 @@ public class Model extends Observable {
             processIndex = Integer.parseInt(plugin.getAttributeValue(XMLTags.PROCESS_ORDER));
         }
 
-        this.conf = plugin.getChild(XMLTags.CONF);
+        conf = plugin.getChild(XMLTags.CONF);
+
+        /*
+         * Certain plugins produce output or require input. The standard element <path value="inout" />
+         * is a valid synonym and is replaced by the user's inout directory
+         */
+        if (conf != null) {
+            if (conf.getChild(XMLTags.PATH) != null) {
+                if ((conf.getChild(XMLTags.PATH).getAttributeValue(XMLTags.VALUE) != null) && (conf.getChild(XMLTags.PATH).getAttributeValue(XMLTags.VALUE).compareToIgnoreCase(XMLTags.INOUT) == 0)) {
+                    conf.getChild(XMLTags.PATH).setAttribute(XMLTags.VALUE, controller.getInoutDir().getAbsolutePath());
+                }
+            }
+        }
 
         if (plugin.getChild(XMLTags.THREADS) == null) {
             throw new MissingElementException(plugin, XMLTags.THREADS);
@@ -146,6 +160,12 @@ public class Model extends Observable {
 
         while (itThreads.hasNext()) {
             Element thread = (Element) itThreads.next();
+
+            // if only one thread class is available, set it as default thread class for plugin
+            if (plugin.getChild(XMLTags.THREADS).getChildren(XMLTags.THREAD).size() == 1) {
+                plugin.setAttribute(XMLTags.THREAD_CLASS, thread.getAttributeValue(XMLTags.THREAD_CLASS));
+            }
+
             threadsMap.put(thread.getAttributeValue(XMLTags.THREAD_CLASS), thread.getAttributeValue(XMLTags.DESCRIPTION));
         }
 
@@ -206,7 +226,7 @@ public class Model extends Observable {
      */
     public final void saveModel(String pathFilename) throws IOException {
         Document doc = new Document((Element) root.clone());
-        ExportToXML.createXML(doc, pathFilename, encoding);
+        ExportToXML.createXML(doc, pathFilename);
     }
 
     /**
@@ -239,16 +259,16 @@ public class Model extends Observable {
      * @throws MissingAttributeException DOCUMENT ME!
      */
     public String getWorkingMode() throws MissingAttributeException {
-        return getAttributeValue(getElement(root, "root"), XMLTags.WORKING_MODE);
+        return getAttributeValue(getElement(root, "root"), XMLTags.GUI);
     }
 
     /**
      * DOCUMENT ME!
      *
-     * @param workingMode DOCUMENT ME!
+     * @param pluginGui DOCUMENT ME!
      */
     public void setWorkingMode(String workingMode) {
-        getElement(root, "root").setAttribute(XMLTags.WORKING_MODE, workingMode);
+        getElement(root, "root").setAttribute(XMLTags.GUI, workingMode);
     }
 
     /**
@@ -615,6 +635,23 @@ public class Model extends Observable {
         }
 
         this.output = tempOutput;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param element DOCUMENT ME!
+     */
+    public final void appendToOutput(Element element) {
+        if (element == null) {
+            throw new IllegalArgumentException("Missing element");
+        }
+
+        if (output == null) {
+        	output = new Element(XMLTags.OUTPUT);
+        }
+        
+        output.addContent(element);
     }
 
     /**

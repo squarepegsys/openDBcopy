@@ -22,40 +22,31 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.sql.SQLException;
+import java.util.Observable;
+import java.util.Properties;
+
 import opendbcopy.config.APM;
 import opendbcopy.config.OperationType;
 import opendbcopy.config.XMLTags;
-
 import opendbcopy.connection.exception.CloseConnectionException;
 import opendbcopy.connection.exception.DriverNotFoundException;
 import opendbcopy.connection.exception.OpenConnectionException;
-
 import opendbcopy.controller.MainController;
-
 import opendbcopy.io.ExportToXML;
 import opendbcopy.io.ImportFromXML;
-
-import opendbcopy.plugin.model.*;
+import opendbcopy.plugin.model.Model;
 import opendbcopy.plugin.model.exception.MissingAttributeException;
 import opendbcopy.plugin.model.exception.MissingElementException;
 import opendbcopy.plugin.model.exception.PluginException;
 import opendbcopy.plugin.model.exception.UnsupportedAttributeValueException;
 
 import org.apache.log4j.Level;
-
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-
-import java.io.IOException;
-
-import java.lang.reflect.InvocationTargetException;
-
-import java.sql.SQLException;
-
-import java.util.Observable;
-import java.util.Properties;
-import java.util.Vector;
 
 
 /**
@@ -69,22 +60,19 @@ public class ProjectManager extends Observable {
     private PluginManager  pluginManager;
     private Document       project;
     private Document       typeMapping;
-    private Document       standardModels;
-    private Element        projectRoot;
-    private Element        plugins;
-    private Vector         operationsExecuted;
-    private String         encoding;
+
+    private Element projectRoot;
+    private Element plugins;
+    private String  encoding;
 
     /**
      * Creates a new ProjectManager object.
      *
      * @param controller DOCUMENT ME!
      * @param typeMapping DOCUMENT ME!
-     * @param standardModels DOCUMENT ME!
      * @param pluginsLocation DOCUMENT ME!
      * @param pluginFilename DOCUMENT ME!
      * @param workingModeFilename DOCUMENT ME!
-     * @param encoding DOCUMENT ME!
      *
      * @throws UnsupportedAttributeValueException DOCUMENT ME!
      * @throws MissingAttributeException DOCUMENT ME!
@@ -100,25 +88,19 @@ public class ProjectManager extends Observable {
      */
     public ProjectManager(MainController controller,
                           Document       typeMapping,
-                          Document       standardModels,
                           String         pluginsLocation,
                           String         pluginFilename,
-                          String         workingModeFilename,
-                          String         encoding) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, JDOMException, ClassNotFoundException, IllegalAccessException, InstantiationException, InvocationTargetException, IOException, PluginException {
+                          String         workingModeFilename) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, JDOMException, ClassNotFoundException, IllegalAccessException, InstantiationException, InvocationTargetException, IOException, PluginException {
         if ((controller == null) || (typeMapping == null)) {
             throw new IllegalArgumentException("Missing arguments values: controller=" + controller + " typeMapping=" + typeMapping);
         }
 
-        this.controller         = controller;
-        this.typeMapping        = typeMapping;
-        this.standardModels     = standardModels;
-        this.encoding           = encoding;
+        this.controller      = controller;
+        this.typeMapping     = typeMapping;
 
         initProject(controller.getApplicationProperties());
 
-        this.pluginManager     = new PluginManager(controller, plugins, pluginsLocation, pluginFilename, workingModeFilename, encoding);
-
-        this.operationsExecuted = new Vector();
+        this.pluginManager     = new PluginManager(controller, this, plugins, pluginsLocation, pluginFilename, workingModeFilename);
     }
 
     /**
@@ -126,12 +108,10 @@ public class ProjectManager extends Observable {
      *
      * @param controller DOCUMENT ME!
      * @param typeMapping DOCUMENT ME!
-     * @param standardModels DOCUMENT ME!
      * @param project DOCUMENT ME!
      * @param pluginsLocation DOCUMENT ME!
      * @param pluginFilename DOCUMENT ME!
      * @param workingModeFilename DOCUMENT ME!
-     * @param encoding DOCUMENT ME!
      *
      * @throws UnsupportedAttributeValueException DOCUMENT ME!
      * @throws MissingAttributeException DOCUMENT ME!
@@ -147,27 +127,21 @@ public class ProjectManager extends Observable {
      */
     public ProjectManager(MainController controller,
                           Document       typeMapping,
-                          Document       standardModels,
                           Document       project,
                           String         pluginsLocation,
                           String         pluginFilename,
-                          String         workingModeFilename,
-                          String         encoding) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, JDOMException, ClassNotFoundException, IllegalAccessException, InstantiationException, InvocationTargetException, IOException, PluginException {
+                          String         workingModeFilename) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, JDOMException, ClassNotFoundException, IllegalAccessException, InstantiationException, InvocationTargetException, IOException, PluginException {
         if ((controller == null) || (typeMapping == null) || (project == null)) {
             throw new IllegalArgumentException("Missing arguments values: controller=" + controller + " typeMapping=" + typeMapping + " project=" + project);
         }
 
-        this.controller         = controller;
-        this.typeMapping        = typeMapping;
-        this.standardModels     = standardModels;
-        this.project            = project;
-        this.encoding           = encoding;
+        this.controller      = controller;
+        this.typeMapping     = typeMapping;
+        this.project         = project;
 
         initProject(controller.getApplicationProperties());
 
-        this.pluginManager     = new PluginManager(controller, plugins, pluginsLocation, pluginFilename, workingModeFilename, encoding);
-
-        this.operationsExecuted = new Vector();
+        this.pluginManager     = new PluginManager(controller, this, plugins, pluginsLocation, pluginFilename, workingModeFilename);
 
         // inform Observers that project has been loaded
         broadcast();
@@ -219,14 +193,13 @@ public class ProjectManager extends Observable {
      */
     public final void execute(Element operation) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, JDOMException, SQLException, IOException, Exception {
         String operationString = operation.getAttributeValue(XMLTags.NAME);
-        operationsExecuted.add(operationString);
 
         // export project to xml file
         if (operationString.compareTo(OperationType.EXPORT_PROJECT) == 0) {
             if (project != null) {
                 // exisiting plugins in plugins element are removed first and then added in correct process order with process_order attribute
                 pluginManager.addPluginsToProject();
-                ExportToXML.createXML(project, operation.getAttributeValue(XMLTags.FILE), encoding);
+                ExportToXML.createXML(project, operation.getAttributeValue(XMLTags.FILE));
             }
         }
         // import project from xml file
@@ -237,6 +210,7 @@ public class ProjectManager extends Observable {
             if (projectRoot != null) {
                 if (projectRoot.getChild(XMLTags.PLUGINS) != null) {
                     plugins = projectRoot.getChild(XMLTags.PLUGINS);
+                    pluginManager.resetModels();
                     pluginManager.loadPluginsFromProject(plugins);
                 } else {
                     throw new MissingElementException(new Element(XMLTags.PLUGINS), XMLTags.PLUGINS);
@@ -244,6 +218,7 @@ public class ProjectManager extends Observable {
             } else {
                 throw new MissingElementException(new Element(XMLTags.PROJECT), XMLTags.PROJECT);
             }
+            broadcast();
         }
         // create new project model
         else if (operationString.compareTo(OperationType.NEW_PROJECT) == 0) {
@@ -257,7 +232,9 @@ public class ProjectManager extends Observable {
         else if (operationString.compareTo(OperationType.IMPORT_PLUGIN) == 0) {
             Element plugin = ImportFromXML.importFile(operation.getAttributeValue(XMLTags.FILE)).getRootElement();
 
-            //pluginManager.loadModel(plugin);
+            // title will be set by pluginGuiManager if required
+            Model model = pluginManager.loadModel(plugin, "");
+            controller.loadPluginGuiFromModel(model, false);
         }
         // export plugin
         else if (operationString.compareTo(OperationType.EXPORT_PLUGIN) == 0) {
@@ -266,36 +243,12 @@ public class ProjectManager extends Observable {
         // execute plugins
         else if (operationString.compareToIgnoreCase(OperationType.EXECUTE) == 0) {
             pluginManager.executePlugins();
+            
+            postMessage(controller.getResourceManager().getString("text.execute.done"));
         }
         // cancel -> interrupt thread
         else if (operationString.compareTo(OperationType.CANCEL) == 0) {
             pluginManager.interruptPlugins();
-        }
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     */
-    public final String getLastOperation() {
-        if (operationsExecuted.size() < 2) {
-            return "";
-        } else {
-            return (String) operationsExecuted.elementAt(operationsExecuted.size() - 2);
-        }
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     */
-    public final String getCurrentOperation() {
-        if (operationsExecuted.size() < 1) {
-            return "";
-        } else {
-            return (String) operationsExecuted.elementAt(operationsExecuted.size() - 1);
         }
     }
 
@@ -328,6 +281,7 @@ public class ProjectManager extends Observable {
             projectRoot.setAttribute(APM.APPLICATION_NAME, ap.getProperty(APM.APPLICATION_NAME));
             projectRoot.setAttribute(APM.APPLICATION_VERSION, ap.getProperty(APM.APPLICATION_VERSION));
             projectRoot.setAttribute(APM.APPLICATION_WEBSITE, ap.getProperty(APM.APPLICATION_WEBSITE));
+            projectRoot.setAttribute(XMLTags.SHUTDOWN_ON_COMPLETION, "false");
 
             plugins = new Element(XMLTags.PLUGINS);
             projectRoot.addContent(plugins);
@@ -350,5 +304,23 @@ public class ProjectManager extends Observable {
      */
     public final PluginManager getPluginManager() {
         return pluginManager;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     */
+    public boolean isShutdownOnCompletion() {
+        return Boolean.valueOf(projectRoot.getAttributeValue(XMLTags.SHUTDOWN_ON_COMPLETION)).booleanValue();
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param shutdown DOCUMENT ME!
+     */
+    public void setShutdownOnCompletion(boolean shutdown) {
+        projectRoot.setAttribute(XMLTags.SHUTDOWN_ON_COMPLETION, Boolean.toString(shutdown));
     }
 }

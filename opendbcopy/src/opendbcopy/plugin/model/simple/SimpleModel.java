@@ -22,6 +22,8 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin.model.simple;
 
+import opendbcopy.controller.MainController;
+
 import opendbcopy.plugin.model.*;
 import opendbcopy.plugin.model.exception.MissingAttributeException;
 import opendbcopy.plugin.model.exception.MissingElementException;
@@ -36,15 +38,15 @@ import java.io.IOException;
 /**
  * class description
  *
- * @author  Anthony Smith
+ * @author Anthony Smith
  * @version $Revision$
  */
 public class SimpleModel extends Model {
     /**
      * Creates a new SimpleModel object.
      *
+     * @param controller DOCUMENT ME!
      * @param pluginElement DOCUMENT ME!
-     * @param encoding DOCUMENT ME!
      *
      * @throws UnsupportedAttributeValueException DOCUMENT ME!
      * @throws MissingAttributeException DOCUMENT ME!
@@ -52,8 +54,8 @@ public class SimpleModel extends Model {
      * @throws JDOMException DOCUMENT ME!
      * @throws IOException DOCUMENT ME!
      */
-    public SimpleModel(Element pluginElement,
-                       String  encoding) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, JDOMException, IOException {
-        super(pluginElement, encoding);
+    public SimpleModel(MainController controller,
+                       Element        pluginElement) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, JDOMException, IOException {
+        super(controller, pluginElement);
     }
 }

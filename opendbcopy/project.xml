@@ -3,7 +3,7 @@
 <project>
   <pomVersion>3</pomVersion>
   <groupId>opendbcopy</groupId>
-  <currentVersion>0.50</currentVersion>
+  <currentVersion>0.5 alpha</currentVersion>
   <logo>/images/opendbcopy_logo.gif</logo>
   <organization>
     <name>Puzzle ITC GmbH</name>
@@ -99,6 +99,15 @@
            <version>1.2.8</version>
            <url>http://jakarta.apache.org/log4j/</url>
         </dependency>
+
+		<!-- commons -->
+        <dependency>
+        <groupId>log4j</groupId>
+           <artifactId>commons-lang</artifactId>
+           <version>2.0</version>
+           <url>http://www.apache.org/dist/commons</url>
+        </dependency>
+
   </dependencies>
   
   <build>

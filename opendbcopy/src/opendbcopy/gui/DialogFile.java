@@ -84,6 +84,7 @@ public class DialogFile extends JFrame {
         int     DialogReturnValue = 0;
 
         chooser.setDialogTitle(title);
+    	chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 
         if (currentDir != null) {
             chooser.setCurrentDirectory(currentDir);
@@ -133,6 +134,7 @@ public class DialogFile extends JFrame {
         int     dialogReturnValue = 0;
 
         chooser.setDialogTitle(title);
+    	chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 
         if (currentDir != null) {
             chooser.setCurrentDirectory(currentDir);
@@ -163,6 +165,41 @@ public class DialogFile extends JFrame {
             return this.fileName;
         } else {
             return EMPTY_STRING;
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param title DOCUMENT ME!
+     * @param fileType DOCUMENT ME!
+     * @param currentDir DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     */
+    public final String saveDialogAnyFile(String title,
+                                   boolean directoriesOnly,
+                                   File   currentDir) {
+        int     dialogReturnValue = 0;
+
+        chooser.setDialogTitle(title);
+
+        if (currentDir != null) {
+            chooser.setCurrentDirectory(currentDir);
+        }
+
+        if (directoriesOnly) {
+        	chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        } else {
+        	chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        }
+        
+        dialogReturnValue = chooser.showSaveDialog(this.parent);
+
+        if (dialogReturnValue == JFileChooser.APPROVE_OPTION) {
+            return chooser.getSelectedFile().getAbsolutePath();
+        } else {
+            return null;
         }
     }
 

@@ -81,7 +81,7 @@ public class NewPluginAction extends AbstractAction {
      */
     public void actionPerformed(ActionEvent evt) {
         try {
-            controller.getWorkingModeManager().loadWorkingMode(pluginIdentifier, false);
+            controller.getPluginGuiManager().loadPluginGui(pluginIdentifier, false);
         } catch (Exception e) {
             frame.postException(e, Level.ERROR);
         }

@@ -59,7 +59,7 @@ public class Menu extends JMenuBar {
     private FrameMain            parentFrame;
     private final MainController controller;
     private ProjectManager       pm;
-    private WorkingModeManager   wmm;
+    private PluginGuiManager     wmm;
     private ResourceManager      rm;
     private PluginManager        pluginManager;
     private Actions              actions;
@@ -67,16 +67,16 @@ public class Menu extends JMenuBar {
     private JMenu                projectMenu;
     private JMenu                pluginMenu;
     private JMenu                showMenu;
+    private JMenu                helpMenu;
     private JMenu                newPluginMenu;
     private JMenuItem            projectNewItem;
     private JMenuItem            projectExportItem;
     private JMenuItem            projectImportItem;
     private JMenuItem            pluginExportItem;
     private JMenuItem            pluginImportItem;
-    private JMenuItem            pluginExecuteItem;
     private JMenuItem            showConsoleLog;
-    private JMenuItem            showPluginChain;
     private JMenuItem            showExecutionLog;
+    private JMenuItem            helpUserManual;
     private JMenuItem            exitItem;
 
     /**
@@ -94,19 +94,20 @@ public class Menu extends JMenuBar {
         this.parentFrame     = parentFrame;
         this.controller      = controller;
         this.pm              = projectManager;
-        this.wmm             = controller.getWorkingModeManager();
+        this.wmm             = controller.getPluginGuiManager();
         pluginManager        = pm.getPluginManager();
         rm                   = controller.getResourceManager();
 
         actions     = new Actions(parentFrame, controller, projectManager);
 
         // initialise the list of available working modes
-        availableWorkingModes     = controller.getWorkingModeManager().getAvailableWorkingModesOrdered();
+        availableWorkingModes     = controller.getPluginGuiManager().getAvailablePluginGuisOrdered();
 
         // menus
         projectMenu       = new JMenu(rm.getString("menu.project"));
         pluginMenu        = new JMenu(rm.getString("menu.plugin"));
         showMenu          = new JMenu(rm.getString("menu.show"));
+        helpMenu          = new JMenu(rm.getString("menu.help"));
         newPluginMenu     = new JMenu(rm.getString("menu.plugin.new"));
 
         /*
@@ -137,7 +138,6 @@ public class Menu extends JMenuBar {
          */
         pluginExportItem      = new JMenuItem(actions.pluginExportAction);
         pluginImportItem      = new JMenuItem(actions.pluginImportAction);
-        pluginExecuteItem     = new JMenuItem(actions.pluginExecuteAction);
 
         // create a JMenuItem for each available plugin
         for (int i = 0; i < availableWorkingModes.size(); i++) {
@@ -150,8 +150,6 @@ public class Menu extends JMenuBar {
         pluginMenu.addSeparator();
         pluginMenu.add(pluginExportItem);
         pluginMenu.add(pluginImportItem);
-        pluginMenu.addSeparator();
-        pluginMenu.add(pluginExecuteItem);
 
         /*
          * Show Menu
@@ -170,20 +168,25 @@ public class Menu extends JMenuBar {
                 }
             });
 
-        showPluginChain = new JMenuItem(rm.getString("menu.show.pluginChain"));
-        showPluginChain.addActionListener(new java.awt.event.ActionListener() {
+        showMenu.add(showExecutionLog);
+        showMenu.add(showConsoleLog);
+
+        /*
+         * Help Menu
+         */
+        helpUserManual = new JMenuItem(rm.getString("menu.help.userManual"));
+        helpUserManual.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    showPluginChain_actionPerformed(e);
+                    helpUserManual_actionPerformed(e);
                 }
             });
 
-        showMenu.add(showPluginChain);
-        showMenu.add(showExecutionLog);
-        showMenu.add(showConsoleLog);
+        helpMenu.add(helpUserManual);
 
         this.add(projectMenu);
         this.add(pluginMenu);
         this.add(showMenu);
+        this.add(helpMenu);
     }
 
     /**
@@ -231,9 +234,9 @@ public class Menu extends JMenuBar {
      *
      * @param e DOCUMENT ME!
      */
-    void showPluginChain_actionPerformed(ActionEvent e) {
-        if (parentFrame.getFramePluginChain() != null) {
-            parentFrame.getFramePluginChain().show();
+    void helpUserManual_actionPerformed(ActionEvent e) {
+        if (parentFrame.getFrameShowUserManual() != null) {
+            parentFrame.getFrameShowUserManual().show();
         }
     }
 }

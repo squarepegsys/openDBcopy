@@ -73,33 +73,31 @@ public class PluginManager extends Observable {
     private static Logger          logger = Logger.getLogger(PluginManager.class.getName());
     private static PluginScheduler pluginScheduler;
     private MainController         controller;
+    private ProjectManager         pm;
     private ResourceManager        rm;
     private Model                  currentModel;
     private SimpleDateFormat       df;
-
-    //    private HashMap                models;
-    private HashMap    observers;
-    private LinkedList modelsToExecute;
-    private LinkedList modelsLoaded;
-    private Element    plugins;
-    private String     encoding;
-    private boolean    done = false;
-    private boolean    started = false;
-    private boolean    suspended = false;
-    private boolean    interrupted = false;
-    private boolean    exceptionOccured = false;
-    private long       executionStarted = 0;
-    private int        currentPluginIndex = 0;
+    private HashMap                observers;
+    private LinkedList             modelsToExecute;
+    private LinkedList             modelsLoaded;
+    private Element                plugins;
+    private boolean                done = false;
+    private boolean                started = false;
+    private boolean                suspended = false;
+    private boolean                interrupted = false;
+    private boolean                exceptionOccured = false;
+    private long                   executionStarted = 0;
+    private int                    currentExecuteIndex = 0;
 
     /**
      * Creates a new PluginManager object.
      *
      * @param controller DOCUMENT ME!
+     * @param pm DOCUMENT ME!
      * @param plugins DOCUMENT ME!
      * @param pluginsLocation DOCUMENT ME!
      * @param pluginFilename DOCUMENT ME!
      * @param workingModeFilename DOCUMENT ME!
-     * @param encoding DOCUMENT ME!
      *
      * @throws FileNotFoundException DOCUMENT ME!
      * @throws JDOMException DOCUMENT ME!
@@ -115,24 +113,24 @@ public class PluginManager extends Observable {
      * @throws IllegalArgumentException DOCUMENT ME!
      */
     public PluginManager(MainController controller,
+                         ProjectManager pm,
                          Element        plugins,
                          String         pluginsLocation,
                          String         pluginFilename,
-                         String         workingModeFilename,
-                         String         encoding) throws FileNotFoundException, UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, JDOMException, IOException, ClassNotFoundException, InstantiationException, InvocationTargetException, IllegalAccessException, PluginException {
-        if ((pluginsLocation == null) || (pluginFilename == null) || (workingModeFilename == null) || (encoding == null)) {
-            throw new IllegalArgumentException("Missing arguments values: pluginsLocation=" + pluginsLocation + " pluginFilename=" + pluginFilename + " workingModeFilename=" + workingModeFilename + " encoding=" + encoding);
+                         String         workingModeFilename) throws FileNotFoundException, UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, JDOMException, IOException, ClassNotFoundException, InstantiationException, InvocationTargetException, IllegalAccessException, PluginException {
+        if ((pluginsLocation == null) || (pluginFilename == null) || (workingModeFilename == null)) {
+            throw new IllegalArgumentException("Missing arguments values: pluginsLocation=" + pluginsLocation + " pluginFilename=" + pluginFilename + " workingModeFilename=" + workingModeFilename);
         }
 
         this.controller     = controller;
+        this.pm             = pm;
         this.rm             = controller.getResourceManager();
         this.plugins        = plugins;
-        this.encoding       = encoding;
 
         modelsLoaded        = new LinkedList();
         modelsToExecute     = new LinkedList();
 
-        loadPlugins(pluginsLocation, pluginFilename, workingModeFilename, encoding);
+        loadPlugins(pluginsLocation, pluginFilename, workingModeFilename);
         loadPluginsFromProject(plugins);
 
         // set time formatting
@@ -169,18 +167,28 @@ public class PluginManager extends Observable {
      * @param modelElement DOCUMENT ME!
      * @param title DOCUMENT ME!
      *
+     * @return DOCUMENT ME!
+     *
      * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      * @throws ClassNotFoundException DOCUMENT ME!
      * @throws InstantiationException DOCUMENT ME!
      * @throws InvocationTargetException DOCUMENT ME!
      * @throws IllegalAccessException DOCUMENT ME!
+     * @throws PluginException DOCUMENT ME!
      */
-    public final void loadModel(Element modelElement,
-                                String  title) throws MissingAttributeException, ClassNotFoundException, InstantiationException, InvocationTargetException, IllegalAccessException {
+    public final Model loadModel(Element modelElement,
+                                 String  title) throws MissingAttributeException, MissingElementException, ClassNotFoundException, InstantiationException, InvocationTargetException, IllegalAccessException, PluginException {
         Model model = (Model) dynamicallyLoadPluginModel(modelElement);
         model.setTitle(title);
+
         modelsLoaded.add(model);
+
+        currentModel = model;
+
         broadcast();
+
+        return model;
     }
 
     /**
@@ -223,22 +231,13 @@ public class PluginManager extends Observable {
     /**
      * inserts given model at index given and shifts former model to the right of the list (index + 1)
      *
-     * @param model DOCUMENT ME!
-     * @param index DOCUMENT ME!
-     *
-     * @throws IllegalArgumentException DOCUMENT ME!
+     * @param sourceIndex DOCUMENT ME!
+     * @param destinationIndex DOCUMENT ME!
      */
-    public final void changeOrderPluginToExecute(Model model,
-                                                 int   index) {
-        if (model == null) {
-            throw new IllegalArgumentException("Missing model");
-        }
-
-        boolean removed = modelsToExecute.remove(model);
-
-        if (removed) {
-            modelsToExecute.add(index, model);
-        }
+    public final void changeOrderPluginToExecute(int sourceIndex,
+                                                 int destinationIndex) {
+        Model sourceModel = (Model) modelsToExecute.remove(sourceIndex);
+        modelsToExecute.add(destinationIndex, sourceModel);
 
         broadcast();
     }
@@ -258,6 +257,8 @@ public class PluginManager extends Observable {
         }
 
         modelsToExecute.add(index, model);
+        modelsLoaded.remove(model);
+
         broadcast();
     }
 
@@ -274,6 +275,26 @@ public class PluginManager extends Observable {
         }
 
         modelsToExecute.add(model);
+        modelsLoaded.remove(model);
+
+        broadcast();
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param model DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     */
+    public final void addPluginLoadedLast(Model model) {
+        if (model == null) {
+            throw new IllegalArgumentException("Missing model");
+        }
+
+        modelsToExecute.remove(model);
+        modelsLoaded.add(model);
+
         broadcast();
     }
 
@@ -297,11 +318,11 @@ public class PluginManager extends Observable {
             throw new PluginException("No models to execute");
         }
 
-        done                   = false;
-        interrupted            = false;
-        exceptionOccured       = false;
-        suspended              = false;
-        currentPluginIndex     = 0;
+        done                    = false;
+        interrupted             = false;
+        exceptionOccured        = false;
+        suspended               = false;
+        currentExecuteIndex     = 0;
 
         pluginScheduler = PluginScheduler.getInstance(this, controller);
 
@@ -339,17 +360,17 @@ public class PluginManager extends Observable {
             throw new PluginException("No model to execute");
         }
 
-        done                   = false;
-        interrupted            = false;
-        exceptionOccured       = false;
-        suspended              = false;
-        currentPluginIndex     = 0;
+        done                    = false;
+        interrupted             = false;
+        exceptionOccured        = false;
+        suspended               = false;
+        currentExecuteIndex     = 0;
 
         pluginScheduler = PluginScheduler.getInstance(this, controller);
 
         try {
             executionStarted = System.currentTimeMillis();
-            pluginScheduler.executePlugin(model);
+            pluginScheduler.executeSinglePlugin(model);
         } catch (MissingAttributeException e) {
             throw new PluginException(e);
         } catch (ClassNotFoundException e) {
@@ -425,8 +446,8 @@ public class PluginManager extends Observable {
             Constructor[] constructors = dynClass.getConstructors();
 
             Object[]      params = new Object[2];
-            params[0]     = model;
-            params[1]     = encoding;
+            params[0]     = controller;
+            params[1]     = model;
 
             // works as long there is only one constructor
             return constructors[0].newInstance(params);
@@ -440,7 +461,6 @@ public class PluginManager extends Observable {
      * @param pluginsLocation DOCUMENT ME!
      * @param pluginFilename DOCUMENT ME!
      * @param workingModeFilename DOCUMENT ME!
-     * @param encoding DOCUMENT ME!
      *
      * @throws UnsupportedAttributeValueException DOCUMENT ME!
      * @throws MissingAttributeException DOCUMENT ME!
@@ -456,8 +476,7 @@ public class PluginManager extends Observable {
      */
     private void loadPlugins(String pluginsLocation,
                              String pluginFilename,
-                             String workingModeFilename,
-                             String encoding) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, JDOMException, FileNotFoundException, IOException, IllegalAccessException, ClassNotFoundException, InstantiationException, InvocationTargetException {
+                             String workingModeFilename) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, JDOMException, FileNotFoundException, IOException, IllegalAccessException, ClassNotFoundException, InstantiationException, InvocationTargetException {
         File   pluginsDirectory = FileHandling.getFile(pluginsLocation);
         File[] pluginDirectories = pluginsDirectory.listFiles();
 
@@ -504,7 +523,7 @@ public class PluginManager extends Observable {
                     }
 
                     // add working mode
-                    controller.addWorkingModeForPlugin(ImportFromXML.importFile(workingModeFile).getRootElement(), pluginRoot);
+                    controller.addPluginGuiForPlugin(ImportFromXML.importFile(workingModeFile).getRootElement(), pluginRoot);
                 }
             }
         }
@@ -557,7 +576,7 @@ public class PluginManager extends Observable {
 
                 if (model.getProcessOrder() >= 0) {
                     addPluginToExecute(model, model.getProcessOrder());
-                    controller.loadWorkingModeForPlugin(model.getIdentifier(), true);
+                    controller.loadPluginGuiFromModel(model, true);
                 } else {
                     throw new MissingAttributeException(model.getPlugin(), XMLTags.PROCESS_ORDER);
                 }
@@ -573,8 +592,11 @@ public class PluginManager extends Observable {
             plugins.removeChildren(XMLTags.PLUGIN);
         }
 
-        currentModel = null;
         modelsToExecute.clear();
+
+        currentModel = null;
+
+        broadcast();
     }
 
     /**
@@ -618,6 +640,9 @@ public class PluginManager extends Observable {
         String[] param = { df.format(new Date(System.currentTimeMillis() - executionStarted)) };
         logger.info(rm.getString("text.execute.done") + " (" + rm.getString("text.execute.time", param) + ")");
         broadcast();
+
+		// checks first if opendbcopy must be shutdown itself or not
+      	controller.shutdownOpendbcopy();
     }
 
     /**
@@ -683,15 +708,15 @@ public class PluginManager extends Observable {
      *
      * @return DOCUMENT ME!
      */
-    public final int getCurrentIndex() {
-        return currentPluginIndex;
+    public final int getCurrentExecuteIndex() {
+        return currentExecuteIndex;
     }
 
     /**
      * DOCUMENT ME!
      */
-    protected final void incrementCurrentIndex() {
-        currentPluginIndex++;
+    protected final void incrementCurrentExecuteIndex() {
+        currentExecuteIndex++;
         broadcast();
     }
 

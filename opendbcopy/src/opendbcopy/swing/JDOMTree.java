@@ -22,81 +22,33 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.swing;
 
-import org.jdom.Attribute;
-import org.jdom.Element;
-
-import java.util.Iterator;
-
 import javax.swing.JTree;
-import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeSelectionModel;
 
 
 /**
  * class description
  *
- * @author Anthony Smith
+ * @author  Anthony Smith
  * @version $Revision$
  */
 public class JDOMTree extends JTree {
-    private Element rootElement;
+    ElementTreeModel model;
 
     /**
      * Creates a new JDOMTree object.
      *
-     * @param treeRoot DOCUMENT ME!
-     * @param rootElement DOCUMENT ME!
+     * @param root DOCUMENT ME!
      */
-    public JDOMTree(DefaultMutableTreeNode treeRoot,
-                    Element                rootElement) {
-        super(treeRoot);
-
-        this.rootElement = rootElement;
-
-        processElement(rootElement, treeRoot);
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param el DOCUMENT ME!
-     * @param dmtn DOCUMENT ME!
-     */
-    protected void processElement(Element                el,
-                                  DefaultMutableTreeNode dmtn) {
-        DefaultMutableTreeNode dmtnLocal = new DefaultMutableTreeNode(el.getName());
-        String                 elText = el.getTextNormalize();
-
-        if ((elText != null) && !elText.equals("")) {
-            dmtnLocal.add(new DefaultMutableTreeNode(elText));
-        }
-
-        processAttributes(el, dmtnLocal);
-
-        Iterator iter = el.getChildren().iterator();
-
-        while (iter.hasNext()) {
-            Element nextEl = (Element) iter.next();
-            processElement(nextEl, dmtnLocal);
-        }
-
-        dmtn.add(dmtnLocal);
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param el DOCUMENT ME!
-     * @param dmtn DOCUMENT ME!
-     */
-    protected void processAttributes(Element                el,
-                                     DefaultMutableTreeNode dmtn) {
-        Iterator atts = el.getAttributes().iterator();
-
-        while (atts.hasNext()) {
-            Attribute              att = (Attribute) atts.next();
-            DefaultMutableTreeNode node = new DefaultMutableTreeNode("@" + att.getName());
-            node.add(new DefaultMutableTreeNode(att.getValue()));
-            dmtn.add(node);
-        }
+    public JDOMTree(ConfNode root) {
+        super(new ElementTreeModel(root));
+        getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+//
+//        DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer();
+//        Icon                    personIcon = null;
+//        renderer.setLeafIcon(personIcon);
+//        renderer.setClosedIcon(personIcon);
+//        renderer.setOpenIcon(personIcon);
+//        setCellRenderer(renderer);
     }
 }

@@ -29,8 +29,8 @@ import opendbcopy.io.Reader;
 import opendbcopy.resource.ResourceManager;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.GridLayout;
+import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
 
@@ -92,6 +92,21 @@ public class FrameShowFile extends JFrame {
 
     /**
      * DOCUMENT ME!
+     */
+    public final void refreshFile() {
+        if ((file != null) && file.exists()) {
+            if (textArea != null) {
+                try {
+                    textArea.setText(Reader.read(file).toString());
+                } catch (IOException e) {
+                    System.out.println(e.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
      *
      * @throws Exception DOCUMENT ME!
      */
@@ -116,8 +131,8 @@ public class FrameShowFile extends JFrame {
         }
 
         scrollPane = new JScrollPane(textArea);
-        scrollPane.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.black, 1), " " + title + " (" + file.getAbsolutePath() + ") "));
-        scrollPane.setBackground(Color.WHITE);
+        scrollPane.setBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.black, 1), " " + title + " (" + file.getAbsolutePath() + ") "));
+        scrollPane.setBackground(SystemColor.WHITE);
 
         buttonRefresh = new JButton(new ImageIcon("resource/images/Refresh24.gif"));
         buttonRefresh.addActionListener(new FrameShowFile_buttonRefresh_actionAdapter(this));
@@ -126,7 +141,7 @@ public class FrameShowFile extends JFrame {
         panelControl.add(buttonRefresh);
 
         panelMain = new JPanel(new BorderLayout(20, 20));
-        panelMain.setBackground(Color.WHITE);
+        panelMain.setBackground(SystemColor.WHITE);
         panelMain.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         panelMain.add(panelControl, BorderLayout.NORTH);
@@ -148,7 +163,11 @@ public class FrameShowFile extends JFrame {
         }
     }
 
-    //Overridden so we can exit when window is closed
+    /**
+     * DOCUMENT ME!
+     *
+     * @param e DOCUMENT ME!
+     */
     protected void processWindowEvent(WindowEvent e) {
         super.processWindowEvent(e);
 

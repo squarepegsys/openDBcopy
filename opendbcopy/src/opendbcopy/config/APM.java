@@ -33,9 +33,10 @@ public final class APM {
     public static final String APPLICATION_NAME = "application_name";
     public static final String APPLICATION_VERSION = "application_version";
     public static final String APPLICATION_WEBSITE = "application_website";
+    public static final String APPLICATION_WEBSITE_USER_MANUAL = "application_website_user_manual";
     public static final String APPLICATION_DEVELOPER_NAME = "application_developer_name";
     public static final String LOG4J_PROPERTIES_FILE = "log4j_properties_file";
-    public static final String WORKING_MODE_CONF_FILE = "working_mode_conf_file";
+    public static final String PLUGINS_GUI_CONF_FILE = "plugins_gui_conf_file";
     public static final String DRIVERS_CONF_FILE = "drivers_conf_file";
     public static final String PROJECTS_DIRECTORY = "projects_directory";
     public static final String PLUGINS_DIRECTORY = "plugins_directory";
@@ -52,5 +53,8 @@ public final class APM {
     public static final String FRAME_CONSOLE_HEIGHT = "frame_console_height";
     public static final String OPENDBCOPY_LOGO_FILE = "opendbcopy_logo_file";
     public static final String OPENDBCOPY_USER_HOME_DIR = "opendbcopy_user_home_dir";
+    public static final String OPENDBCOPY_RESOURCE_BUNDLE_DIR = "opendbcopy_resource_bundle_dir";
+    public static final String OPENDBCOPY_RESOURCE_NAME = "opendbcopy_resource_name";
+    public static final String OPENDBCOPY_RESOURCE_LOAD_ADDITIONAL = "opendbcopy_resource_load_additional";
     public static final String PLUGIN_IN_OUT_DIR = "plugin_in_out_dir";
 }

@@ -22,30 +22,12 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui.database;
 
-import opendbcopy.config.Driver;
-import opendbcopy.config.OperationType;
-import opendbcopy.config.XMLTags;
-
-import opendbcopy.controller.MainController;
-
-import opendbcopy.gui.DynamicPanel;
-import opendbcopy.gui.WorkingMode;
-
-import opendbcopy.plugin.model.database.DatabaseModel;
-import opendbcopy.plugin.model.exception.MissingAttributeException;
-import opendbcopy.plugin.model.exception.MissingElementException;
-import opendbcopy.plugin.model.exception.UnsupportedAttributeValueException;
-
-import org.jdom.Element;
-
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Rectangle;
 import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
-
 import java.util.Iterator;
 import java.util.Observable;
 import java.util.TreeMap;
@@ -58,6 +40,19 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
+
+import opendbcopy.config.Driver;
+import opendbcopy.config.OperationType;
+import opendbcopy.config.XMLTags;
+import opendbcopy.controller.MainController;
+import opendbcopy.gui.DynamicPanel;
+import opendbcopy.gui.PluginGui;
+import opendbcopy.plugin.model.database.DatabaseModel;
+import opendbcopy.plugin.model.exception.MissingAttributeException;
+import opendbcopy.plugin.model.exception.MissingElementException;
+import opendbcopy.plugin.model.exception.UnsupportedAttributeValueException;
+
+import org.jdom.Element;
 
 
 /**
@@ -104,13 +99,13 @@ public class PanelConnection extends DynamicPanel {
      * Creates a new PanelConnection object.
      *
      * @param controller DOCUMENT ME!
-     * @param workingMode DOCUMENT ME!
+     * @param pluginGui DOCUMENT ME!
      * @param registerAsObserver DOCUMENT ME!
      *
      * @throws Exception DOCUMENT ME!
      */
     public PanelConnection(MainController controller,
-                           WorkingMode    workingMode,
+                           PluginGui    workingMode,
                            Boolean        registerAsObserver) throws Exception {
         super(controller, workingMode, registerAsObserver);
 
@@ -370,7 +365,7 @@ public class PanelConnection extends DynamicPanel {
                 Driver driver = null;
                 String selectedDriver = null;
 
-                tfURLS.setBackground(Color.WHITE);
+                tfURLS.setBackground(SystemColor.WHITE);
 
                 Element connection = model.getSourceConnection();
                 connection.setAttribute(XMLTags.DRIVER_CLASS, tfDriverClassNameS.getText());
@@ -402,7 +397,7 @@ public class PanelConnection extends DynamicPanel {
 
                 controller.getSqlDriverManager().saveDriverFileIntoUserHome();
             } else {
-                tfURLS.setBackground(Color.RED);
+                tfURLS.setBackground(SystemColor.RED);
             }
         } catch (Exception ex) {
             postException(ex);
@@ -420,7 +415,7 @@ public class PanelConnection extends DynamicPanel {
                 Driver driver = null;
                 String selectedDriver = null;
 
-                tfURLD.setBackground(Color.WHITE);
+                tfURLD.setBackground(SystemColor.WHITE);
 
                 Element connection = model.getDestinationConnection();
                 connection.setAttribute(XMLTags.DRIVER_CLASS, tfDriverClassNameD.getText());
@@ -452,7 +447,7 @@ public class PanelConnection extends DynamicPanel {
 
                 controller.getSqlDriverManager().saveDriverFileIntoUserHome();
             } else {
-                tfURLD.setBackground(Color.RED);
+                tfURLD.setBackground(SystemColor.RED);
             }
         } catch (Exception ex) {
             postException(ex);
