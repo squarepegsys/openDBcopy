@@ -22,6 +22,7 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin.statistics;
 
+import opendbcopy.config.APM;
 import opendbcopy.config.XMLTags;
 
 import opendbcopy.connection.DBConnection;
@@ -131,7 +132,6 @@ public class WriteStatisticsToFilePlugin extends DynamicPluginThread {
         int          destinationRecords = 0;
         int          totalSourceRecords = 0;
         int          totalDestinationRecords = 0;
-        String       newLine = controller.getLineSep();
 
         // get parameters for plugin
         Element conf = model.getConf();
@@ -156,8 +156,8 @@ public class WriteStatisticsToFilePlugin extends DynamicPluginThread {
         String  delimiter = ";";
 
         // init the string buffer to show table headings
-        buffer.append("Created by opendbcopy statistics on " + model.getSourceStatistics().getAttributeValue(XMLTags.CAPTURE_DATE) + newLine);
-        buffer.append(newLine);
+        buffer.append("Created by openDBcopy Statistics Plugin on " + model.getSourceStatistics().getAttributeValue(XMLTags.CAPTURE_DATE) + APM.LINE_SEP);
+        buffer.append(APM.LINE_SEP);
 
         buffer.append("SOURCE" + delimiter);
         buffer.append("RECORDS" + delimiter);
@@ -168,7 +168,7 @@ public class WriteStatisticsToFilePlugin extends DynamicPluginThread {
             buffer.append("+ / -" + delimiter);
         }
 
-        buffer.append(newLine);
+        buffer.append(APM.LINE_SEP);
 
         if (model.getDbMode() == model.DUAL_MODE) {
             // go through the tables which are mapped
@@ -189,7 +189,7 @@ public class WriteStatisticsToFilePlugin extends DynamicPluginThread {
                     buffer.append(statisticsDestinationTable.getAttributeValue(XMLTags.NAME) + delimiter);
                     buffer.append(statisticsDestinationTable.getAttributeValue(XMLTags.RECORDS) + delimiter);
                     buffer.append(difference + delimiter);
-                    buffer.append(newLine);
+                    buffer.append(APM.LINE_SEP);
                 }
 
                 totalSourceRecords += sourceRecords;
@@ -202,10 +202,10 @@ public class WriteStatisticsToFilePlugin extends DynamicPluginThread {
             buffer.append("TOTAL" + delimiter);
             buffer.append(totalDestinationRecords + delimiter);
             buffer.append(totalSourceRecords - totalDestinationRecords);
-            buffer.append(newLine);
+            buffer.append(APM.LINE_SEP);
 
             // add empty line    	
-            buffer.append(newLine);
+            buffer.append(APM.LINE_SEP);
 
             // go through unmapped source tables
             List     unmappedSourceTables = model.getUnmappedSourceTables();
@@ -219,7 +219,7 @@ public class WriteStatisticsToFilePlugin extends DynamicPluginThread {
                 buffer.append("UNMAPPED" + delimiter);
                 buffer.append(delimiter);
                 buffer.append(delimiter);
-                buffer.append(newLine);
+                buffer.append(APM.LINE_SEP);
             }
 
             // go through unmapped destination tables
@@ -234,7 +234,7 @@ public class WriteStatisticsToFilePlugin extends DynamicPluginThread {
                 buffer.append(table.getAttributeValue(XMLTags.NAME) + delimiter);
                 buffer.append(table.getAttributeValue(XMLTags.RECORDS) + delimiter);
                 buffer.append(delimiter);
-                buffer.append(newLine);
+                buffer.append(APM.LINE_SEP);
             }
         }
         // single_db mode
@@ -248,7 +248,7 @@ public class WriteStatisticsToFilePlugin extends DynamicPluginThread {
                 Element table = model.getSourceStatisticsTable(((Element) itSourceTables.next()).getAttributeValue(XMLTags.NAME));
                 buffer.append(table.getAttributeValue(XMLTags.NAME) + delimiter);
                 buffer.append(table.getAttributeValue(XMLTags.RECORDS) + delimiter);
-                buffer.append(newLine);
+                buffer.append(APM.LINE_SEP);
 
                 sourceRecords = Integer.parseInt(table.getAttributeValue(XMLTags.RECORDS));
                 totalSourceRecords += sourceRecords;

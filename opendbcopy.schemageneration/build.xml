@@ -85,6 +85,11 @@
    	<!-- ============================================================= -->
    	<target name="clean">
       	<delete quiet="true" dir="${build.dir}"/>
+   		
+   		<!-- delete possible older versions of the plugins jar -->
+      	<delete>
+		    <fileset dir="${lib.dir}" includes="**/*${plugin.name}*.jar"/>
+		</delete>
    	</target>
    	
 	<target name="cleanhbm" depends="preparehbm">
@@ -125,10 +130,21 @@
    		<!-- copy configuration to destination dir -->
 	   	<copy file="${plugin.file}" todir="${OPENDBCOPY_HOME}/plugins/${plugin.name}"/>
 		<copy file="${gui.file}" todir="${OPENDBCOPY_HOME}/plugins/${plugin.name}"/>
+		
+   		<!-- copy code generation configuration to destination dir -->
+		<copy file="${codegen.config}" todir="${OPENDBCOPY_HOME}/plugins/${plugin.name}"/>
+
+   		<!-- copy README to destination dir -->
+		<copy file="README" todir="${OPENDBCOPY_HOME}/plugins/${plugin.name}"/>
 
 		<!-- copy lib dir to destination dir -->
 	   	<copy todir="${OPENDBCOPY_HOME}/plugins/${plugin.name}/lib">
     		<fileset dir="${lib.dir}"/>
+		</copy>
+   		
+		<!-- copy hbm dir to destination dir -->
+	   	<copy todir="${OPENDBCOPY_HOME}/plugins/${plugin.name}/hbm">
+    		<fileset dir="${hbm.dir}"/>
 		</copy>
 		
 		<!-- deploy ant build stuff -->
@@ -146,6 +162,12 @@
 		<!-- copy plugin configuration and working mode into distribution -->
 	   	<copy file="${plugin.file}" todir="${dist.dir}/${plugin.name}"/>
 		<copy file="${gui.file}" todir="${dist.dir}/${plugin.name}"/>
+
+   		<!-- copy code generation configuration to destination dir -->
+		<copy file="${codegen.config}" todir="${dist.dir}/${plugin.name}"/>
+
+   		<!-- copy README to destination dir -->
+		<copy file="README" todir="${dist.dir}/${plugin.name}"/>
 		
 		<!-- copy lib dir into distribution -->
 	   	<copy todir="${dist.dir}/${plugin.name}/lib">
@@ -197,7 +219,8 @@
 		</taskdef>            
       
         <hbm2java 
-    	    output="${hbm.dir}/src">
+    	    output="${hbm.dir}/src"
+    	    config="${codegen.config}">
            	<fileset dir="${hbm.dir}">
                <include name="**/*.hbm.xml"/>
            </fileset>
@@ -219,15 +242,13 @@
          	<fileset dir="${hbm.dir}/classes"/>
       	</jar>     	
         
-		<!-- copy hibernate.properties into standard build dir -->
-	   	<copy file="${hbm.dir}/hibernate.properties" todir="${lib.dir}"/>
-        
+        <echo message="If no errors occured, very well! For debug, info and warnings see file hbm2java_code_generation.log"/>
     </target>
 
    	<!-- ============================================================= -->
    	<!-- Create the Database schema                                    -->
    	<!-- ============================================================= -->
-   	<target name="schema-create" depends="hbm2java">        
+   	<target name="schema-create">        
 	    <taskdef name="schema-create"
 	        classname="net.sf.hibernate.tool.hbm2ddl.SchemaExportTask">
 	        <classpath>
@@ -235,13 +256,16 @@
 	        </classpath>
 		</taskdef>            
   
+      	<mkdir dir="${sql.dir}"/>
+  		<property file="${hbm.dir}/hibernate.properties"/>
+  
 	    <schema-create 
 	    	properties="${hbm.dir}/hibernate.properties"
 	    	quiet="no" 
 	        text="no" 
 		    drop="no"
 		    delimiter=";" 
-		    output="${hbm.dir}/schema-export.sql">
+		    output="${sql.dir}/${db_product_name}_schema_create.sql">
 	       	<fileset dir="${hbm.dir}">
 	           <include name="**/*.hbm.xml"/>
 	        </fileset>
@@ -251,7 +275,7 @@
    	<!-- ============================================================= -->
    	<!-- Update the Database schema (not all JDBC drivers support this -->
    	<!-- ============================================================= -->
-	<target name="schema-update" depends="hbm2java">
+	<target name="schema-update" depends="prepare">
 	    <taskdef name="schema-update"
 	        classname="net.sf.hibernate.tool.hbm2ddl.SchemaUpdateTask">
 	        <classpath>
@@ -271,19 +295,23 @@
    	<!-- ============================================================= -->
    	<!-- Drop the Database schema                                      -->
    	<!-- ============================================================= -->
-	<target name="schema-drop" depends="hbm2java">        
+	<target name="schema-drop">        
 	    <taskdef name="schemaexport"
 	        classname="net.sf.hibernate.tool.hbm2ddl.SchemaExportTask">
 	        <classpath>
                 <path refid="plugin.classpath" />
 	        </classpath>
 		</taskdef>            
+
+      	<mkdir dir="${sql.dir}"/>
+  		<property file="${hbm.dir}/hibernate.properties"/>
 	  
 	    <schemaexport 
 	    	properties="${hbm.dir}/hibernate.properties"
 	    	quiet="no" 
 	        text="no" 
-		    drop="yes">
+		    drop="yes"
+		    output="${sql.dir}/${db_product_name}_schema_drop.sql">
 	       	<fileset dir="${hbm.dir}">
 	           <include name="**/*.hbm.xml"/>
 	       </fileset>

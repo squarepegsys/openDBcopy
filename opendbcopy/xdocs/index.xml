@@ -14,7 +14,7 @@
 
   <section name="openDBcopy Overview">
 	<p>
-		<b>Designed and developed by Anthony Smith, published under the terms of the <a href="license.html">GNU General Public License</a></b>
+		<b>Designed and developed by Anthony Smith, published under the terms of the <a href="license.html">GNU General Public License</a>.</b>
 	</p>
 	<p>
 	  <ul>
@@ -22,23 +22,18 @@
 		<li><a href="developer-manual.pdf">openDBcopy Developer Manual (PDF, ~500 KB)</a></li>
 	  </ul>
 	</p>
-	<br/>
 	<p>
 		openDBcopy is a universal database utility to migrate data 
 		from and to any database given a JDBC driver.
 	</p>
-
 	<ul>
 		<li>Standard filters are included</li>
 		<li>Custom plugins can be added and/or developed</li>
     	<li>Complete migration project saved as XML for easy re-use</li>
 		<li>Run with GUI or as batch process</li>
     </ul>
-
-	<br/><br/>
-		
 	<center>
-		<img border="0px" src="images/captures/general_demo.gif" />
+		<img border="0px" src="images/general_demo.gif" />
 			<p>Select columns to process and map columns which were not automatically mapped</p>
 	</center>
   </section>

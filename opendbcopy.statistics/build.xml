@@ -72,6 +72,11 @@
    	<!-- ============================================================= -->
    	<target name="clean">
       	<delete quiet="true" dir="${build.dir}"/>
+
+   		<!-- delete possible older versions of the plugins jar -->
+      	<delete>
+		    <fileset dir="${lib.dir}" includes="**/*${plugin.name}*.jar"/>
+		</delete>
    	</target>
    	
    	<!-- ============================================================= -->

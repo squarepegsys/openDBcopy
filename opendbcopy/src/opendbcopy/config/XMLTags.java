@@ -187,9 +187,13 @@ public final class XMLTags {
     public static final String UNKNOWN = "unknown";    
     public static final String INT = "int";
     public static final String HIBERNATE_DIALECT = "hibernate_dialect";
-    public static final String HIBERNATE_DIALECT_PACKAGE_PREFIX = "net.sf.hibernate.dialect";
-    public static final String HIBERNATE_DIALECT_CLASS_SUFFIX = "Dialect";
+    public static final String DIALECT = "dialect";
     public static final String PACKAGE_NAME = "package_name";
+    public static final String OUTER_JOIN = "outer-join";
+    public static final String LAZY = "lazy";
+    public static final String INVERSE = "inverse";
+    public static final String GENERATOR_CLASS = "generator_class";
+    public static final String SELECTED = "selected";
     
     // application arguments
     public static final String ARGUMENTS = "arguments";

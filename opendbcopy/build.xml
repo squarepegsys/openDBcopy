@@ -124,6 +124,7 @@
 		</delete>
    		
    		<!-- opendbcopy.schemageneration requires additional libs and hbm directory removed -->
+		<copy file="${lib.dir}/jdom.jar" todir="plugins/opendbcopy.schemageneration/lib"/>
    		<copy file="${lib.dir}/log4j-1.2.8.jar" todir="plugins/opendbcopy.schemageneration/lib"/>
    		<copy file="${lib.dir}/commons-lang-2.0.jar" todir="plugins/opendbcopy.schemageneration/lib"/>
    		<copy file="${lib.dir}/xerces.jar" todir="plugins/opendbcopy.schemageneration/lib"/>
@@ -141,7 +142,7 @@
 			izPackDir="${basedir}/tools/IzPack"/>		
 		<echo>1) Please ensure that maven site:generate has been executed before installer</echo>
 		<echo>2) App Version was changed in project.xml, install.xml, build.xml</echo>
-		<echo>3) opendbcopy.properties are public (show_gui, language, browser_paths)</echo>
+		<echo>3) CVS checked in for proper java headers</echo>
 	</target>
 	
    	<!-- ============================================================= -->

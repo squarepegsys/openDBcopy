@@ -22,23 +22,18 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin.script;
 
-import java.io.File;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-
+import opendbcopy.config.APM;
 import opendbcopy.config.XMLTags;
+
 import opendbcopy.connection.DBConnection;
+
 import opendbcopy.connection.exception.DriverNotFoundException;
 import opendbcopy.connection.exception.OpenConnectionException;
+
 import opendbcopy.controller.MainController;
+
 import opendbcopy.io.Writer;
+
 import opendbcopy.plugin.model.DynamicPluginThread;
 import opendbcopy.plugin.model.Model;
 import opendbcopy.plugin.model.database.DatabaseModel;
@@ -49,11 +44,26 @@ import opendbcopy.plugin.model.exception.MissingAttributeException;
 import opendbcopy.plugin.model.exception.MissingElementException;
 import opendbcopy.plugin.model.exception.PluginException;
 import opendbcopy.plugin.model.exception.UnsupportedAttributeValueException;
+
 import opendbcopy.sql.Helper;
+
 import opendbcopy.util.InputOutputHelper;
 import opendbcopy.util.IntHashMap;
 
 import org.jdom.Element;
+
+import java.io.File;
+import java.io.IOException;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 
 /**
@@ -68,8 +78,7 @@ public class InsertScriptPlugin extends DynamicPluginThread {
     private Statement     stmSource;
     private ResultSet     rs;
     private StringBuffer  sbScript;
-    private File        outputPath;
-    private String        newLine = "";
+    private File          outputPath;
     private String        database = "";
     private String        identifierQuoteStringOut = "";
     private List          processTables = null;
@@ -98,20 +107,19 @@ public class InsertScriptPlugin extends DynamicPluginThread {
      */
     protected void setUp() throws PluginException {
         try {
-            newLine = controller.getLineSep();
-
             // read the plugin configuration
             Element conf = model.getConf();
             outputPath = new File(conf.getChild(XMLTags.DIR).getAttributeValue(XMLTags.VALUE));
-            
+
             if (!outputPath.exists()) {
-            	boolean mkDirOk = outputPath.mkdir();
-            	if (!mkDirOk) {
-            		throw new PluginException("Could not create " + outputPath.getAbsolutePath());
-            	}
+                boolean mkDirOk = outputPath.mkdir();
+
+                if (!mkDirOk) {
+                    throw new PluginException("Could not create " + outputPath.getAbsolutePath());
+                }
             }
-            
-            show_qualified_table_name     = Boolean.valueOf(conf.getChild(XMLTags.SHOW_QUALIFIED_TABLE_NAME).getAttributeValue(XMLTags.VALUE)).booleanValue();
+
+            show_qualified_table_name = Boolean.valueOf(conf.getChild(XMLTags.SHOW_QUALIFIED_TABLE_NAME).getAttributeValue(XMLTags.VALUE)).booleanValue();
 
             if (model.getDbMode() == model.DUAL_MODE) {
                 identifierQuoteStringOut     = model.getDestinationMetadata().getChild(XMLTags.IDENTIFIER_QUOTE_STRING).getAttributeValue(XMLTags.VALUE);
@@ -218,7 +226,7 @@ public class InsertScriptPlugin extends DynamicPluginThread {
 
                 srcResult.close();
 
-                File file = new File(outputPath.getAbsolutePath() + controller.getFileSep() + fileName);
+                File file = new File(outputPath.getAbsolutePath() + APM.FILE_SEP + fileName);
 
                 Writer.write(sbScript, file);
 
@@ -236,7 +244,7 @@ public class InsertScriptPlugin extends DynamicPluginThread {
                 outputFiles = (File[]) generatedFiles.toArray(outputFiles);
 
                 Element outputConf = model.getConf().getChild(XMLTags.OUTPUT);
-                
+
                 model.appendToOutput(InputOutputHelper.createFileListElement(outputFiles, outputConf.getChild(XMLTags.FILELIST).getAttributeValue(XMLTags.VALUE)));
             }
         } catch (UnsupportedAttributeValueException e) {
@@ -321,7 +329,7 @@ public class InsertScriptPlugin extends DynamicPluginThread {
             }
 
             sbScript.append(");");
-            sbScript.append(newLine);
+            sbScript.append(APM.LINE_SEP);
 
             model.setCurrentProgressRecord(++counterRecords);
         }
@@ -337,14 +345,14 @@ public class InsertScriptPlugin extends DynamicPluginThread {
                                   int    processOrder) {
         sbScript = new StringBuffer();
 
-        sbScript.append("#############################################################################" + newLine);
-        sbScript.append("#" + newLine);
-        sbScript.append("# Script for table " + tableName + newLine);
-        sbScript.append("#" + newLine);
-        sbScript.append("# Load this script as #" + processOrder + " if there are referential integrity constraints set" + newLine);
-        sbScript.append("#" + newLine);
-        sbScript.append("# generated on " + new Date().toString() + newLine);
-        sbScript.append("#" + newLine);
-        sbScript.append("#############################################################################" + newLine);
+        sbScript.append("#############################################################################" + APM.LINE_SEP);
+        sbScript.append("#" + APM.LINE_SEP);
+        sbScript.append("# Script for table " + tableName + APM.LINE_SEP);
+        sbScript.append("#" + APM.LINE_SEP);
+        sbScript.append("# Load this script as #" + processOrder + " if there are referential integrity constraints set" + APM.LINE_SEP);
+        sbScript.append("#" + APM.LINE_SEP);
+        sbScript.append("# generated on " + new Date().toString() + APM.LINE_SEP);
+        sbScript.append("#" + APM.LINE_SEP);
+        sbScript.append("#############################################################################" + APM.LINE_SEP);
     }
 }

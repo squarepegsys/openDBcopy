@@ -26,11 +26,56 @@
 <plugin identifier="schemageneration" model_class="opendbcopy.plugin.schemageneration.model.SchemagenerationModel">
 	<conf>
 		<!-- path may be relative or absolute -->
-		<dir required="true" value="plugins/opendbcopy.schemageneration/hbm" type="dir" description="plugin.opendbcopy.schemageneration.conf.outputDir" />	
-		<package_name required="true" value="schema" type="string" description="plugin.opendbcopy.schemageneration.conf.packageName" />
-		<hibernate_dialect required="true" value="" type="hibernate_dialect" description="plugin.opendbcopy.schemageneration.hibernateDialect" />		
+		<dir value="plugins/opendbcopy.schemageneration/hbm" description="plugin.opendbcopy.schemageneration.conf.outputDir" />	
+		<package_name value="schema" description="plugin.opendbcopy.schemageneration.conf.packageName" />
+		<hibernate_dialect class="net.sf.hibernate.dialect.GenericDialect" name="Generic" description="plugin.opendbcopy.schemageneration.hibernateDialect">
+			<dialect class="net.sf.hibernate.dialect.DB2Dialect" name="DB2" />
+			<dialect class="net.sf.hibernate.dialect.DB2400Dialect" name="DB2 AS/400" />
+			<dialect class="net.sf.hibernate.dialect.DB2390Dialect" name="DB2 OS390" />
+			<dialect class="net.sf.hibernate.dialect.PostgreSQLDialect" name="PostgreSQL" />
+			<dialect class="net.sf.hibernate.dialect.MySQLDialect" name="MySQL" />
+			<dialect class="net.sf.hibernate.dialect.OracleDialect" name="Oracle (any version)" />
+			<dialect class="net.sf.hibernate.dialect.Oracle9Dialect" name="Oracle 9" />
+			<dialect class="net.sf.hibernate.dialect.SybaseDialect" name="Sybase" />
+			<dialect class="net.sf.hibernate.dialect.SybaseAnywhereDialect" name="Sybase Anywhere" />
+			<dialect class="net.sf.hibernate.dialect.SQLServerDialect" name="Microsoft SQL Server" />
+			<dialect class="net.sf.hibernate.dialect.SAPDBDialect" name="SAP DB" />
+			<dialect class="net.sf.hibernate.dialect.InformixDialect" name="Informix" />
+			<dialect class="net.sf.hibernate.dialect.HSQLDialect" name="HypersonicSQL" />
+			<dialect class="net.sf.hibernate.dialect.IngresDialect" name="Ingres" />
+			<dialect class="net.sf.hibernate.dialect.ProgressDialect" name="Progress" />
+			<dialect class="net.sf.hibernate.dialect.MckoiDialect" name="Mckoi SQL" />
+			<dialect class="net.sf.hibernate.dialect.InterbaseDialect" name="Interbase" />
+			<dialect class="net.sf.hibernate.dialect.PointbaseDialect" name="Pointbase" />
+			<dialect class="net.sf.hibernate.dialect.FrontbaseDialect" name="FrontBase" />
+			<dialect class="net.sf.hibernate.dialect.FirebirdDialect" name="Firebird" />
+			<dialect class="net.sf.hibernate.dialect.GenericDialect" name="Generic" />
+		</hibernate_dialect>
+		<outer-join value="auto" description="plugin.opendbcopy.schemageneration.conf.outerJoin" />
+		<lazy value="false" description="plugin.opendbcopy.schemageneration.conf.lazy" />
+		<inverse value="false" description="plugin.opendbcopy.schemageneration.conf.inverse" />
+		<generator_class value="assigned" description="plugin.opendbcopy.schemageneration.conf.generator_class" >
+			<increment class="increment" description="plugin.opendbcopy.schemageneration.conf.generator_class.increment" />
+			<identity class="identity" description="plugin.opendbcopy.schemageneration.conf.generator_class.identity" />
+			<uuid_hex class="uuid.hex" description="plugin.opendbcopy.schemageneration.conf.generator_class.uuid_hex" />
+			<uuid_string class="uuid.string" description="plugin.opendbcopy.schemageneration.conf.generator_class.uuid_string" />
+			<native class="native" description="plugin.opendbcopy.schemageneration.conf.generator_class.native" />
+			<assigned class="assigned" description="plugin.opendbcopy.schemageneration.conf.generator_class.assigned" />
+			<sequence class="sequence" description="plugin.opendbcopy.schemageneration.conf.generator_class.sequence">
+				<param name="sequence">[table]_sequence</param>
+			</sequence>
+			<seqhilo class="seqhilo" description="plugin.opendbcopy.schemageneration.conf.generator_class.seqhilo">
+				<param name="sequence">[table]_hi_value</param>
+                <param name="max_lo">1</param>
+            </seqhilo>
+			<hilo class="hilo" description="plugin.opendbcopy.schemageneration.conf.generator_class.hilo">
+				<param name="table">[table]_hi_value</param>
+                <param name="column">next_value</param>
+                <param name="max_lo">1</param>
+            </hilo>
+		</generator_class>
 		<output>
-			<filelist value="schemageneration" type="string" description="plugin.opendbcopy.schemageneration.conf.output.filelistIdentifier" />
+			<filelist value="schemageneration" description="plugin.opendbcopy.schemageneration.conf.output.filelistIdentifier" />
 		</output>			
 	</conf>
 	<threads>

@@ -1,0 +1,3 @@
+<codegen>
+	<generate renderer="net.sf.hibernate.tool.hbm2java.BasicRenderer"/>
+</codegen>

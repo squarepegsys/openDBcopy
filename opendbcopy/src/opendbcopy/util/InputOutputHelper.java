@@ -22,24 +22,20 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.util;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.StringTokenizer;
+
+import opendbcopy.config.APM;
 import opendbcopy.config.XMLTags;
-
-import opendbcopy.controller.MainController;
-
 import opendbcopy.plugin.model.exception.MissingAttributeException;
 import opendbcopy.plugin.model.exception.MissingElementException;
 
 import org.jdom.Element;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.StringTokenizer;
 
 
 /**
@@ -360,7 +356,7 @@ public final class InputOutputHelper {
      */
     private static File getFile(String dir,
                                 String filename) throws FileNotFoundException {
-        File file = new File(dir + MainController.fileSep + filename);
+        File file = new File(dir + APM.FILE_SEP + filename);
 
         if (file.exists()) {
             return file;

@@ -22,11 +22,18 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin.statistics;
 
+import opendbcopy.config.OperationType;
 import opendbcopy.config.XMLTags;
 
+import opendbcopy.connection.DBConnection;
+import opendbcopy.connection.exception.CloseConnectionException;
+import opendbcopy.connection.exception.DriverNotFoundException;
+import opendbcopy.connection.exception.OpenConnectionException;
 import opendbcopy.controller.MainController;
 
 import opendbcopy.plugin.model.database.DatabaseModel;
+import opendbcopy.plugin.model.database.DatabaseModelReader;
+import opendbcopy.plugin.model.database.DbTest;
 import opendbcopy.plugin.model.exception.MissingAttributeException;
 import opendbcopy.plugin.model.exception.MissingElementException;
 import opendbcopy.plugin.model.exception.UnsupportedAttributeValueException;
@@ -35,6 +42,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 
 /**
@@ -65,6 +73,75 @@ public class StatisticsModel extends DatabaseModel {
         loadStatistics(pluginElement);
     }
 
+    public void execute(Element operation) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, JDOMException, SQLException, IOException, Exception {
+        String operationString = operation.getAttributeValue(XMLTags.NAME);
+        
+        // test source connection
+        if (operationString.compareTo(OperationType.TEST_SOURCE_CONNECTION) == 0) {
+            source_db_connection_successful = DBConnection.testConnection(getSourceConnection());
+
+            if (getDbMode() == DUAL_MODE) {
+                if (source_db_connection_successful && destination_db_connection_successful) {
+                    readDatabaseMetadata();
+                }
+            } else {
+                if (source_db_connection_successful) {
+                    readDatabaseMetadata();
+                }
+            }
+
+            broadcast();
+        }
+
+        // test destination connection
+        if (operationString.compareTo(OperationType.TEST_DESTINATION_CONNECTION) == 0) {
+            destination_db_connection_successful = DBConnection.testConnection(getDestinationConnection());
+
+            if (source_db_connection_successful && destination_db_connection_successful) {
+                readDatabaseMetadata();
+            }
+
+            broadcast();
+        }
+
+        // read database metadata of both databases (if SINGLE_MODE just source database)
+        if (operationString.compareTo(OperationType.READ_METADATA) == 0) {
+            DatabaseModelReader.readDatabasesMetaData(this);
+        }
+
+        // test table filter
+        if (operationString.compareTo(OperationType.TEST_TABLE_FILTER) == 0) {
+            DbTest.testTableFilter(this, operation.getAttributeValue(XMLTags.TABLE));
+            broadcast();
+        }
+
+        // capture source model
+        if (operationString.compareTo(OperationType.CAPTURE_SOURCE_MODEL) == 0) {
+            setSourceModel(DatabaseModelReader.readModel(getSourceDb()));
+
+            // set elements process=true as ModelReader does not do this job
+            if (getDbMode() == SINGLE_MODE) {
+                setElementsProcessRecursively(getSourceModel(), true);
+            }
+
+            broadcast();
+        }
+
+        // capture destination model
+        if (operationString.compareTo(OperationType.CAPTURE_DESTINATION_MODEL) == 0) {
+            setDestinationModel(DatabaseModelReader.readModel(getDestinationDb()));
+            broadcast();
+        }
+
+        // create mapping if both models are loaded and mapping not yet set up
+        if (getDbMode() == DUAL_MODE) {
+            if (isSourceModelCaptured() && isDestinationModelCaptured() && !isMappingSetup()) {
+                setupMapping();
+                broadcast();
+            }
+        }
+    }
+    
     /**
      * DOCUMENT ME!
      *

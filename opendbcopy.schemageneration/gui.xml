@@ -27,7 +27,7 @@
 	<title value="title.plugin.opendbcopy.schemageneration" />
 	<panels>
 		<panel title="title.plugin.opendbcopy.schemageneration.panel.0">
-			<class name="opendbcopy.gui.PanelConfiguration" />
+			<class name="opendbcopy.plugin.schemageneration.gui.PanelConfiguration" />
 		</panel>
 		<panel title="title.plugin.opendbcopy.schemageneration.panel.1">
 			<class name="opendbcopy.gui.database.PanelConnection" register_as_observer="true" />

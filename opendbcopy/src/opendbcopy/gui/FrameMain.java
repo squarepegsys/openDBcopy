@@ -70,6 +70,7 @@ import org.jdom.JDOMException;
  */
 public class FrameMain extends JFrame implements Observer {
     private static Logger          logger = Logger.getLogger(FrameMain.class.getName());
+    private static final int MIN_FRAME_WIDTH = 1024;
     private static final Dimension SCREEN_SIZE = Toolkit.getDefaultToolkit().getScreenSize();
     private Menu                   menu;
     private MainController         controller;
@@ -237,15 +238,19 @@ public class FrameMain extends JFrame implements Observer {
 
         this.setJMenuBar(this.menu);
         this.menu.setVisible(true);
+        
         this.setSize(new Dimension(frameWidth, frameHeight));
+        locateDialogCentreScreen(this);
+
+        if (SCREEN_SIZE.width <= MIN_FRAME_WIDTH) {
+        	this.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        }
 
         // first line
         contentPane.add(panelPluginChain, "1, 1");
 
         // third line
         contentPane.add(panelCurrentPluginGui, "1, 3");
-
-        locateDialogCentreScreen(this);
     }
 
     /**

@@ -22,6 +22,7 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin.dump;
 
+import opendbcopy.config.APM;
 import opendbcopy.config.XMLTags;
 
 import opendbcopy.connection.DBConnection;
@@ -70,8 +71,7 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
     private int           counterRecords = 0;
     private int           counterTables = 0;
     private int           append_file_after_records = 0;
-    private char        delimiter = (char) 9;
-    private String        newLine = "";
+    private String        delimiter;
     private String        fileType = "";
     private boolean       show_header = false;
     private boolean       show_null_values = false;
@@ -98,8 +98,6 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
      * @throws PluginException DOCUMENT ME!
      */
     protected final void setUp() throws PluginException {
-        newLine = controller.getLineSep();
-
         // read the plugins configuration
         Element conf = model.getConf();
 
@@ -118,6 +116,13 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
             show_header                   = Boolean.valueOf(conf.getChild(XMLTags.SHOW_HEADER).getAttributeValue(XMLTags.VALUE)).booleanValue();
             show_null_values              = Boolean.valueOf(conf.getChild("show_null_values").getAttributeValue(XMLTags.VALUE)).booleanValue();
             append_file_after_records     = Integer.parseInt(conf.getChild(XMLTags.APPEND_FILE_AFTER_RECORDS).getAttributeValue(XMLTags.VALUE));
+
+            delimiter = conf.getChild(XMLTags.DELIMITER).getAttributeValue(XMLTags.VALUE);
+
+            // transform \t for tabulator into unicode representation
+            if (delimiter.compareToIgnoreCase("\\t") == 0) {
+                delimiter = "\u0009";
+            }
 
             // get connection
             connSource     = DBConnection.getConnection(model.getSourceConnection());
@@ -152,7 +157,7 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
 
                 String  sourceTableName = tableProcess.getAttributeValue(XMLTags.NAME);
 
-                File    file = new File(outputPath.getAbsolutePath() + controller.getFileSep() + getFileName(sourceTableName));
+                File    file = new File(outputPath.getAbsolutePath() + APM.FILE_SEP + getFileName(sourceTableName));
 
                 counterRecords = 0;
 
@@ -204,7 +209,7 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
                         }
                     }
 
-                    recordBuffer.append(newLine);
+                    recordBuffer.append(APM.LINE_SEP);
 
                     if ((counterRecords % append_file_after_records) == 0) {
                         fileWriter.write(recordBuffer.toString());
@@ -281,7 +286,7 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
             recordBuffer.append(((Element) itProcessColumns.next()).getAttributeValue(XMLTags.NAME) + delimiter);
         }
 
-        recordBuffer.append(newLine);
+        recordBuffer.append(APM.LINE_SEP);
     }
 
     /**

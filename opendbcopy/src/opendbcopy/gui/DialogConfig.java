@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Locale;
 
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -62,7 +61,6 @@ public class DialogConfig extends JDialog {
     private JComboBox       comboBoxGuiLanguages;
     private JTextField      tfEncoding;
     private JTextField tfBrowserPaths;
-    private JCheckBox       checkBoxShowGui;
     private JTextPane       textPaneDefaultBrowser;
     private JButton         buttonCancel;
     private JButton         buttonOk;
@@ -95,7 +93,7 @@ public class DialogConfig extends JDialog {
     private void guiInit() {
         double[][] size = {
                               { GUI.B, GUI.P, GUI.HG, GUI.P, GUI.B }, // Columns
-        { GUI.B, GUI.P, GUI.VG, GUI.P, GUI.VG, GUI.P, GUI.VG, GUI.P, GUI.VG, GUI.P, GUI.B }
+        { GUI.B, GUI.P, GUI.VG, GUI.P, GUI.VG, GUI.P, GUI.VG, GUI.P, GUI.B }
         }; // Rows
 
         panelMain     = new JPanel(new TableLayout(size));
@@ -103,9 +101,6 @@ public class DialogConfig extends JDialog {
         labelGuiLanguage        = new JLabel(rm.getString("text.config.guiLanguage"));
         labelEncoding           = new JLabel(rm.getString("text.config.encoding"));
         labelDefaultBrowser     = new JLabel(rm.getString("text.config.defaultBrowser"));
-
-        checkBoxShowGui            = new JCheckBox(rm.getString("text.config.showGui"));
-        checkBoxShowGui.setSelected(new Boolean(cm.getApplicationProperty(APM.SHOW_GUI)).booleanValue());
 
         comboBoxGuiLanguages = new JComboBox();
         fillGuiLanguages();
@@ -122,18 +117,17 @@ public class DialogConfig extends JDialog {
         buttonOk = new JButton(rm.getString("button.ok"));
         buttonOk.addActionListener(new DialogConfig_buttonOk_actionAdapter(this));
 
-        panelMain.add(checkBoxShowGui, "1, 1, 3, 1");
-        panelMain.add(labelGuiLanguage, "1, 3");
-        panelMain.add(comboBoxGuiLanguages, "3, 3");
-        panelMain.add(labelEncoding, "1, 5");
-        panelMain.add(tfEncoding, "3, 5");
-        panelMain.add(labelDefaultBrowser, "1, 7");
-        panelMain.add(tfBrowserPaths, "3, 7");
+        panelMain.add(labelGuiLanguage, "1, 1");
+        panelMain.add(comboBoxGuiLanguages, "3, 1");
+        panelMain.add(labelEncoding, "1, 3");
+        panelMain.add(tfEncoding, "3, 3");
+        panelMain.add(labelDefaultBrowser, "1, 5");
+        panelMain.add(tfBrowserPaths, "3, 5");
         
         JPanel panelControl = new JPanel(new GridLayout(1, 2, 10, 10));
         panelControl.add(buttonCancel);
         panelControl.add(buttonOk);
-        panelMain.add(panelControl, "1, 9, 3, 9");
+        panelMain.add(panelControl, "1, 7, 3, 7");
 
         this.getContentPane().setLayout(new GridLayout(1, 1));
         this.getContentPane().add(panelMain);
@@ -165,9 +159,6 @@ public class DialogConfig extends JDialog {
 
     void buttonOk_actionPerformed(ActionEvent e) {
     	try {
-    		// show gui
-        	cm.updateApplicationProperty(APM.SHOW_GUI, Boolean.toString(checkBoxShowGui.isSelected()));
-        	
         	// default language
         	cm.updateApplicationProperty(APM.DEFAULT_LANGUAGE, ((LocaleBean) comboBoxGuiLanguages.getSelectedItem()).getLocale().getLanguage());
         	

@@ -177,7 +177,7 @@ public class PluginScheduler implements Observer {
      */
     public final void interruptCurrentPlugin() {
         if (currentPluginThread != null) {
-            currentPluginThread.interrupt();
+            currentPluginThread.setInterrupted(true);
         }
 
         pluginManager.setInterrupted(true);

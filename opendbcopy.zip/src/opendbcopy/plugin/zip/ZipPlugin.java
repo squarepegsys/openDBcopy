@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import opendbcopy.config.APM;
 import opendbcopy.config.XMLTags;
 import opendbcopy.controller.MainController;
 import opendbcopy.plugin.model.DynamicPluginThread;
@@ -281,7 +282,7 @@ public class ZipPlugin extends DynamicPluginThread {
 
                 for (int i = 0; i < fileList.length; i++) {
                     if (fileList[i].isDirectory()) {
-                        zipDir(fileList[i], dirAppender + MainController.fileSep + fileList[i].getName());
+                        zipDir(fileList[i], dirAppender + APM.FILE_SEP + fileList[i].getName());
                     } else if (fileList[i].isFile()) {
                         zipFileEntry(fileList[i], dirAppender);
                     }
@@ -309,7 +310,7 @@ public class ZipPlugin extends DynamicPluginThread {
         ZipEntry fileEntry = null;
 
         if (dirAppender != null) {
-            fileEntry = new ZipEntry(dirAppender + MainController.fileSep + zipEntryFile.getName());
+            fileEntry = new ZipEntry(dirAppender + APM.FILE_SEP + zipEntryFile.getName());
         } else {
             fileEntry = new ZipEntry(zipEntryFile.getName());
         }

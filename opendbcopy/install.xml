@@ -4,7 +4,7 @@
 
     <info>
         <appname>openDBcopy</appname>
-        <appversion>0.51rc1</appversion>
+        <appversion>0.51rc2</appversion>
         <authors>
             <author name="Anthony Smith" email="smith@puzzle.ch"/>
         </authors>
@@ -58,7 +58,7 @@
 			<file src="lib/commons-lang-2.0.jar" targetdir="$INSTALL_PATH/lib"/>
 			<file src="lib/TableLayout.jar" targetdir="$INSTALL_PATH/lib"/>
 			<file src="lib/ostermillerutils_1_03_00.jar" targetdir="$INSTALL_PATH/lib"/>
-			<executable stage="never" targetfile="$INSTALL_PATH/lib/start.sh"/>
+			<executable stage="never" targetfile="$INSTALL_PATH/bin/start.sh"/>
         </pack>
         <pack name="User Manual" required="no" preselected="yes">
             <description>User Manual</description>
@@ -68,7 +68,6 @@
             <description>Source Codes, Developer Manual and API Docs (for developers only)</description>
             <file src="src" targetdir="$INSTALL_PATH"/>
             <file src=".project" targetdir="$INSTALL_PATH"/>
-            <file src=".classpath" targetdir="$INSTALL_PATH"/>
             <file src="jalopy_settings_opendbcopy.xml" targetdir="$INSTALL_PATH"/>
             <file src="build.xml" targetdir="$INSTALL_PATH"/>
             <file src="build.properties" targetdir="$INSTALL_PATH"/>

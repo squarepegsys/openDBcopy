@@ -120,7 +120,7 @@ public class SchemagenerationModel extends DatabaseModel {
 
         // capture source model
         if (operationString.compareTo(OperationType.CAPTURE_SOURCE_MODEL) == 0) {
-            setSourceModel(DatabaseModelReader.readModel(getSourceDb(), operation));
+            setSourceModel(DatabaseModelReader.readModel(getSourceDb()));
 
             // set elements process=true as ModelReader does not do this job
             if (getDbMode() == SINGLE_MODE) {

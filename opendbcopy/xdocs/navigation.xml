@@ -8,10 +8,7 @@
 
 	<body>
         <links>
-            <item href="http://www.sourceforge.net/projects/opendbcopy" name="opendbcopy@sourceforge"/>
-        	<item name="Squirrel-SQL" href="http://squirrel-sql.sourceforge.net/"/>
-			<item href="http://xmenu-xlayer.sourceforge.net/" name="Xmenu-xlayer: DHTML menu"/>
-			<item href="http://autoj.sourceforge.net" name="autoj builder"/>
+            <item href="http://www.sourceforge.net/projects/opendbcopy" name="openDBcopy at SourceForge"/>
         </links>
 
 		<menu name="Quick Links">
@@ -26,7 +23,7 @@
 			<item href="/features.html" name="Features"></item>
 			<item href="/user-manual.pdf" name="User Manual"></item>
 			<item href="/developer-manual.pdf" name="Developer Manual"></item>
-			<item href="/../apidocs/index.html" name="Java API Docs"></item>
+<!--			<item href="/../apidocs/index.html" name="Java API Docs"></item> -->
 		</menu>
 		
 		<menu name="Project Info">
@@ -36,6 +33,15 @@
 			<item href="/issue-tracking.html" name="Issue Tracking"></item>
 			<item href="/license.html" name="License"></item>
 		</menu>
+
+        <menu name="Useful Links">
+            <item href="http://squirrel-sql.sourceforge.net/" name="Squirrel-SQL"/>
+            <item href="http://www.hibernate.org/" name="Hibernate"/>
+            <item href="http://boss.bekk.no/boss/middlegen/" name="Middlegen"/>
+			<item href="https://appfuse.dev.java.net/" name="appFuse"/>
+			<item href="http://autoj.sourceforge.net" name="autoj builder"/>
+			<item href="http://xmenu-xlayer.sourceforge.net/" name="Xmenu-xlayer"/>			
+        </menu>
 
 		<!-- footer will be placed above the (c) -->
 		<footer>

@@ -337,7 +337,7 @@ public class PanelConnection extends DynamicPanel {
                 connection.setAttribute(XMLTags.URL, tfURLS.getText());
                 connection.setAttribute(XMLTags.USERNAME, tfUserNameS.getText());
 
-                if (this.tfPasswordS.getPassword() != null) {
+                if (this.tfPasswordS.getPassword().length > 0) {
                     connection.setAttribute(XMLTags.PASSWORD, new String(tfPasswordS.getPassword()));
                 } else {
                     connection.setAttribute(XMLTags.PASSWORD, "");
@@ -386,7 +386,7 @@ public class PanelConnection extends DynamicPanel {
                 connection.setAttribute(XMLTags.URL, tfURLD.getText());
                 connection.setAttribute(XMLTags.USERNAME, tfUserNameD.getText());
 
-                if (this.tfPasswordD.getPassword() != null) {
+                if (this.tfPasswordD.getPassword().length > 0) {
                     connection.setAttribute(XMLTags.PASSWORD, new String(tfPasswordD.getPassword()));
                 } else {
                     connection.setAttribute(XMLTags.PASSWORD, "");

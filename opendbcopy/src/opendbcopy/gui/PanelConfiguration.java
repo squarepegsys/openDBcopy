@@ -151,15 +151,7 @@ public class PanelConfiguration extends DynamicPanel {
      */
     private void provideSelection(ConfNode confNode) {
         Object[] possibilitiesBoolean = { "true", "false" };
-        Object[] possibilitiesUnicode = { "\u0009 (Unicode Tabulator)", "\u003b (Unicode Semicolon)" };
         Object[] possibilitiesFileDirFilelistSelection = { XMLTags.FILE, XMLTags.DIR, XMLTags.FILELIST };
-
-        // see http://www.hibernate.org/hib_docs/api/net/sf/hibernate/dialect/package-summary.html for details
-        Object[] possibilitiesHibernateDialect = {
-                                                     "DB2400", "DB2", "Firebird", "FrontBase", "HSQL", "Informix9", "Informix", "Ingres", "Interbase",
-                                                     "Mckoi", "MySQL", "Oracle9", "Oracle", "Pointbase", "PostgreSQL", "Progress", "SAPDB",
-                                                     "SQLServer", "Sybase11_9_2", "SybaseAnywhere", "Sybase", "Generic"
-        };
 
         Object[] possibilities = null;
         String   input = null;
@@ -170,11 +162,6 @@ public class PanelConfiguration extends DynamicPanel {
 
         if (confNode.getAttributeType().compareToIgnoreCase(XMLTags.FILE_DIR_FILELISTS_SELECTION) == 0) {
             input = (String) JOptionPane.showInputDialog(this, rm.getString(confNode.getElementDescription()), rm.getString(confNode.getElementDescription()), JOptionPane.PLAIN_MESSAGE, GUI.getImageIconConfig(), possibilitiesFileDirFilelistSelection, confNode.getAttributeValue());
-        }
-
-        if (confNode.getAttributeType().compareToIgnoreCase(XMLTags.UNICODE) == 0) {
-            input     = (String) JOptionPane.showInputDialog(this, rm.getString(confNode.getElementDescription()), rm.getString(confNode.getElementDescription()), JOptionPane.PLAIN_MESSAGE, GUI.getImageIconConfig(), possibilitiesUnicode, confNode.getAttributeValue());
-            input     = input.substring(0, "\u0009".length());
         }
 
         if (confNode.getAttributeType().compareToIgnoreCase(XMLTags.BOOLEAN) == 0) {
@@ -190,11 +177,6 @@ public class PanelConfiguration extends DynamicPanel {
                 JOptionPane.showMessageDialog(this, e.getMessage(), e.getMessage(), JOptionPane.ERROR_MESSAGE);
                 input = null;
             }
-        }
-
-        if (confNode.getAttributeType().compareToIgnoreCase(XMLTags.HIBERNATE_DIALECT) == 0) {
-            input     = (String) JOptionPane.showInputDialog(this, rm.getString(confNode.getElementDescription()), rm.getString(confNode.getElementDescription()), JOptionPane.PLAIN_MESSAGE, GUI.getImageIconConfig(), possibilitiesHibernateDialect, confNode.getAttributeValue());
-            input     = XMLTags.HIBERNATE_DIALECT_PACKAGE_PREFIX + "." + input + XMLTags.HIBERNATE_DIALECT_CLASS_SUFFIX;
         }
 
         if (confNode.getAttributeType().compareToIgnoreCase(XMLTags.FILE) == 0) {

@@ -85,8 +85,8 @@ public class DatabaseModel extends Model {
     private Element  destinationModel;
     private Element  mapping;
     private Element  filter;
-    private boolean  source_db_connection_successful = false;
-    private boolean  destination_db_connection_successful = false;
+    protected boolean  source_db_connection_successful = false;
+    protected boolean  destination_db_connection_successful = false;
 
     /**
      * Creates a new DatabasePluginModel object.
@@ -142,7 +142,7 @@ public class DatabaseModel extends Model {
      */
     public void execute(Element operation) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, JDOMException, SQLException, IOException, Exception {
         String operationString = operation.getAttributeValue(XMLTags.NAME);
-
+        
         // test source connection
         if (operationString.compareTo(OperationType.TEST_SOURCE_CONNECTION) == 0) {
             source_db_connection_successful = DBConnection.testConnection(getSourceConnection());

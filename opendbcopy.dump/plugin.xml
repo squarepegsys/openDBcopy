@@ -28,7 +28,7 @@
 		<!-- path may be relative or absolute -->
 		<dir required="true" value="" type="dir" description="plugin.opendbcopy.dump.conf.outputDir" />	
 		<file_type required="true" value="csv" type="string" description="plugin.opendbcopy.dump.conf.fileType" />
-		<delimiter required="true" value="" type="unicode" description="plugin.opendbcopy.dump.conf.columnDelimiter" />
+		<delimiter required="true" value="" type="string" description="plugin.opendbcopy.dump.conf.columnDelimiter" />
 		<show_header value="true" type="boolean" description="plugin.opendbcopy.dump.conf.showHeader" />
 		<show_null_values value="false" type="boolean" description="plugin.opendbcopy.dump.conf.showNullValues" />
 		<append_file_after_records value="500" type="int" description="plugin.opendbcopy.dump.conf.appendFileAfterRecords" />

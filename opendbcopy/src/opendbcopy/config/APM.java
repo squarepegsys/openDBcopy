@@ -29,7 +29,15 @@ package opendbcopy.config;
  * @version $Revision$
  */
 public final class APM {
-    public static final String APPLICATION_COPYRIGHT = "application_copyright";
+    public static final String CONF_DIR = "conf";
+    public static final String APP_PROPERTIES_FILE = "opendbcopy.properties";
+    public static final String APPLICATION_LOG_FILE_NAME = "application_log.txt";
+    public static final String EXECUTION_LOG_FILE_NAME = "execution_log.txt";
+    public static final String FILE_SEP = System.getProperty("file.separator");
+    public static final String LINE_SEP = System.getProperty("line.separator");
+    
+    
+	public static final String APPLICATION_COPYRIGHT = "application_copyright";
     public static final String APPLICATION_NAME = "application_name";
     public static final String APPLICATION_VERSION = "application_version";
     public static final String APPLICATION_DEVELOPER_NAME = "application_developer_name";

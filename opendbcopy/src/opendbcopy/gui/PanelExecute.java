@@ -301,7 +301,7 @@ public class PanelExecute extends DynamicPanel {
                 buttonControl.setText(OperationType.EXECUTE);
                 buttonControl.setActionCommand(OperationType.EXECUTE);
 
-                execute(operation, rm.getString("text.execute.interrupted"));
+                controller.execute(operation);
             } catch (Exception ex) {
                 postException(ex);
             }

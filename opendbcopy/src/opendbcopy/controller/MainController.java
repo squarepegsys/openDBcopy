@@ -22,31 +22,34 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.controller;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.MissingResourceException;
+import java.util.Observer;
+import java.util.Properties;
+
 import opendbcopy.config.APM;
 import opendbcopy.config.ConfigManager;
 import opendbcopy.config.OperationType;
 import opendbcopy.config.SQLDriverManager;
 import opendbcopy.config.XMLTags;
-
 import opendbcopy.connection.exception.CloseConnectionException;
 import opendbcopy.connection.exception.DriverNotFoundException;
 import opendbcopy.connection.exception.OpenConnectionException;
-
 import opendbcopy.gui.FrameConsole;
 import opendbcopy.gui.FrameMain;
 import opendbcopy.gui.PluginGuiManager;
-
-import opendbcopy.io.FileHandling;
 import opendbcopy.io.ImportFromXML;
-
 import opendbcopy.plugin.JobManager;
-
 import opendbcopy.plugin.model.Model;
 import opendbcopy.plugin.model.exception.MissingAttributeException;
 import opendbcopy.plugin.model.exception.MissingElementException;
 import opendbcopy.plugin.model.exception.PluginException;
 import opendbcopy.plugin.model.exception.UnsupportedAttributeValueException;
-
 import opendbcopy.resource.ResourceManager;
 
 import org.apache.log4j.Category;
@@ -55,27 +58,9 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.PropertyConfigurator;
-
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-
-import java.lang.reflect.InvocationTargetException;
-
-import java.sql.SQLException;
-
-import java.util.HashMap;
-import java.util.MissingResourceException;
-import java.util.Observer;
-import java.util.Properties;
-
-import javax.swing.UIManager;
 
 
 /**
@@ -85,20 +70,7 @@ import javax.swing.UIManager;
  * @version $Revision$
  */
 public class MainController {
-    public static final String      fileSep = System.getProperty("file.separator");
-    public static final String      lineSep = System.getProperty("line.separator");
-    private static final String     CONF_DIR = "conf";
-    private static final String     APP_PROPERTIES_FILE = "opendbcopy.properties";
     private static Logger           logger = Logger.getLogger(MainController.class.getName());
-    private static File             opendbcopyUserHomeDir;
-    private static File             logDir;
-    private static File             inoutDir;
-    private static File             personalJobsDir;
-    private static File             personalPluginsDir;
-    private static File             personalConfDir;
-    private static File             personalSQLDriversFile;
-    private static File             executionLogFile;
-    private static String           pathFilenameConsoleOut;
     private static ConfigManager    cm;
     private static JobManager       jm;
     private static ResourceManager  rm;
@@ -135,7 +107,7 @@ public class MainController {
      */
     public MainController(String[] args) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, JDOMException, SQLException, FileNotFoundException, ClassNotFoundException, IllegalAccessException, InstantiationException, InvocationTargetException, IOException, Exception {
         if (isGuiEnabled()) {
-            taskLauncher = new TaskLauncher(this, 5, frameWidth, frameHeight, pathFilenameConsoleOut, cm.getApplicationProperty(APM.OPENDBCOPY_LOGO_FILE));
+            taskLauncher = new TaskLauncher(this, 5, frameWidth, frameHeight, cm.getPathFilenameConsoleOut(), cm.getApplicationProperty(APM.OPENDBCOPY_LOGO_FILE));
             taskLauncher.go();
         }
 
@@ -145,16 +117,16 @@ public class MainController {
         Document typeMapping = null;
         Document workingMode = null;
 
-        try {
-            // set the look and feel. If not existing, set default crossplatform look and feel
-            if (cm.getApplicationProperty(APM.LOOK_AND_FEEL) != null) {
-                if (cm.getApplicationProperty(APM.LOOK_AND_FEEL).compareToIgnoreCase(APM.SYSTEM) == 0) {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                }
-            }
-        } catch (Exception e) {
-            System.err.println(rm.getString("text.controller.cannotSetLF"));
-        }
+//        try {
+//            // set the look and feel. If not existing, set default crossplatform look and feel
+//            if (cm.getApplicationProperty(APM.LOOK_AND_FEEL) != null) {
+//                if (cm.getApplicationProperty(APM.LOOK_AND_FEEL).compareToIgnoreCase(APM.SYSTEM) == 0) {
+//                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+//                }
+//            }
+//        } catch (Exception e) {
+//            System.err.println(rm.getString("text.controller.cannotSetLF"));
+//        }
 
         // evaluate arguments
         project = Arguments.process(args);
@@ -176,7 +148,7 @@ public class MainController {
         addMessage(rm.getString("text.controller.workingModeManagerDone"));
 
         // read drivers file
-        sqlDriverManager = new SQLDriverManager(personalSQLDriversFile);
+        sqlDriverManager = new SQLDriverManager(cm.getPersonalSQLDriversFile());
         addMessage(rm.getString("text.controller.sqlDriversDone"));
 
         // read SQL types mapping
@@ -225,21 +197,10 @@ public class MainController {
      */
     public static void main(String[] args) {
         try {
-            cm = new ConfigManager(CONF_DIR + fileSep + APP_PROPERTIES_FILE);
+            cm = new ConfigManager();
 
             System.out.println("reading language specific resources");
             rm = new ResourceManager(cm.getApplicationProperty(APM.OPENDBCOPY_RESOURCE_BUNDLE_DIR), cm.getApplicationProperty(APM.OPENDBCOPY_RESOURCE_NAME), cm.getApplicationProperty(APM.DEFAULT_LANGUAGE));
-
-            setupDirectoriesAndCreateLocalFiles();
-            System.out.println(rm.getString("text.controller.checkingDirectoriesDone"));
-
-            String[] params = { pathFilenameConsoleOut };
-            System.out.println(rm.getString("text.controller.consoleRedirect", params));
-
-            // lead System.out into single file
-            PrintStream out = new PrintStream(new FileOutputStream(pathFilenameConsoleOut));
-            System.setOut(out);
-            System.setErr(out);
 
             // check if the gui shall be shown or not
             if ((cm.getApplicationProperty(APM.SHOW_GUI) != null) && (cm.getApplicationProperty(APM.SHOW_GUI).compareToIgnoreCase("true") == 0)) {
@@ -432,89 +393,6 @@ public class MainController {
     }
 
     /**
-     * Creates required directories in user_home for opendbcopy.
-     *
-     * @throws IOException DOCUMENT ME!
-     */
-    private static void setupDirectoriesAndCreateLocalFiles() throws IOException {
-        // check that user's home directory for opendbcopy exists
-        String userDir = null;
-
-        if (Boolean.valueOf(cm.getApplicationProperty(APM.OPENDBCOPY_USER_HOME_DIR_IS_ABSOLUTE)).booleanValue()) {
-            userDir = cm.getApplicationProperty(APM.OPENDBCOPY_USER_HOME_DIR);
-        } else {
-            userDir = System.getProperty("user.home") + fileSep + cm.getApplicationProperty(APM.OPENDBCOPY_USER_HOME_DIR);
-        }
-
-        try {
-            opendbcopyUserHomeDir = FileHandling.getFile(userDir);
-        } catch (FileNotFoundException e) {
-            opendbcopyUserHomeDir = new File(userDir);
-            opendbcopyUserHomeDir.mkdir();
-
-            String[] param = { opendbcopyUserHomeDir.getAbsolutePath() };
-            System.out.println(rm.getString("text.controller.created", param));
-        }
-
-        // check that log directory exists, else create it
-        logDir     = setupDirInOpendbcopyUserHome("log");
-
-        // check that personal conf directory exists, else create it
-        personalConfDir     = setupDirInOpendbcopyUserHome(CONF_DIR);
-
-        // check that plugin in out dir exists, else create it
-        inoutDir     = setupDirInOpendbcopyUserHome(cm.getApplicationProperty(APM.PLUGIN_IN_OUT_DIR));
-
-        // check that local plugins folder exists, else create it
-        personalPluginsDir     = setupDirInOpendbcopyUserHome(cm.getApplicationProperty(APM.PLUGINS_DIRECTORY));
-
-        // check that local projects folder exists, else create it
-        personalJobsDir     = setupDirInOpendbcopyUserHome(cm.getApplicationProperty(APM.JOBS_DIRECTORY));
-
-        // create path filenames for console output
-        pathFilenameConsoleOut = logDir.getAbsolutePath() + fileSep + "application_log.txt";
-
-        // check if opendbcopy user home dir contains sql driver file, if not, copy a standard copy into this directory
-        File   standardSQLDriverFile = FileHandling.getFile(cm.getApplicationProperty(APM.DRIVERS_CONF_FILE));
-        String standardSQLDriverFilename = standardSQLDriverFile.getName();
-        String personalSQLDriverPathFilename = opendbcopyUserHomeDir.getAbsolutePath() + fileSep + cm.getApplicationProperty(APM.DRIVERS_CONF_FILE);
-
-        personalSQLDriversFile = FileHandling.getFileInDirectory(personalConfDir, standardSQLDriverFilename);
-
-        if (personalSQLDriversFile == null) {
-            personalSQLDriversFile = new File(opendbcopyUserHomeDir.getAbsolutePath() + fileSep + cm.getApplicationProperty(APM.DRIVERS_CONF_FILE));
-
-            FileHandling.copyFile(standardSQLDriverFile, personalSQLDriversFile);
-        }
-
-        // execution log file reference
-        executionLogFile = new File(logDir.getAbsolutePath() + fileSep + "execution_log.txt");
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param dirName DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     */
-    private static File setupDirInOpendbcopyUserHome(String dirName) {
-        File file = null;
-
-        try {
-            file = FileHandling.getFile(opendbcopyUserHomeDir.getAbsolutePath() + fileSep + dirName);
-        } catch (FileNotFoundException e) {
-            file = new File(opendbcopyUserHomeDir.getAbsolutePath() + fileSep + dirName);
-            file.mkdir();
-
-            String[] param = { file.getAbsolutePath() };
-            System.out.println(rm.getString("text.controller.created", param));
-        }
-
-        return file;
-    }
-
-    /**
      * DOCUMENT ME!
      *
      * @param message DOCUMENT ME!
@@ -575,7 +453,7 @@ public class MainController {
 
         try {
             // setup fileAppender for application logging
-            FileAppender fa = new FileAppender(new PatternLayout("%5p %d %m%n"), executionLogFile.getAbsolutePath(), false);
+            FileAppender fa = new FileAppender(new PatternLayout("%5p %d %m%n"), cm.getExecutionLogFile().getAbsolutePath(), false);
 
             //            fa.setThreshold(Priority.INFO);
             Category cat = Category.getInstance("opendbcopy.plugin");
@@ -655,19 +533,10 @@ public class MainController {
     /**
      * DOCUMENT ME!
      *
-     * @return Returns the personalConfDir.
-     */
-    public final File getPersonalConfDir() {
-        return personalConfDir;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
      * @return Returns the personalPluginsDir.
      */
     public final File getPersonalPluginsDir() {
-        return personalPluginsDir;
+        return cm.getPersonalPluginsDir();
     }
 
     /**
@@ -676,7 +545,7 @@ public class MainController {
      * @return Returns the personalJobsDir.
      */
     public final File getPersonalJobsDir() {
-        return personalJobsDir;
+        return cm.getPersonalJobsDir();
     }
 
     /**
@@ -712,7 +581,7 @@ public class MainController {
      * @return Returns the executionLogFile.
      */
     public final File getExecutionLogFile() {
-        return executionLogFile;
+        return cm.getExecutionLogFile();
     }
 
     /**
@@ -721,24 +590,6 @@ public class MainController {
      * @return Returns the inoutDir.
      */
     public final File getInoutDir() {
-        return inoutDir;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return Returns the fileSep.
-     */
-    public final String getFileSep() {
-        return fileSep;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return Returns the lineSep.
-     */
-    public final String getLineSep() {
-        return lineSep;
+        return cm.getInoutDir();
     }
 }

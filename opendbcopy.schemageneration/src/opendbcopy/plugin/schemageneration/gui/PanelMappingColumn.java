@@ -258,7 +258,7 @@ public class PanelMappingColumn extends DynamicPanel {
             // set default selected item
             dataMapping[row][1]     = combo.getSelectedItem();
 
-            dataProcess[row][0] = new Boolean(columnMapping.getAttributeValue(XMLTags.MAPPED));
+            dataProcess[row][0] = new Boolean(columnMapping.getAttributeValue(XMLTags.PROCESS));
 
             row++;
         }

@@ -15,6 +15,10 @@
 		<class name="com.nilostep.xlsql.jdbc.xlDriver" />
 		<url value="jdbc:nilostep:excel:&lt;directory&gt;" />
 	</driver>
+    <driver name="Firebird JayBird">
+		<class name="org.firebirdsql.jdbc.FBDriver" />
+		<url value="jdbc:firebirdsql:[//host[:port]/]&lt;database&gt;" />
+	</driver>
     <driver name="HSQLDB In-Memory">
         <class name="org.hsqldb.jdbcDriver" />
         <url value="jdbc:hsqldb:." />

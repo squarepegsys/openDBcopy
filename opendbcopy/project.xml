@@ -3,7 +3,7 @@
 <project>
   <pomVersion>3</pomVersion>
   <groupId>opendbcopy</groupId>
-  <currentVersion>0.51rc1</currentVersion>
+  <currentVersion>0.51rc2</currentVersion>
   <logo>/images/opendbcopy_logo.gif</logo>
   <organization>
     <name>Puzzle ITC GmbH</name>

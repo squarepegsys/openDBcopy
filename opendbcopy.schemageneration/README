@@ -1,0 +1,5 @@
+First of all - using this plugin requires some further explanation.
+
+Migrating a schema is done using Hibernate's Tools (Extension library) http://www.hibernate.org
+
+Please see the User Manual for detailed instructions.

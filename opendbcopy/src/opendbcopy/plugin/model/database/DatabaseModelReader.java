@@ -122,20 +122,40 @@ public abstract class DatabaseModelReader {
             meta     = conn.getMetaData();
 
             try {
-                driver.setAttribute(XMLTags.NAME, meta.getDriverName());
+            	String driverName = meta.getDriverName();
+            	
+            	if (driverName != null) {
+                    driver.setAttribute(XMLTags.NAME, driverName);
+            	} else {
+            		driver.setAttribute(XMLTags.NAME, "");
+            	}
+            	
             } catch (SQLException e) {
                 logger.warn("Driver does not support reading DriverName");
             }
 
             try {
-                driver.setAttribute(XMLTags.DRIVER_VERSION, meta.getDriverVersion());
+            	String driverVersion = meta.getDriverVersion();
+            	
+            	if (driverVersion != null) {
+            		driver.setAttribute(XMLTags.DRIVER_VERSION, driverVersion);
+            	} else {
+            		driver.setAttribute(XMLTags.DRIVER_VERSION, "");
+            	}
             } catch (SQLException e) {
                 logger.warn("Driver does not support reading Driver Version");
             }
 
             try {
                 Element dbProductName = new Element(XMLTags.DB_PRODUCT_NAME);
-                dbProductName.setAttribute(XMLTags.VALUE, meta.getDatabaseProductName());
+                
+                String databaseProductName = meta.getDatabaseProductName();
+                
+                if (databaseProductName != null) {
+                	dbProductName.setAttribute(XMLTags.VALUE, databaseProductName);
+                } else {
+                	dbProductName.setAttribute(XMLTags.VALUE, "");
+                }
                 metadata.addContent(dbProductName);
             } catch (SQLException e) {
                 logger.warn("Driver does not support reading Database Product Name");
@@ -143,7 +163,14 @@ public abstract class DatabaseModelReader {
 
             try {
                 Element db_product_version = new Element(XMLTags.DB_PRODUCT_VERSION);
-                db_product_version.setAttribute(XMLTags.VALUE, meta.getDatabaseProductVersion());
+                
+                String dbProductVersion = meta.getDatabaseProductVersion();
+                
+                if (dbProductVersion != null) {
+                    db_product_version.setAttribute(XMLTags.VALUE, dbProductVersion);
+                } else {
+                    db_product_version.setAttribute(XMLTags.VALUE, "");
+                }
                 metadata.addContent(db_product_version);
             } catch (SQLException e) {
                 logger.warn("Driver does not support reading Database Product Version");
@@ -151,7 +178,14 @@ public abstract class DatabaseModelReader {
 
             try {
                 Element catalogSeparator = new Element(XMLTags.CATALOG_SEPARATOR);
-                catalogSeparator.setAttribute(XMLTags.VALUE, meta.getCatalogSeparator());
+                
+                String catSep = meta.getCatalogSeparator();
+                
+                if (catSep != null) {
+                    catalogSeparator.setAttribute(XMLTags.VALUE, meta.getCatalogSeparator());
+                } else {
+                    catalogSeparator.setAttribute(XMLTags.VALUE, "");
+                }
                 metadata.addContent(catalogSeparator);
             } catch (SQLException e) {
                 logger.warn("Driver does not support reading Catalog Separator");
@@ -159,7 +193,14 @@ public abstract class DatabaseModelReader {
 
             try {
                 Element identifierQuoteString = new Element(XMLTags.IDENTIFIER_QUOTE_STRING);
-                identifierQuoteString.setAttribute(XMLTags.VALUE, meta.getIdentifierQuoteString());
+                
+                String idQuoteString = meta.getIdentifierQuoteString();
+                
+                if (idQuoteString != null) {
+                    identifierQuoteString.setAttribute(XMLTags.VALUE, idQuoteString);
+                } else {
+                    identifierQuoteString.setAttribute(XMLTags.VALUE, "");
+                }                
                 metadata.addContent(identifierQuoteString);
             } catch (SQLException e) {
                 logger.warn("Driver does not support reading Identifier Quote String");
