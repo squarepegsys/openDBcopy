@@ -19,6 +19,9 @@
  * TITLE $Id$
  * ---------------------------------------------------------------------------
  * $Log$
+ * Revision 1.1  2004/01/09 18:09:36  iloveopensource
+ * first release
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.controller;
 
@@ -38,6 +41,7 @@ import org.apache.log4j.PropertyConfigurator;
 import org.jdom.Document;
 import org.jdom.Element;
 
+import java.io.IOException;
 import java.util.Observer;
 import java.util.Properties;
 
@@ -62,6 +66,7 @@ public class MainController {
      * @param args DOCUMENT ME!
      */
     public MainController(String[] args) {
+    	
         applicationProperties = loadApplicationProperties();
 
         setupLog4j(applicationProperties.getProperty(APM.LOG4J_PROPERTIES_FILE));
@@ -111,7 +116,14 @@ public class MainController {
      * @param args DOCUMENT ME!
      */
     public static void main(String[] args) {
-        new MainController(args);
+    	try {
+    		ClasspathLoader.addLibDirectoryToClasspath();
+    		
+    		new MainController(args);
+    	} catch (IOException e) {
+    		System.err.println(e.getMessage());
+    		System.exit(0);
+    	}    	
     }
 
     /**
