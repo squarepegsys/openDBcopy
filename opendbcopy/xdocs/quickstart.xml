@@ -26,6 +26,8 @@
 					<b>java -jar opendbcopy-xx-install.jar</b> (substitute xx with version number you have downloaded)
 					<br/><br/>
 					A setup wizard will guide you through the installation.
+					<br/><br/>
+					Non Windows users please modify security properties of start.sh. Opendbcopy requires execution right.
 				</p>
 			</subsection>
 			<subsection name="Run">

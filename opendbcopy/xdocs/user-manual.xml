@@ -1,14 +1,729 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<document>
-    <properties>
-    	<author email="smith@puzzle.ch">Anthony Smith</author>
-        <title>User Manual</title>
-    </properties>
-    <body>
-        <section name="User Manual">
-        	<p>
-				Under construction ... online by end of January 2004.
-			</p>
-		</section>
-    </body>
+<?xml version="1.0" encoding="UTF-8"?>
+<document><properties><title>User Manual</title></properties>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<body><section name="User Manual">
+
+
+
+
+Table of Contents
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<p>
+Table of Contents
+</p>
+
+<p><a href="#Overview">Overview</a>
+</p>
+<p><a href="#Software%20Requirements">Software Requirements</a>
+</p>
+<p><a href="#Installing%20opendbcopy">Installing opendbcopy</a>
+</p>
+<p><a href="#Before%20using%20opendbcopy">Before using opendbcopy</a>
+</p>
+<p><a href="#Starting%20opendbcopy">Starting opendbcopy</a>
+</p>
+<p><a href="#Importing%20/%20Exporting%20a%20Project">Importing / Exporting a Project</a>
+</p>
+<p><a href="#Connection%20Details">Connection Details</a>
+</p>
+<p><a href="#Database%20Model%20Details">Database Model Details</a>
+</p>
+<p><a href="#Selecting%20Tables%20to%20Process%20and%20Table%20Mapping">Selecting Tables to Process and Table Mapping</a>
+</p>
+<p><a href="#Selecting%20Columns%20to%20Process,%20Column%20Mapping%20and%20Record%20Filtering">Selecting Columns to Process, Column Mapping and Record Filtering</a>
+</p>
+<p><a href="#Setting%20global%20String%20filters">Setting global String filters</a>
+</p>
+<p><a href="#Executing%20Operations%20(Plugins)">Executing Operations (Plugins)</a>
+</p>
+<p><a href="#Configuring%20Drivers">Configuring Drivers</a>
+</p>
+<p><a href="#Configuring%20opendbcopy%20(email%20notification%20etc.)">Configuring opendbcopy (email notification etc.)</a>
+</p>
+<p><a href="#Executing%20opendbcopy%20from%20the%20command%20line%20(batch%20mode)">Executing opendbcopy from the command line (batch mode)</a>
+</p>
+
+
+<br/><a name="&#10;Overview&#10;"><h3>
+Overview
+<a href="#User Manual">
+					(back to top)
+				</a></h3></a>
+<p>opendbcopy must be understood as a framework to configure and read database meta data.
+ The complete configuration can be saved as xml file for simple re-use. Executing an operation such as migrating data from one database into another is done using plugins. Opendbcopy comes along with a set of standard plugins, such as copying records of tables from one database into another, creating SQL Insert scripts, creating flat files with data or creating statistics.</p>
+<p/>
+<p>Opendbcopy provides a wizard to configure a database project.</p>
+<p/>
+<p>Executing a plugin can be done either from the Graphical User Interface or directly via command line providing an xml file with the required configuration.</p>
+<p/>
+<p>Plugin behaviour can be modified using the plugin.xml file in the plugins directory, see 'Plugins' for details.</p>
+<p/>
+<p>Opendbcopy can be used to work with one database or two databases. Choose the database mode required on the first screen of the wizard, see Connection Details for further information.</p>
+<p/>
+<p>If problems occur please have a look at the Frequently Asked Questions (FAQ), User Mailing List or contact me by email (<a href="mailto:smith@puzzle.ch">smith@puzzle.ch</a>
+) providing application and execution log from the log directory (reset after a new restart of opendbcopy).</p>
+<p/>
+<br/><a name="&#10;Software Requirements&#10;"><h3>
+Software Requirements
+<a href="#User Manual">
+					(back to top)
+				</a></h3></a>
+<p>opendbcopy requires a Java Runtime Environment. If not yet installed, please download a Java Runtime Environment or Developer Kit 1.3 or higher from <a href="http://java.sun.com/">http://java.sun.com</a>
+.</p>
+<p/>
+<p>Opendbcopy has been tested using J2SDK 1.3 and 1.4.</p>
+<p/>
+<p>The full installation of opendbcopy including the complete off line
+ documentation requires about 7MB of disk space.
+</p>
+<p/>
+<br/><a name="Installing opendbcopy"><h3>Installing opendbcopy<a href="#User Manual">
+					(back to top)
+				</a></h3></a>
+<p>opendbcopy is distributed using a set-up
+ wizard (IzPack Installer – platform independent). Once successfully downloaded the opendbcopy-xx-install.jar can be started by entering the following command in a shell (Command Prompt for Windows users)</p>
+<p/>
+<p>Go to the downloaded file's directory.</p>
+<p/>
+<p>Enter the following command:</p>
+<p>java -jar opendbcopy-xx.install.jar (replace xx with current version)</p>
+<p/>
+<p>If Java can be found a dialogue
+ pops up asking to select a preferred language for the set-up
+ wizard. Choose between English, German or French. Please note that opendbcopy is distributed in English only.</p>
+<p/>
+<p>On the following screens read the README text and License Agreement. Then choose where a location to install opendbcopy.</p>
+<p/>
+<p>After this select the packages to install. To unpack the source code and API documentation too, select these packages as well. These packages may be of interest to developers.</p>
+<p/>
+<p>After installation the set-up
+ wizard can create desktop shortcuts if opendbcopy is running on a Windows platform.</p>
+<p/>
+<p>If you have modified SQLDrivers.xml and install a newer version of opendbcopy please make a safety copy of SQLDrivers.xml and overwrite the new standard SQLDrivers.xml file to re-use your settings after installation.</p>
+<p/>
+<br/><a name="Before using opendbcopy"><h3>Before using opendbcopy<a href="#User Manual">
+					(back to top)
+				</a></h3></a>
+<p>Make sure the required database drivers are set in the CLASSPATH environment variable or were copied into the lib directory of opendbcopy. When copying the database drivers into the lib directory of opendbcopy, one does not need to add those to the CLASSPATH any more
+, because those drivers are dynamically loaded at start-up
+ of opendbcopy.</p>
+<p/>
+<br/><a name="Starting opendbcopy"><h3>Starting opendbcopy<a href="#User Manual">
+					(back to top)
+				</a></h3></a>
+<p>When running opendbcopy on a Windows platform one can either start opendbcopy using the shortcut 'opendbcopy launcher' on the desktop or click on 'opendbcopy launcher' within the program group opendbcopy under Start Menu, Programs.</p>
+<p/>
+<p>Windows users can also start opendbcopy by calling the start.bat from a command line or Windows Explorer.</p>
+<p/>
+<p>Linux, Unix or Mac users please call the start.sh script to launch opendbcopy.</p>
+<p/>
+<p>Opendbcopy is launched via a shell and then opens a graphical user interface. Do not close the shell window if you do not want to close opendbcopy too. The shell window is automatically closed when closing opendbcopy via menu 'Project, Exit'.</p>
+<p/>
+<br/><a name="Importing / Exporting a Project"><h3>Importing / Exporting a Project<a href="#User Manual">
+					(back to top)
+				</a></h3></a>
+<p>At any time during configuration of a database migration project one can save its configuration by clicking on 'Project, Export Project ...' and specify a file name and 
+location.</p>
+<p/>
+<p>At any time one can also import an existing project. Therefore click on 'Project, Import Project ...'.</p>
+<p/>
+<p>Please note that the file dialogue
+ appearing only shows XML files.</p>
+<p/>
+<p>If you feel comfortable with the XML project configuration you can also manually manipulate a project file or reopen it in opendbcopy and modify it using the graphical user interface. See the developer's section for details about the project XML file.</p>
+<p/>
+<br/><a name="Connection Details"><h3>Connection Details<a href="#User Manual">
+					(back to top)
+				</a></h3></a>
+<p/>
+<p>When launching opendbcopy, the first step to take is to set-up
+ a database connection, or two connections, one to the source and one to the destination database if working in dual database mode. This is where most problems may occur, for example when trying to connect to a database which is located behind a firewall and does not allow to connect directly, missing JDBC drivers, etc. (see FAQ for details)</p>
+<p/>
+<p>The following screen allows to configure database connections.</p>
+<p><img alt="" src="images/screens/dual_db_connection.gif" />
+</p>
+<p/>
+<h4>Choosing a database mode<a href="#User Manual">
+					(back to top)
+				</a></h4>
+<p>By default dual database mode is selected. This requires successful configuration and test to both database connections, source and destination, before one can continue with the wizard using the next button or by clicking on the Model(s) tab.</p>
+<p/>
+<p>To work in single database mode select the single database check box.
+ </p>
+<p/>
+<p>Please note that the current release allows to change from dual database mode into single, but not the other way round without forcing an error. This 'bug' will be fixed if required.</p>
+<p/>
+<h4>Specifying
+ a database connection<a href="#User Manual">
+					(back to top)
+				</a></h4>
+<p>The source and destination connection details section allow to specify details to source and destination database.</p>
+<p/>
+<p>The driver name fields allow to select a driver from the pre-configured driver settings file (see configuring drivers for details).</p>
+<p/>
+<p>If one selects a driver from the driver name select box, the Driver Class and URL text fields
+ are automatically filled. Please note that the URL must be further configured, e.g. replace &lt;server&gt; by a server URL, &lt;dbname&gt; by a database name etc.</p>
+<p/>
+<p>In the user field enter the user which has the required rights to execute the plugins you want to use. To read database meta data
+ no special user rights are required.</p>
+<p/>
+<p>The password field is hidden, but when saving a project as xml file the password is saved as plain text!</p>
+<p/>
+<p>Once done, click on 'Apply and Test'. When receiving errors please have a look at them and correct appropriately.</p>
+<p/>
+<p>When working in dual database mode, configure the destination database connection details too.</p>
+<p/>
+<p>The wizard let's you continue once the database connection details have been applied and tested successfully.</p>
+<p/>
+<p>Please note that it is up to you to ensure that you always select the original database in the source section and the target database in the destination section. Certain plugins only allow to execute operations (plugins) on the destination database.</p>
+<p>
+</p>
+<br/><a name="Database Model Details"><h3>Database Model Details<a href="#User Manual">
+					(back to top)
+				</a></h3></a>
+<p>The database model details screen lets one specify the catalogue and/or schema to work with. Please note that not every database works with catalogues and schemas. Some work with catalogues only, others with schemas only.</p>
+<p/>
+<p>Opendbcopy has already read the available catalogue and/or schema names given the connection details on the previous screen. If possible, a catalogue or schema have already been pre-selected given the database url (reading the catalogue) or user name (schema name).</p>
+<p/>
+<p><img alt="" src="images/screens/dual_model.gif" />
+</p>
+<p/>
+<p>When working with Microsoft Access databases please be aware to select the catalogue manually from the list of catalogues provided.</p>
+<p/>
+<p>When working with PostgreSQL please be aware that the current implementation of opendbcopy does not read tables using qualified table names, e.g. catalogue_name.table_name. It reads and accesses tables only by table name.</p>
+<p/>
+<p>Working in single database mode, one can only specify source model details. To capture (read) database meta data
+ click on 'Capture Source Model'. Please be patient as this process may take a while!</p>
+<p/>
+<h4>Further model details<a href="#User Manual">
+					(back to top)
+				</a></h4>
+<p>If you only want to capture certain tables you may use SQL wild cards
+ (% for anything, _ for one character) to reduce the number of tables to capture. E.g.
+ To capture tables beginning with TX, enter TX%. </p>
+<p/>
+<h4>Reading Primary, Foreign Keys and Indexes<a href="#User Manual">
+					(back to top)
+				</a></h4>
+<p>When copying data on-line
+ it is important that data is inserted in the right order. For example having a parent and child table which are linked by a foreign key constraint, it is a must that data of the parent table is inserted before the records are inserted into the child table. Opendbcopy is able to read and manage foreign key constraints when selecting the 'Read Foreign Keys' check box.
+</p>
+<p/>
+<p>Reading Primary Keys and Indexes is only required when using a plugin that creates or modifies table structures which is currently not available by the standard plugins provided.</p>
+<p/>
+<p>Please note that when one does not require reading Primary Keys, Foreign Keys or Indexes to uncheck the appropriate 
+check boxes
+ to save time capturing database models.
+</p>
+<p/>
+<br/><a name="Selecting Tables to Process and Table Mapping"><h3>Selecting Tables to Process and Table Mapping<a href="#User Manual">
+					(back to top)
+				</a></h3></a>
+<h4>Single Database Mode<a href="#User Manual">
+					(back to top)
+				</a></h4>
+<p>In single database mode, one can select which tables / views to process. Please note that certain plugins (e.g. Statistic plugins) do not bother which tables are selected to process, others, such as creating dump files or SQL scripts only process the tables / views which are selected.</p>
+<p/>
+<p>In single database mode the screen looks like</p>
+<p/>
+<p><img alt="" src="images/screens/single_table_selection.gif" />
+</p>
+<p/>
+<p>Using the button 'Deselect All' or 'Select All' once all tables are deselected lets one uncheck or check all tables / views.</p>
+<p/>
+<p>Please note that only tables / views which are selected can be further configured on the following Process Columns tab.</p>
+<p/>
+<h4>Dual Database Mode<a href="#User Manual">
+					(back to top)
+				</a></h4>
+<p>If working in dual database mode the screen looks like</p>
+<p/>
+<p><img alt="" src="images/screens/dual_table_mapping.gif" />
+</p>
+<p/>
+<p>In the leftmost column all tables and / or views are listed which were read when capturing the source database model. The second column shows available tables / views from the captured destination model. By default opendbcopy tries to automatically map a destination table / view to a given source table / view. Thereby it does not matter if the source table / view is written using small or capital letters.</p>
+<p/>
+<p>Fields which do not contain any entry in the second column, the mapping column, could not be automatically mapped. To map a certain source table / view to a destination table / view, click on the appropriate field and select a destination table / view from the list provided. </p>
+<p/>
+<p>Tables / Views, which were automatically mapped, can also be changed by clicking on the appropriate field and by choosing another destination table / view.</p>
+<p/>
+<p>The last column specifies if the mapped source / destination table shall be processed. One can 'Deselect All' tables / views or 'Select All' once all rows have been deselected.</p>
+<p/>
+<p>Once completed proceed to the next tab.</p>
+<p/>
+<p/>
+<br/><a name="Selecting Columns to Process, Column Mapping and Record Filtering"><h3>Selecting Columns to Process, Column Mapping and Record Filtering<a href="#User Manual">
+					(back to top)
+				</a></h3></a>
+<h4>Single Database Mode<a href="#User Manual">
+					(back to top)
+				</a></h4>
+<p>In single database mode the screen looks like</p>
+<p/>
+<p><img alt="" src="images/screens/single_column_selection.gif" />
+</p>
+<p>On the left hand side a tree element allows to navigate over tables / views which have been set to process on the previous tab.</p>
+<p/>
+<p>When clicking on a table / view, a table structure showing all source columns of the selected table / view appear on the right hand side of the screen.</p>
+<p/>
+<p>If not all columns shall be processed uncheck appropriate column(s).</p>
+<p/>
+<h4>Dual Database Mode<a href="#User Manual">
+					(back to top)
+				</a></h4>
+<p>In dual database mode the screen looks like</p>
+<p/>
+<p><img alt="" src="images/screens/dual_column_mapping_filtered.gif" />
+</p>
+<p/>
+<p>Click on a table / view in the tree navigation on the left hand side of the screen to see available source columns of selected table / view. Columns of the destination table / view, which could be mapped automatically (case insensitive), are listed in the second column next to the appropriate source column and are automatically checked to be processed.</p>
+<p/>
+<p>Again one can change already mapped destination columns by clicking on the appropriate field. </p>
+<p/>
+<p>If no destination column could be associated, please select one from the appropriate list when clicking on a field in the destination column, if required.</p>
+<p/>
+<h4>Setting Table Filters<a href="#User Manual">
+					(back to top)
+				</a></h4>
+<p>By default all records of a source table / view are being processed once one executes an operation (plugin). To filter records specify an SQL compliant WHERE statement in the appropriate table filter text field.
+</p>
+<p/>
+<p>E.g.
+ To filter records which have an internal id (field IPERSON_NR) greater than 200000, enter </p>
+<p/>
+<p>IPERSON_NR &gt; 200000</p>
+<p/>
+<p>and click on Apply and Test</p>
+<p/>
+<p>If the test is successful, the number of records which will be processed is shown next to the table filter buttons. If an error occurs there must be an error in the filter specification.</p>
+<p/>
+<p>Again a filter can be set as 'Process' or not. If applying and testing were successful, the check box
+ is automatically selected.</p>
+<p/>
+<p>The following SQL filter commands can be used:</p>
+<p/>
+<p>Logical Operators: &gt;, &lt;, =, AND, OR</p>
+<p/>
+<p>Ordering Operators: ORDER BY (to reorder the records in the destination table / view)</p>
+<p/>
+<p>e.g.</p>
+<p/>
+<p>IPERSON_NR &gt; 200000 AND IPERSON_NR &lt; 300000 ORDER BY 
+IPERSON_NR</p>
+<p/>
+<p/>
+<br/><a name="Setting global String filters"><h3>Setting global String filters<a href="#User Manual">
+					(back to top)
+				</a></h3></a>
+<p>Currently opendbcopy provides the following string filters:</p>
+<p/>
+<h4>Trim Strings
+ <a href="#User Manual">
+					(back to top)
+				</a></h4>
+<p>Remove spaces at the beginning and at the end of a string (any string compatible database column type such as CHAR, VARCHAR, TEXT, etc.)</p>
+<p/>
+<h4>Remove multiple intermediate white spaces
+<a href="#User Manual">
+					(back to top)
+				</a></h4>
+<p>e.g. Having a string field in a database column, e.g. a street number followed by street name and there is more than one white space
+ between the two 'texts' in the same database field, all white spaces
+ except one are removed.</p>
+<p/>
+<h4>Set NULL if String is empty (if column is NULLABLE)<a href="#User Manual">
+					(back to top)
+				</a></h4>
+<p>If a table provides string compatible fields which are nullable (containing nothing than SQL Null) and the source field once trimmed has length = 0 (an empty
+ string), this filter inserts SQL Null into the destination field instead of an empty
+ string.</p>
+<p/>
+<br/><a name="Executing Operations (Plugins)"><h3>Executing Operations (Plugins)<a href="#User Manual">
+					(back to top)
+				</a></h3></a>
+<p>The last tab is for the selection of a plugin to execute.</p>
+<p/>
+<p>The screen looks like</p>
+<p/>
+<p><img alt="" src="images/screens/single_execute_write_sql_scripts.gif" />
+</p>
+<p/>
+<p>At the top the plugins available for the current database mode selected (single or dual) are listed.</p>
+<p/>
+<p>Select the plugin to execute and click on 'Execute'.</p>
+<p/>
+<p>Operation progress is shown at the bottom. An operation can be cancelled at any time by clicking on 'Cancel'. </p>
+<p/>
+<p>A commit to the database is done once all records of a given table / view are copied.</p>
+<p/>
+<p>Progress information is displayed in the 'Execution Log' section and also into the execution log file in the log directory of opendbcopy. Once restarting opendbcopy all log files are reset unless you change the configuration of opendbcopy, see Configuring opendbcopy for details.</p>
+<p/>
+<p>Please note that not all databases support roll-back
+ functionality. E.g.
+ using the copy plugin with a MySQL database, not supporting roll-back
+ operations, records already written to the destination table(s) / view(s) cannot be undone. The delete plugin for example allows to delete all destination tables / views which are selected for processing.</p>
+<p/>
+<p>For a list of available plugins and configuration please see the plugins section.</p>
+<p/>
+<br/><a name="Configuring Drivers"><h3>Configuring Drivers<a href="#User Manual">
+					(back to top)
+				</a></h3></a>
+<p>Using an external XML file to configure driver pre-selections lets one change default database driver classes, names and connection URLs easily.</p>
+<p/>
+<p>If a database driver is not listed within 'Driver Name' selection one can easily append a further entry into the SQLDrivers.xml file in the conf directory of opendbcopy.</p>
+<p/>
+<p>An entry consists of the following elements:</p>
+<p/>
+<table summary="This table used for layout purposes only.">
+
+<tr><th><p>Element</p>
+</th>
+<th><p>Description</p>
+</th>
+
+</tr>
+<tr><td><p>Driver Name</p>
+</td>
+<td><p>The driver name to show in the Driver Name selection</p>
+</td>
+</tr>
+<tr><td><p>Class Name</p>
+</td>
+<td><p>The complete package and class name of the driver to use</p>
+</td>
+</tr>
+<tr><td><p>Url Value</p>
+</td>
+<td><p>Default URL (be aware to escape XML characters by appropriate codes)</p>
+</td>
+</tr>
+</table>
+<p/>
+<p>When appending a new driver please return a short feedback to the developer(s) of opendbcopy.</p>
+<p/>
+<p>If you have modified SQLDrivers.xml and install a newer version of opendbcopy please make a safety copy of SQLDrivers.xml and overwrite the new standard SQLDrivers.xml after installation.</p>
+<p/>
+<br/><a name="Configuring opendbcopy (email notification etc.)"><h3>Configuring opendbcopy (email notification etc.)<a href="#User Manual">
+					(back to top)
+				</a></h3></a>
+<p>The following options can be configured for opendbcopy</p>
+<p/>
+<ul><li><p>Email notification of plugin execution status</p>
+</li>
+<li><p>XML Encoding of project XML files</p>
+</li>
+<li><p>Log Level</p>
+</li>
+<li><p>Look and Feel</p>
+</li>
+<li><p>Locations to log, plugins and SQL drivers configuration</p>
+</li>
+</ul>
+<h4>Email notification of plugin execution status<a href="#User Manual">
+					(back to top)
+				</a></h4>
+<p>To turn on email notification for plugin execution status (simple information or errors) open log4j.properties file located in the conf directory of opendbcopy
+
+Change
+
+
+log4j.logger.opendbcopy.plugin
+=INFO, STDOUT, EXECFILE
+
+into
+
+
+log4j.logger.opendbcopy.plugin
+=INFO, STDOUT, EXECFILE, MAIL
+
+
+Then change the following line with appropriate information
+
+
+log4j.appender.MAIL.layout.ConversionPattern
+=MAIL_SERVER&amp;SENDER_EMAIL&amp;RECIPIENT_EMAIL&amp;%d&amp;%5p&amp;%c&amp;(%F Line:%L)&amp;%m%n
+
+
+Replace 
+
+MAIL_SERVER with your mail server
+SENDER_EMAIL with the email address that shall appear as sender
+RECIPIENT_EMAIL with the email address of the email recipient
+
+
+Save the changes and restart opendbcopy. Now all information generated by plugins is automatically sent to the email recipient as separate email showing the complete message and date / time of creation.
+
+
+</p>
+<h4>XML Encoding of project XML files<a href="#User Manual">
+					(back to top)
+				</a></h4>
+<p>To change XML encoding of project files change the XML encoding in opendbcopy.properties in the directory conf, save the changes and restart opendbcopy.</p>
+<p/>
+<h4>Log Level<a href="#User Manual">
+					(back to top)
+				</a></h4>
+<p>Especially when developing new plugins further log information can be helpful. Each package of opendbcopy is configured with a log level. Change the appropriate package log level. Available log levels are DEBUG, INFO, WARN, ERROR, FATAL.</p>
+<p/>
+<h4>Look and Feel<a href="#User Manual">
+					(back to top)
+				</a></h4>
+<p>By default the look and feel is the operating system's look and feel. When removing 
+look_and_feel
+=system
+ in opendbcopy.properties (conf directory) or changing its value into anything else, the Java look and feel is selected. Future releases may allow to select between different layouts within the graphical user interface, if required.
+</p>
+<p/>
+<h4>Locations to log, plugins and SQL drivers configuration<a href="#User Manual">
+					(back to top)
+				</a></h4>
+<p>opendbcopy.properties (conf directory) allows to specify where the log, plugins and SQLDrivers configurations are located. Change appropriate if required. One may use relative or absolute path names.</p>
+<p/>
+<br/><a name="Executing opendbcopy from the command&#10; line (batch mode)"><h3>Executing opendbcopy from the command
+ line (batch mode)<a href="#User Manual">
+					(back to top)
+				</a></h3></a>
+<p>Once a database migration project has been set up using the graphical user interface and saved as XML file, opendbcopy can be launched via command line without showing any graphical user interface and directly execute a selected operation (plugin).</p>
+<p/>
+<p>Currently only execution of one plugin at the time is supported. Future releases may support execution of several plugins, if required.</p>
+<p/>
+<p>Starting opendbcopy from the command line accepts the following syntax:</p>
+<p/>
+<p/>
+<p>Minimum argument is:</p>
+<p><source>file=&lt;project_path_filename&gt;</source>
+</p>
+<p/>
+<p>Non mandatory arguments: </p>
+<p><source>operation=&lt;operation&gt; runlevel=&lt;runlevel&gt;</source>
+</p>
+<p>
+</p>
+<p/>
+<p>LEGEND</p>
+<p>file:  
+your opendbcopy project file to open (see different examples below)</p>
+<p>operation: 'execute' to immediately execute the project's plugin</p>
+<p>runlevel: 
+'1' for SHELL only, '5' for GUI (Graphical User Interface)</p>
+<p>
+</p>
+<p/>
+<p>Example call 1: (no arguments -&gt; create a new project)</p>
+<p><source>&gt; java opendbcopy.controller.MainController</source>
+</p>
+<p/>
+<p>Example call 2: (import project from xml file -&gt; continue your work)</p>
+<p><source>&gt; java opendbcopy.controller.MainController file=c:/opendbcopy/myproject.xml</source>
+</p>
+<p/>
+<p>Example call 3: (import project xml from file and execute contained plugin in GUI mode)</p>
+<p><source>&gt; java opendbcopy.controller.MainController file=/tmp/projects/myproject.xml operation=execute</source>
+</p>
+<p/>
+<p>Example call 4: (import project xml from file and execute contained plugin in SHELL mode)</p>
+<p><source>&gt; java opendbcopy.controller.MainController file=myproject.xml operation=execute runlevel=1</source>
+</p>
+</section></body>
 </document>

@@ -1,14 +1,400 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<document>
-    <properties>
-    	<author email="smith@puzzle.ch">Anthony Smith</author>
-        <title>About</title>
-    </properties>
-    <body>
-        <section name="Plugins">
-        	<p>
-				<br/><br/>
-			</p>
-		</section>
-    </body>
+<?xml version="1.0" encoding="UTF-8"?>
+<document><properties><title>Plugins</title></properties>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<body><section name="Plugins">
+
+
+
+
+Table of Contents
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<p>
+Table of Contents
+</p>
+
+<p><a href="#Overview">Overview</a>
+</p>
+<p><a href="#Executing%20a%20Plugin">Executing a Plugin</a>
+</p>
+<p><a href="#Logging%20Information%20for%20Plugins">Logging Information for Plugins</a>
+</p>
+<p><a href="#Configure%20Plugins">Configure Plugins</a>
+</p>
+
+
+<br/><a name="&#10;&#10;Overview&#10;&#10;"><h3>
+
+Overview
+
+<a href="#Plugins">
+					(back to top)
+				</a></h3></a>
+<p>opendbcopy provides a set of standard plugins. </p>
+<p/>
+<p>Runtime parameters are loaded from a central plugins.xml file, containing a plugin entry for each plugin with individual parameters. New plugins can easily be developed (see <a href="../docs/developer-manual.html">developer manual </a>
+). </p>
+<p/>
+<p>The following plugins are distributed with opendbcopy: </p>
+<ul><li><p>Online Migration of databases (only logging records which cannot be processed) </p>
+</li>
+<li><p>Write dump files such as csv, tab delimited, ... </p>
+</li>
+<li><p>Write SQL data scripts </p>
+</li>
+<li><p>Comparing number of records for each database and write a nice report </p>
+</li>
+</ul>
+<p/>
+<br/><a name="Executing a Plugin"><h3>Executing a Plugin<a href="#Plugins">
+					(back to top)
+				</a></h3></a>
+<p>To execute a plugin use opendbcopy's 'Execute' Tab or launch opendbcopy directly from a shell (see <a href="user-manual.html">User Manual</a>
+ for details).</p>
+<p/>
+<p>At the top select a plugin. Only plugins providing the current database mode are shown.</p>
+<p/>
+<p>Click on 'Execute' to execute the plugin or 'Cancel' to cancel an already running plugin.</p>
+<p/>
+<br/><a name="Logging Information for Plugins"><h3>Logging Information for Plugins<a href="#Plugins">
+					(back to top)
+				</a></h3></a>
+<p>Every time when launching opendbcopy and executing a plugin a new log file, called opendbcopy_execution_log_file.log, is created. It only contains information or errors of plugins themselves. When relaunching opendbcopy, the old execution log file is overwritten.</p>
+<p/>
+<p>To change this behaviour use another Log4j Appender.</p>
+<p/>
+<p>To show less log information change the following line in log4j.properties file (conf directory)</p>
+<p/>
+<p><source># logs execution</source>
+</p>
+<p>log4j.logger.opendbcopy.plugin
+=INFO, STDOUT, EXECFILE
+</p>
+<p/>
+<p>into something like</p>
+<p/>
+<p><source># logs execution</source>
+</p>
+<p>log4j.logger.opendbcopy.plugin
+=WARN, STDOUT, EXECFILE
+</p>
+<p/>
+<p>If you like to receive email notifications regarding the status of a plugin's execution, add the email appender to above line, see the <a href="user-manual.html">user manual</a>
+ for details.</p>
+<p/>
+<br/><a name="Configure Plugins"><h3>Configure Plugins<a href="#Plugins">
+					(back to top)
+				</a></h3></a>
+<p>To modify or append new plugins modify the plugins.xml file in the plugins directory of opendbcopy.</p>
+<p/>
+<p>There is a plugin element for each available plugin in plugins.xml.</p>
+<p/>
+<p>To change a plugin's behaviour modify appropriate line(s). See comments within plugins.xml for available options.</p>
+<p/>
+<p>To add a new plugin ensure that the following elements are available:</p>
+<p/>
+<table summary="This table used for layout purposes only.">
+
+
+<tr><th><p>Element / Attribute Name</p>
+</th>
+<th><p>Description</p>
+</th>
+<th><p>Required</p>
+</th>
+
+</tr>
+<tr><td><p>plugin</p>
+</td>
+<td><p>The central element for a plugin</p>
+</td>
+<td><p>Yes</p>
+</td>
+</tr>
+<tr><td><p>db_mode</p>
+</td>
+<td><p>'single', 'dual' or 'both' can be specified</p>
+</td>
+<td><p>Yes</p>
+</td>
+</tr>
+<tr><td><p>class</p>
+</td>
+<td><p>Complete Class Name to plugin</p>
+</td>
+<td><p>Yes</p>
+</td>
+</tr>
+<tr><td><p>description</p>
+</td>
+<td><p>Description of plugin</p>
+</td>
+<td><p>Yes</p>
+</td>
+</tr>
+<tr><td><p>author</p>
+</td>
+<td><p>Author's name</p>
+</td>
+<td><p>No</p>
+</td>
+</tr>
+<tr><td><p>conf</p>
+</td>
+<td><p>Parent element for sub-elements</p>
+</td>
+<td><p>No, not for all plugins </p>
+</td>
+</tr>
+</table>
+<p/>
+<p>Here an example</p>
+<p/>
+<p>&lt;plugin db_mode="dual"&gt;
+</p>
+<p>
+&lt;class name="opendbcopy.plugin.standard.copy.CopyMapping" /&gt;
+</p>
+<p>
+&lt;description value="Copy Tables according to defined Mapping" /&gt;
+</p>
+<p>
+&lt;author name="Anthony Smith" /&gt;
+</p>
+<p>
+&lt;conf&gt;
+</p>
+<p>
+
+&lt;!-- path may be relative or absolute --&gt;
+</p>
+<p>
+
+&lt;path value="log/" /&gt;
+</p>
+<p>
+
+
+&lt;file_type value="csv" /&gt;
+</p>
+<p>
+
+
+&lt;!-- for a tab delimiter enter \n as value --&gt;
+</p>
+<p>
+
+&lt;delimiter value=";" /&gt;
+</p>
+<p>
+
+&lt;log_error value="true" /&gt;
+</p>
+<p>
+&lt;/conf&gt;
+</p>
+<p>&lt;/plugin&gt;
+</p>
+</section></body>
 </document>

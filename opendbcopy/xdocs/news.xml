@@ -16,6 +16,10 @@
 							<th>Message</th>
 						</tr>
 						<tr>
+							<td>02.02.2004</td>
+							<td>Simple selection of JDBC driver, documentation</td>
+						</tr>								
+						<tr>
 							<td>20.01.2004</td>
 							<td>Bugfixes for PostgreSQL and Linux start script start.sh</td>
 						</tr>								

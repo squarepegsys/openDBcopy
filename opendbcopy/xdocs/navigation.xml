@@ -10,6 +10,8 @@
         <links>
         	<item name="Squirrel-SQL" href="http://squirrel-sql.sourceforge.net/"/>
             <item href="http://www.sourceforge.net/projects/opendbcopy" name="opendbcopy@sourceforge"/>
+			<item href="http://xmenu-xlayer.sourceforge.net/" name="Xmenu-xlayer: great DHTML menu"/>
+			<item href="http://autoj.sourceforge.net" name="autoj - build system"/>
         </links>
 
 		<menu name="Quick Links">
@@ -40,11 +42,13 @@
 
 		<!-- footer will be placed above the (c) -->
 		<footer>
+			<table border="0">
 			<p>
 				<a href="http://sourceforge.net">
 					<img src="http://sourceforge.net/sflogo.php?group_id=91406" border="0" alt="sf logo"/>
 				</a>
 			</p>
+			</table>
 		</footer>		
 
 		<search/>
