@@ -22,6 +22,9 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui.database;
 
+import info.clearthought.layout.TableLayout;
+
+import opendbcopy.config.GUI;
 import opendbcopy.config.OperationType;
 import opendbcopy.config.XMLTags;
 
@@ -37,7 +40,6 @@ import opendbcopy.plugin.model.exception.MissingElementException;
 import org.jdom.Element;
 
 import java.awt.GridLayout;
-import java.awt.Rectangle;
 import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -86,21 +88,23 @@ public class PanelModel extends DynamicPanel implements ItemListener {
     private JCheckBox     checkBoxReadSourcePrimaryKeys = new JCheckBox();
     private JCheckBox     checkBoxReadSourceForeignKeys = new JCheckBox();
     private JCheckBox     checkBoxReadSourceIndexes = new JCheckBox();
+    private JCheckBox     checkBoxUseQualifiedSourceTableName = new JCheckBox();
     private JCheckBox     checkBoxReadDestinationPrimaryKeys = new JCheckBox();
     private JCheckBox     checkBoxReadDestinationForeignKeys = new JCheckBox();
     private JCheckBox     checkBoxReadDestinationIndexes = new JCheckBox();
+    private JCheckBox     checkBoxUseQualifiedDestinationTableName = new JCheckBox();
 
     /**
      * Creates a new PanelModel object.
      *
      * @param controller DOCUMENT ME!
-     * @param pluginGui DOCUMENT ME!
+     * @param workingMode DOCUMENT ME!
      * @param registerAsObserver DOCUMENT ME!
      *
      * @throws Exception DOCUMENT ME!
      */
     public PanelModel(MainController controller,
-                      PluginGui    workingMode,
+                      PluginGui      workingMode,
                       Boolean        registerAsObserver) throws Exception {
         super(controller, workingMode, registerAsObserver);
 
@@ -164,32 +168,41 @@ public class PanelModel extends DynamicPanel implements ItemListener {
         }
     }
 
-	public void itemStateChanged(ItemEvent e) {
-		Object source = e.getItemSelectable();
-		boolean enable = false;
-		if (e.getStateChange() == ItemEvent.SELECTED) {
-			enable = true;
-		}
-		
-		try {
-			if (source == checkBoxReadSourcePrimaryKeys) {
-				model.getSourceModel().setAttribute(XMLTags.READ_PRIMARY_KEYS, Boolean.toString(enable));
-			} else if (source == checkBoxReadSourceForeignKeys) {
-				model.getSourceModel().setAttribute(XMLTags.READ_FOREIGN_KEYS, Boolean.toString(enable));
-			} else if (source == checkBoxReadSourceIndexes) {
-				model.getSourceModel().setAttribute(XMLTags.READ_INDEXES, Boolean.toString(enable));
-			} else if (source == checkBoxReadDestinationPrimaryKeys) {
-				model.getDestinationModel().setAttribute(XMLTags.READ_PRIMARY_KEYS, Boolean.toString(enable));
-			} else if (source == checkBoxReadDestinationForeignKeys) {
-				model.getDestinationModel().setAttribute(XMLTags.READ_FOREIGN_KEYS, Boolean.toString(enable));
-			} else if (source == checkBoxReadDestinationIndexes) {
-				model.getDestinationModel().setAttribute(XMLTags.READ_INDEXES, Boolean.toString(enable));
-			}
+    /**
+     * DOCUMENT ME!
+     *
+     * @param e DOCUMENT ME!
+     */
+    public void itemStateChanged(ItemEvent e) {
+        Object  source = e.getItemSelectable();
+        boolean enable = false;
 
-		} catch (MissingElementException ex) {
-			postException(ex);
-		}
-	}
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+            enable = true;
+        }
+
+        try {
+            if (source == checkBoxReadSourcePrimaryKeys) {
+                model.getSourceModel().setAttribute(XMLTags.READ_PRIMARY_KEYS, Boolean.toString(enable));
+            } else if (source == checkBoxReadDestinationPrimaryKeys) {
+                model.getDestinationModel().setAttribute(XMLTags.READ_PRIMARY_KEYS, Boolean.toString(enable));
+            } else if (source == checkBoxReadSourceForeignKeys) {
+                model.getSourceModel().setAttribute(XMLTags.READ_FOREIGN_KEYS, Boolean.toString(enable));
+            } else if (source == checkBoxReadDestinationForeignKeys) {
+                model.getDestinationModel().setAttribute(XMLTags.READ_FOREIGN_KEYS, Boolean.toString(enable));
+            } else if (source == checkBoxReadSourceIndexes) {
+                model.getSourceModel().setAttribute(XMLTags.READ_INDEXES, Boolean.toString(enable));
+            } else if (source == checkBoxReadDestinationIndexes) {
+                model.getDestinationModel().setAttribute(XMLTags.READ_INDEXES, Boolean.toString(enable));
+            } else if (source == checkBoxUseQualifiedSourceTableName) {
+                model.getSourceModel().setAttribute(XMLTags.USE_QUALIFIED_TABLE_NAME, Boolean.toString(enable));
+            } else if (source == checkBoxUseQualifiedDestinationTableName) {
+                model.getDestinationModel().setAttribute(XMLTags.USE_QUALIFIED_TABLE_NAME, Boolean.toString(enable));
+            }
+        } catch (MissingElementException ex) {
+            postException(ex);
+        }
+    }
 
     /**
      * DOCUMENT ME!
@@ -233,6 +246,12 @@ public class PanelModel extends DynamicPanel implements ItemListener {
                 checkBoxReadSourceIndexes.setSelected(true);
             } else {
                 checkBoxReadSourceIndexes.setSelected(false);
+            }
+
+            if (Boolean.valueOf(model.getSourceModel().getAttributeValue(XMLTags.USE_QUALIFIED_TABLE_NAME)).booleanValue()) {
+                checkBoxUseQualifiedSourceTableName.setSelected(true);
+            } else {
+                checkBoxUseQualifiedSourceTableName.setSelected(false);
             }
         } catch (Exception e) {
             // ignore it as those attributes are not mandatory
@@ -282,6 +301,12 @@ public class PanelModel extends DynamicPanel implements ItemListener {
             } else {
                 checkBoxReadDestinationIndexes.setSelected(false);
             }
+
+            if (Boolean.valueOf(model.getDestinationModel().getAttributeValue(XMLTags.USE_QUALIFIED_TABLE_NAME)).booleanValue()) {
+                checkBoxUseQualifiedDestinationTableName.setSelected(true);
+            } else {
+                checkBoxUseQualifiedDestinationTableName.setSelected(false);
+            }
         } catch (Exception e) {
             // ignore it as those attributes are not mandatory
         }
@@ -329,120 +354,118 @@ public class PanelModel extends DynamicPanel implements ItemListener {
      * DOCUMENT ME!
      */
     private void guiInit() {
-        gridLayout.setColumns(1);
-        gridLayout.setHgap(10);
-        gridLayout.setRows(2);
-        gridLayout.setVgap(10);
-        this.setLayout(gridLayout);
-        panelSource.setLayout(null);
-        panelDestination.setLayout(null);
+        double[][] size = {
+                              { GUI.B, GUI.P, GUI.HG, GUI.F, 40, GUI.P, GUI.HG, GUI.P, GUI.B }, // Columns
+        { GUI.B, GUI.P, GUI.VS, GUI.P, GUI.VS, GUI.P, GUI.VS, GUI.P, GUI.B }
+        }; // Rows
 
-        panelSource.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1), " Source Data Model "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-        panelDestination.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1), " Destination Data Model "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        TableLayout layout = new TableLayout(size);
+
+        panelSource.setLayout(layout);
+        panelDestination.setLayout(layout);
+
+        panelSource.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1), " " + rm.getString("text.model.sourceModel") + " "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        panelDestination.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1),  " " + rm.getString("text.model.destinationModel") + " "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 
         // source
         labelCatalogS.setText(rm.getString("text.model.catalog"));
-        labelCatalogS.setBounds(new Rectangle(12, 26, 100, 20));
-
         comboCatalogS.setToolTipText(rm.getString("text.model.catalog.toolTip"));
-        comboCatalogS.setBounds(new Rectangle(130, 22, 183, 20));
 
         labelSchemaS.setText(rm.getString("text.model.schema"));
-        labelSchemaS.setBounds(new Rectangle(12, 58, 100, 20));
-
         comboSchemaS.setToolTipText(rm.getString("text.model.schema.toolTip"));
-        comboSchemaS.setBounds(new Rectangle(130, 56, 183, 20));
 
         labelTablePatternS.setText(rm.getString("text.model.tablePattern"));
-        labelTablePatternS.setBounds(new Rectangle(12, 90, 100, 20));
-
         tfTablePatternS.setToolTipText(rm.getString("text.model.tablePattern.toolTip"));
         tfTablePatternS.setText("%");
-        tfTablePatternS.setBounds(new Rectangle(130, 90, 183, 20));
 
-        buttonReadModelS.setBounds(new Rectangle(370, 22, 230, 24));
         buttonReadModelS.setText(rm.getString("button.captureSourceModel"));
         buttonReadModelS.addActionListener(new PanelModel_buttonReadModelS_actionAdapter(this));
         buttonReadModelS.setToolTipText(rm.getString("text.model.bePatient"));
 
-        checkBoxReadSourcePrimaryKeys.setSelected(true);
-        checkBoxReadSourcePrimaryKeys.setBounds(new Rectangle(130, 116, 400, 20));
         checkBoxReadSourcePrimaryKeys.setText(" " + rm.getString("text.model.readPrimaryKey"));
         checkBoxReadSourcePrimaryKeys.addItemListener(this);
 
-        checkBoxReadSourceForeignKeys.setSelected(true);
-        checkBoxReadSourceForeignKeys.setBounds(new Rectangle(130, 136, 400, 20));
         checkBoxReadSourceForeignKeys.setText(" " + rm.getString("text.model.readForeignKey"));
         checkBoxReadSourceForeignKeys.addItemListener(this);
 
-        checkBoxReadSourceIndexes.setSelected(false);
-        checkBoxReadSourceIndexes.setBounds(new Rectangle(130, 156, 400, 20));
         checkBoxReadSourceIndexes.setText(" " + rm.getString("text.model.readIndex"));
         checkBoxReadSourceIndexes.addItemListener(this);
-        
+
+        checkBoxUseQualifiedSourceTableName.setText(" " + rm.getString("text.model.qualifiedTableName"));
+        checkBoxUseQualifiedSourceTableName.addItemListener(this);
+
+        // source layout
+        // first line
+        panelSource.add(labelCatalogS, "1, 1");
+        panelSource.add(comboCatalogS, "3, 1");
+        panelSource.add(checkBoxReadSourcePrimaryKeys, "5, 1");
+        panelSource.add(buttonReadModelS, "7, 1");
+
+        // second line
+        panelSource.add(labelSchemaS, "1, 3");
+        panelSource.add(comboSchemaS, "3, 3");
+        panelSource.add(checkBoxReadSourceForeignKeys, "5, 3");
+
+        // third line
+        panelSource.add(labelTablePatternS, "1, 5");
+        panelSource.add(tfTablePatternS, "3, 5");
+        panelSource.add(checkBoxReadSourceIndexes, "5, 5");
+
+        // fourth line
+        panelSource.add(checkBoxUseQualifiedSourceTableName, "5, 7");
+
         // destination
         labelCatalogD.setText(rm.getString("text.model.catalog"));
-        labelCatalogD.setBounds(new Rectangle(12, 26, 100, 20));
-
         comboCatalogD.setToolTipText(rm.getString("text.model.catalog.toolTip"));
-        comboCatalogD.setBounds(new Rectangle(130, 22, 183, 20));
 
         labelSchemaD.setText(rm.getString("text.model.schema"));
-        labelSchemaD.setBounds(new Rectangle(12, 58, 100, 20));
-
-        comboSchemaD.setBounds(new Rectangle(130, 56, 183, 20));
         comboSchemaD.setToolTipText(rm.getString("text.model.schema.toolTip"));
 
         labelTablePatternD.setText(rm.getString("text.model.tablePattern"));
-        labelTablePatternD.setBounds(new Rectangle(12, 90, 100, 20));
-
         tfTablePatternD.setText("%");
-        tfTablePatternD.setBounds(new Rectangle(130, 90, 183, 20));
         tfTablePatternD.setToolTipText(rm.getString("text.model.tablePattern.toolTip"));
 
-        buttonReadModelD.setBounds(new Rectangle(370, 21, 230, 24));
         buttonReadModelD.setText(rm.getString("button.captureDestinationModel"));
         buttonReadModelD.addActionListener(new PanelModel_buttonReadModelD_actionAdapter(this));
         buttonReadModelD.setToolTipText(rm.getString("text.model.bePatient"));
 
-        checkBoxReadDestinationPrimaryKeys.setSelected(true);
-        checkBoxReadDestinationPrimaryKeys.setBounds(new Rectangle(130, 116, 400, 20));
         checkBoxReadDestinationPrimaryKeys.setText(" " + rm.getString("text.model.readPrimaryKey"));
         checkBoxReadDestinationPrimaryKeys.addItemListener(this);
 
-        checkBoxReadDestinationForeignKeys.setSelected(true);
-        checkBoxReadDestinationForeignKeys.setBounds(new Rectangle(130, 136, 400, 20));
         checkBoxReadDestinationForeignKeys.setText(" " + rm.getString("text.model.readForeignKey"));
         checkBoxReadDestinationForeignKeys.addItemListener(this);
-        
-        checkBoxReadDestinationIndexes.setSelected(true);
-        checkBoxReadDestinationIndexes.setBounds(new Rectangle(130, 156, 400, 20));
+
         checkBoxReadDestinationIndexes.setText(" " + rm.getString("text.model.readIndex"));
         checkBoxReadDestinationIndexes.addItemListener(this);
 
+        checkBoxUseQualifiedDestinationTableName.setText(" " + rm.getString("text.model.qualifiedTableName"));
+        checkBoxUseQualifiedDestinationTableName.addItemListener(this);
+
+        // destination layout
+        // first line
+        panelDestination.add(labelCatalogD, "1, 1");
+        panelDestination.add(comboCatalogD, "3, 1");
+        panelDestination.add(checkBoxReadDestinationPrimaryKeys, "5, 1");
+        panelDestination.add(buttonReadModelD, "7, 1");
+
+        // second line
+        panelDestination.add(labelSchemaD, "1, 3");
+        panelDestination.add(comboSchemaD, "3, 3");
+        panelDestination.add(checkBoxReadDestinationForeignKeys, "5, 3");
+
+        // third line
+        panelDestination.add(labelTablePatternD, "1, 5");
+        panelDestination.add(tfTablePatternD, "3, 5");
+        panelDestination.add(checkBoxReadDestinationIndexes, "5, 5");
+
+        // fourth line
+        panelDestination.add(checkBoxUseQualifiedDestinationTableName, "5, 7");
+
+        // tempororay
+        this.setLayout(new GridLayout(2, 1, 10, 10));
+
         this.add(panelSource, null);
         this.add(panelDestination, null);
-        panelSource.add(labelCatalogS, null);
-        panelSource.add(labelSchemaS, null);
-        panelSource.add(labelTablePatternS, null);
-        panelSource.add(comboCatalogS, null);
-        panelSource.add(comboSchemaS, null);
-        panelSource.add(tfTablePatternS, null);
-        panelSource.add(buttonReadModelS, null);
-        panelSource.add(checkBoxReadSourcePrimaryKeys, null);
-        panelSource.add(checkBoxReadSourceForeignKeys, null);
-        panelSource.add(checkBoxReadSourceIndexes, null);
-
-        panelDestination.add(labelCatalogD, null);
-        panelDestination.add(labelSchemaD, null);
-        panelDestination.add(labelTablePatternD, null);
-        panelDestination.add(comboCatalogD, null);
-        panelDestination.add(comboSchemaD, null);
-        panelDestination.add(tfTablePatternD, null);
-        panelDestination.add(buttonReadModelD, null);
-        panelDestination.add(checkBoxReadDestinationPrimaryKeys, null);
-        panelDestination.add(checkBoxReadDestinationForeignKeys, null);
-        panelDestination.add(checkBoxReadDestinationIndexes, null);
     }
 
     /**
@@ -452,15 +475,12 @@ public class PanelModel extends DynamicPanel implements ItemListener {
      */
     void buttonReadModelS_actionPerformed(ActionEvent e) {
         try {
-            model.setSourceCatalog((String) this.comboCatalogS.getSelectedItem());
-            model.setSourceSchema((String) this.comboSchemaS.getSelectedItem());
-            model.setSourceTablePattern(this.tfTablePatternS.getText());
+            model.setSourceCatalog((String) comboCatalogS.getSelectedItem());
+            model.setSourceSchema((String) comboSchemaS.getSelectedItem());
+            model.setSourceTablePattern(tfTablePatternS.getText());            
 
             Element operation = new Element(XMLTags.OPERATION);
             operation.setAttribute(XMLTags.NAME, OperationType.CAPTURE_SOURCE_MODEL);
-            operation.setAttribute(XMLTags.READ_PRIMARY_KEYS, Boolean.toString(checkBoxReadSourcePrimaryKeys.isSelected()));
-            operation.setAttribute(XMLTags.READ_FOREIGN_KEYS, Boolean.toString(checkBoxReadSourceForeignKeys.isSelected()));
-            operation.setAttribute(XMLTags.READ_INDEXES, Boolean.toString(checkBoxReadSourceIndexes.isSelected()));
 
             String[] param = { rm.getString("text.model.sourceModel") };
 
@@ -483,9 +503,6 @@ public class PanelModel extends DynamicPanel implements ItemListener {
 
             Element operation = new Element(XMLTags.OPERATION);
             operation.setAttribute(XMLTags.NAME, OperationType.CAPTURE_DESTINATION_MODEL);
-            operation.setAttribute(XMLTags.READ_PRIMARY_KEYS, Boolean.toString(checkBoxReadDestinationPrimaryKeys.isSelected()));
-            operation.setAttribute(XMLTags.READ_FOREIGN_KEYS, Boolean.toString(checkBoxReadDestinationForeignKeys.isSelected()));
-            operation.setAttribute(XMLTags.READ_INDEXES, Boolean.toString(checkBoxReadDestinationIndexes.isSelected()));
 
             String[] param = { rm.getString("text.model.destinationModel") };
 

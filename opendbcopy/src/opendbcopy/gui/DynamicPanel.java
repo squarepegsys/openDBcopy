@@ -28,7 +28,7 @@ import opendbcopy.connection.exception.OpenConnectionException;
 
 import opendbcopy.controller.MainController;
 
-import opendbcopy.plugin.ProjectManager;
+import opendbcopy.plugin.JobManager;
 
 import opendbcopy.plugin.model.Model;
 import opendbcopy.plugin.model.exception.MissingAttributeException;
@@ -61,7 +61,7 @@ import javax.swing.JPanel;
 public class DynamicPanel extends JPanel implements Observer {
     protected MainController  controller;
     protected PluginGui       pluginGui;
-    protected ProjectManager  pm;
+    protected JobManager      jm;
     protected ResourceManager rm;
     protected Model           model;
 
@@ -77,7 +77,7 @@ public class DynamicPanel extends JPanel implements Observer {
                         Boolean        registerAsObserver) {
         this.controller     = controller;
         this.rm             = controller.getResourceManager();
-        this.pm             = controller.getProjectManager();
+        this.jm             = controller.getJobManager();
         this.pluginGui      = pluginGui;
         this.model          = pluginGui.getModel();
 

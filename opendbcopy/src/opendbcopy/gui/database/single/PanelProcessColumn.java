@@ -243,7 +243,7 @@ public class PanelProcessColumn extends DynamicPanel {
 
             if (nbrRecordsString != null) {
                 String[] param = { nbrRecordsString };
-                labelInfo.setText(rm.getString("text.column.records", param));
+                labelInfo.setText(rm.getString("text.column.selectedRecords", param));
             }
         } else {
             buttonDeleteFilter.setEnabled(false);

@@ -170,6 +170,7 @@ public class SQLDriverManager {
             throw new IllegalArgumentException("Missing driver");
         }
 
+        resetLastSelected(XMLTags.SOURCE_DB);
         resetDefault(XMLTags.SOURCE_DB);
         driver.setDefault(XMLTags.SOURCE_DB, url, username);
     }
@@ -190,6 +191,7 @@ public class SQLDriverManager {
             throw new IllegalArgumentException("Missing driver");
         }
 
+        resetLastSelected(XMLTags.DESTINATION_DB);
         resetDefault(XMLTags.DESTINATION_DB);
         driver.setDefault(XMLTags.DESTINATION_DB, url, username);
     }
@@ -236,6 +238,18 @@ public class SQLDriverManager {
 
             Driver  driver = new Driver(driverElement);
             drivers.put(driver.getName(), driver);
+        }
+    }
+
+    private void resetLastSelected(String database) {
+        Iterator itDrivers = drivers.values().iterator();
+
+        while (itDrivers.hasNext()) {
+            Driver tempDriver = (Driver) itDrivers.next();
+
+            if ((tempDriver.getDefault(database) != null) && (tempDriver.getDefault(database).getName().compareTo(database) == 0)) {
+                tempDriver.setLastSelected(database, false);
+            }
         }
     }
 

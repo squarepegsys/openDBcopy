@@ -22,10 +22,8 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin.model.database.exception;
 
-import org.apache.commons.lang.builder.ToStringBuilder;
-import org.apache.commons.lang.builder.ToStringStyle;
-
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.TreeMap;
 
 
@@ -83,7 +81,16 @@ public class DependencyNotSolvableException extends Exception {
      * @return DOCUMENT ME!
      */
     public String getUnsortedNodesListed() {
-        return ToStringBuilder.reflectionToString(unsortedNodes, ToStringStyle.MULTI_LINE_STYLE);
+    	String output = "";
+    	if (unsortedNodes != null && unsortedNodes.size() > 0) {
+        	Iterator itKeys = unsortedNodes.keySet().iterator();
+        	
+        	while (itKeys.hasNext()) {
+        		output += (String) itKeys.next() + "\n";
+        	}
+    	}
+    	
+        return output;
     }
 
     /**
@@ -92,6 +99,15 @@ public class DependencyNotSolvableException extends Exception {
      * @return DOCUMENT ME!
      */
     public String getSortedNodesListed() {
-        return ToStringBuilder.reflectionToString(sortedNodes, ToStringStyle.MULTI_LINE_STYLE);
+    	String output = "";
+    	if (sortedNodes != null && sortedNodes.size() > 0) {
+        	Iterator itKeys = sortedNodes.keySet().iterator();
+        	
+        	while (itKeys.hasNext()) {
+        		output += (String) itKeys.next() + "\n";
+        	}
+    	}
+    	
+        return output;
     }
 }

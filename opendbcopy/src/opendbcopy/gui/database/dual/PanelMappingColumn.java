@@ -268,7 +268,7 @@ public class PanelMappingColumn extends DynamicPanel {
 
             if (nbrRecordsString != null) {
                 String[] param = { nbrRecordsString };
-                labelInfo.setText(rm.getString("text.column.records", param));
+                labelInfo.setText(rm.getString("text.column.selectedRecords", param));
             }
         } else {
             buttonDeleteFilter.setEnabled(false);
@@ -333,7 +333,7 @@ public class PanelMappingColumn extends DynamicPanel {
             // set default selected item
             dataMapping[row][1]     = combo.getSelectedItem();
 
-            dataProcess[row][0] = new Boolean(columnMapping.getAttributeValue(XMLTags.MAPPED));
+            dataProcess[row][0] = new Boolean(columnMapping.getAttributeValue(XMLTags.PROCESS));
 
             row++;
         }

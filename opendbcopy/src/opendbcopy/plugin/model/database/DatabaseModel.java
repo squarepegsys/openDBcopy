@@ -34,6 +34,7 @@ import opendbcopy.connection.exception.OpenConnectionException;
 import opendbcopy.controller.MainController;
 
 import opendbcopy.plugin.model.*;
+import opendbcopy.plugin.model.database.beans.BeanManager;
 import opendbcopy.plugin.model.database.dependency.Dependency;
 import opendbcopy.plugin.model.database.dependency.Mapper;
 import opendbcopy.plugin.model.database.exception.DependencyNotSolvableException;
@@ -63,6 +64,8 @@ import java.util.Vector;
 public class DatabaseModel extends Model {
     public final int SINGLE_MODE = 1;
     public final int DUAL_MODE = 2;
+    private BeanManager sourceDbBeanManager;
+    private BeanManager destinationDbBeanManager;
     private Mapper   mapper;
     private Element  sourceDb;
     private Element  sourceDriver;
@@ -102,6 +105,23 @@ public class DatabaseModel extends Model {
         super(controller, pluginElement);
 
         loadExistingElements();
+        
+        // load bean managers
+        if (sourceModel != null) {
+        	sourceDbBeanManager = new BeanManager(this, sourceModel);
+        	
+        	if (sourceModel.getChildren(XMLTags.TABLE) != null && sourceModel.getChildren(XMLTags.TABLE).size() > 0) {
+        		sourceDbBeanManager.parseTables();
+        	}
+        }
+        
+        if (destinationModel != null) {
+        	destinationDbBeanManager = new BeanManager(this, destinationModel);
+
+        	if (destinationModel.getChildren(XMLTags.TABLE) != null && destinationModel.getChildren(XMLTags.TABLE).size() > 0) {
+        		destinationDbBeanManager.parseTables();
+        	}
+        }
     }
 
     /**
@@ -164,7 +184,7 @@ public class DatabaseModel extends Model {
 
         // capture source model
         if (operationString.compareTo(OperationType.CAPTURE_SOURCE_MODEL) == 0) {
-            setSourceModel(DatabaseModelReader.readModel(getSourceDb(), operation));
+            setSourceModel(DatabaseModelReader.readModel(getSourceDb()));
 
             // set elements process=true as ModelReader does not do this job
             if (getDbMode() == SINGLE_MODE) {
@@ -176,7 +196,7 @@ public class DatabaseModel extends Model {
 
         // capture destination model
         if (operationString.compareTo(OperationType.CAPTURE_DESTINATION_MODEL) == 0) {
-            setDestinationModel(DatabaseModelReader.readModel(getDestinationDb(), operation));
+            setDestinationModel(DatabaseModelReader.readModel(getDestinationDb()));
             broadcast();
         }
 
@@ -754,18 +774,18 @@ public class DatabaseModel extends Model {
             throw new IllegalArgumentException("Missing tableName");
         }
 
-        if (getSourceCatalog().length() > 0) {
-            if (getSourceDatabaseName().compareToIgnoreCase("PostgreSQL") == 0) {
-                return tableName;
-            } else {
+        if (getSourceModel().getAttribute(XMLTags.USE_QUALIFIED_TABLE_NAME) != null && Boolean.valueOf(getSourceModel().getAttributeValue(XMLTags.USE_QUALIFIED_TABLE_NAME)).booleanValue()) {
+            if (getSourceCatalog().length() > 0) {
                 return getSourceCatalog() + getSourceCatalogSeparator() + tableName;
+            } else {
+                if (getSourceSchema().compareTo("%") == 0) {
+                    return tableName;
+                } else {
+                    return getSourceSchema() + "." + tableName;
+                }
             }
         } else {
-            if (getSourceSchema().compareTo("%") == 0) {
-                return tableName;
-            } else {
-                return getSourceSchema() + "." + tableName;
-            }
+        	return tableName;
         }
     }
 
@@ -785,18 +805,18 @@ public class DatabaseModel extends Model {
             throw new IllegalArgumentException("Missing tableName");
         }
 
-        if (getDestinationCatalog().length() > 0) {
-            if (getDestinationDatabaseName().compareToIgnoreCase("PostgreSQL") == 0) {
-                return tableName;
-            } else {
+        if (getDestinationModel().getAttribute(XMLTags.USE_QUALIFIED_TABLE_NAME) != null && Boolean.valueOf(getDestinationModel().getAttributeValue(XMLTags.USE_QUALIFIED_TABLE_NAME)).booleanValue()) {
+            if (getDestinationCatalog().length() > 0) {
                 return getDestinationCatalog() + getDestinationCatalogSeparator() + tableName;
+            } else {
+                if (getDestinationSchema().compareTo("%") == 0) {
+                    return tableName;
+                } else {
+                    return getDestinationSchema() + "." + tableName;
+                }
             }
         } else {
-            if (getDestinationSchema().compareTo("%") == 0) {
-                return tableName;
-            } else {
-                return getDestinationSchema() + "." + tableName;
-            }
+        	return tableName;
         }
     }
 
@@ -1487,9 +1507,9 @@ public class DatabaseModel extends Model {
         }
 
         if (tablePattern.length() > 0) {
-            getElement(sourceTablePattern, "sourceTablePattern").setAttribute(XMLTags.TABLE_PATTERN, tablePattern);
+            getElement(sourceTablePattern, "sourceTablePattern").setAttribute(XMLTags.VALUE, tablePattern);
         } else {
-            getElement(sourceTablePattern, "sourceTablePattern").setAttribute(XMLTags.TABLE_PATTERN, "%");
+            getElement(sourceTablePattern, "sourceTablePattern").setAttribute(XMLTags.VALUE, "%");
         }
     }
 
@@ -1507,9 +1527,9 @@ public class DatabaseModel extends Model {
         }
 
         if (tablePattern.length() > 0) {
-            getElement(destinationTablePattern, "destinationTablePattern").setAttribute(XMLTags.TABLE_PATTERN, tablePattern);
+            getElement(destinationTablePattern, "destinationTablePattern").setAttribute(XMLTags.VALUE, tablePattern);
         } else {
-            getElement(destinationTablePattern, "destinationTablePattern").setAttribute(XMLTags.TABLE_PATTERN, "%");
+            getElement(destinationTablePattern, "destinationTablePattern").setAttribute(XMLTags.VALUE, "%");
         }
     }
 
@@ -1615,7 +1635,12 @@ public class DatabaseModel extends Model {
             throw new IllegalArgumentException("Missing element");
         }
 
+        if (destinationDb.getChild(XMLTags.MODEL) != null) {
+        	destinationDb.removeChild(XMLTags.MODEL);
+        }
+        
         destinationModel = element;
+        destinationDb.addContent(destinationModel);
     }
 
     /**

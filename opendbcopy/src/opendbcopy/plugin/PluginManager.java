@@ -73,7 +73,7 @@ public class PluginManager extends Observable {
     private static Logger          logger = Logger.getLogger(PluginManager.class.getName());
     private static PluginScheduler pluginScheduler;
     private MainController         controller;
-    private ProjectManager         pm;
+    private JobManager             jm;
     private ResourceManager        rm;
     private Model                  currentModel;
     private SimpleDateFormat       df;
@@ -113,7 +113,7 @@ public class PluginManager extends Observable {
      * @throws IllegalArgumentException DOCUMENT ME!
      */
     public PluginManager(MainController controller,
-                         ProjectManager pm,
+                         JobManager     pm,
                          Element        plugins,
                          String         pluginsLocation,
                          String         pluginFilename,
@@ -123,7 +123,7 @@ public class PluginManager extends Observable {
         }
 
         this.controller     = controller;
-        this.pm             = pm;
+        this.jm             = pm;
         this.rm             = controller.getResourceManager();
         this.plugins        = plugins;
 
@@ -641,8 +641,8 @@ public class PluginManager extends Observable {
         logger.info(rm.getString("text.execute.done") + " (" + rm.getString("text.execute.time", param) + ")");
         broadcast();
 
-		// checks first if opendbcopy must be shutdown itself or not
-      	controller.shutdownOpendbcopy();
+        // checks first if opendbcopy must be shutdown itself or not
+        controller.shutdownOpendbcopy();
     }
 
     /**

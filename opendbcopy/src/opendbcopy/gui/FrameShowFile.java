@@ -134,7 +134,7 @@ public class FrameShowFile extends JFrame {
         scrollPane.setBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.black, 1), " " + title + " (" + file.getAbsolutePath() + ") "));
         scrollPane.setBackground(SystemColor.WHITE);
 
-        buttonRefresh = new JButton(new ImageIcon("resource/images/Refresh24.gif"));
+        buttonRefresh = new JButton(" " + rm.getString("button.refresh"), new ImageIcon("resource/images/Refresh24.gif"));
         buttonRefresh.addActionListener(new FrameShowFile_buttonRefresh_actionAdapter(this));
 
         panelControl = new JPanel(new GridLayout(1, 1, 20, 20));

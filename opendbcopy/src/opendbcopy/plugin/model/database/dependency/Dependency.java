@@ -275,7 +275,11 @@ public class Dependency {
                         if (sortedNodes.containsValue(parent)) {
                             contains_parent[parentCounter] = true;
                         } else {
-                            contains_parent[parentCounter] = false;
+                        	if (node.findParent(node.getName()) != null) {
+                        		contains_parent[parentCounter] = true;
+                        	} else {
+                                contains_parent[parentCounter] = false;
+                        	}
                         }
 
                         parentCounter++;

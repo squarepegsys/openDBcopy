@@ -34,7 +34,7 @@ import org.jdom.Document;
 
 
 /**
- * Individual plugins shall extend DynamicPluginThread. Plugin instances are launched, monitored and eventually synchronised using a
+ * Individual plugins must extend DynamicPluginThread. Plugin instances are launched, monitored and eventually synchronised using a
  * PluginThreadManager.
  *
  * @author Anthony Smith
@@ -58,7 +58,7 @@ public class DynamicPluginThread extends Thread implements IExecute {
                                Model          baseModel) throws PluginException {
         this.controller      = controller;
         this.baseModel       = baseModel;
-        this.typeMapping     = controller.getProjectManager().getTypeMapping();
+        this.typeMapping     = controller.getJobManager().getTypeMapping();
 
         try {
             logger = Logger.getLogger(baseModel.getThreadClassName());

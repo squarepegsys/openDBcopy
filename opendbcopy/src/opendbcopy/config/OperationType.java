@@ -30,11 +30,11 @@ package opendbcopy.config;
  */
 public final class OperationType {
     /** Project and Application Operations */
-    public static final String NEW_PROJECT = "new_project";
+    public static final String NEW_JOB = "new_job";
     public static final String ADD_PLUGIN = "add_plugin";
     public static final String REMOVE_PLUGIN = "remove_plugin";
-    public static final String EXPORT_PROJECT = "export_project";
-    public static final String IMPORT_PROJECT = "import_project";
+    public static final String EXPORT_JOB = "export_job";
+    public static final String IMPORT_JOB = "import_job";
     public static final String EXIT = "exit";
 
     public static final String NEW_PLUGIN = "new_plugin";

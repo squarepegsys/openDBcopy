@@ -61,31 +61,23 @@ public class PluginGuiManager extends Observable implements Observer {
     private PluginGui       currentPluginGui;
     private LinkedList      pluginGuisLoaded;
     private LinkedList      pluginGuisToExecute;
-    private int             frameWidth;
-    private int             frameHeight;
     private boolean         amRegisteredAsObserverToPluginManager = false;
 
     /**
-     * Creates a new PluginGuiManager object.  Please be aware that PluginGuiManager contains two LinkedLists. One to hold plugin guis which are in
+     * Creates a new PluginGuiManager object. Please be aware that PluginGuiManager contains two LinkedLists. One to hold plugin guis which are in
      * LinkedList of models to be executed, one to hold plugin guis which are in LinkedList of modes only loaded. Because of the MVC pattern
      * implemented it is up to the controller to decide whether a GUI is available or not. Therefore models, which are contained within a project
      * and are loaded at startup, are passed to PluginGuiManager if and only if Gui is enabled. The Gui is able to display both LinkedList of Plugin
      * Guis.
      *
      * @param controller DOCUMENT ME!
-     * @param frameWidth DOCUMENT ME!
-     * @param frameHeight DOCUMENT ME!
      *
      * @throws MissingAttributeException DOCUMENT ME!
      * @throws MissingElementException DOCUMENT ME!
      */
-    public PluginGuiManager(MainController controller,
-                            int            frameWidth,
-                            int            frameHeight) throws MissingAttributeException, MissingElementException {
-        this.frameWidth      = frameWidth;
-        this.frameHeight     = frameHeight;
-        this.controller      = controller;
-        this.rm              = controller.getResourceManager();
+    public PluginGuiManager(MainController controller) throws MissingAttributeException, MissingElementException {
+        this.controller     = controller;
+        this.rm             = controller.getResourceManager();
 
         pluginGuisLoaded        = new LinkedList();
         pluginGuisToExecute     = new LinkedList();
@@ -111,11 +103,11 @@ public class PluginGuiManager extends Observable implements Observer {
      */
     public void update(Observable o,
                        Object     arg) {
-        if (controller.getProjectManager().getPluginManager().getModelsLoaded().size() == 0) {
+        if (controller.getJobManager().getPluginManager().getModelsLoaded().size() == 0) {
             pluginGuisLoaded.clear();
         }
 
-        if (controller.getProjectManager().getPluginManager().getModelsToExecute().size() == 0) {
+        if (controller.getJobManager().getPluginManager().getModelsToExecute().size() == 0) {
             pluginGuisToExecute.clear();
         }
     }
@@ -149,14 +141,14 @@ public class PluginGuiManager extends Observable implements Observer {
         // now load the model with appropriate model
         if (isExecutableModel) {
             // takes the last model that is within the linked list of executable models
-            model = controller.getProjectManager().getPluginManager().getModelToExecute(pluginGuisToExecute.size());
+            model = controller.getJobManager().getPluginManager().getModelToExecute(pluginGuisToExecute.size());
             model.setTitle(pluginGui.getTitle());
-            pluginGui.load(model, frameWidth, frameHeight);
+            pluginGui.load(model);
             pluginGuisToExecute.add(pluginGui);
         } else {
             // creates a new model for linked list of models loaded
-            model = controller.getProjectManager().getPluginManager().loadModel(pluginGui.getPluginElement(), pluginGui.getTitle());
-            pluginGui.load(model, frameWidth, frameHeight);
+            model = controller.getJobManager().getPluginManager().loadModel(pluginGui.getPluginElement(), pluginGui.getTitle());
+            pluginGui.load(model);
             pluginGuisLoaded.add(pluginGui);
         }
 
@@ -193,7 +185,7 @@ public class PluginGuiManager extends Observable implements Observer {
         }
 
         model.setTitle(pluginGui.getTitle());
-        pluginGui.load(model, frameWidth, frameHeight);
+        pluginGui.load(model);
 
         if (modelToExecute) {
             pluginGuisToExecute.add(pluginGui);
@@ -216,7 +208,7 @@ public class PluginGuiManager extends Observable implements Observer {
     public final Vector getAvailablePluginGuisOrdered() {
         // register myself to pluginManager
         if (!amRegisteredAsObserverToPluginManager) {
-            controller.getProjectManager().getPluginManager().registerObserver(this);
+            controller.getJobManager().getPluginManager().registerObserver(this);
             amRegisteredAsObserverToPluginManager = true;
         }
 
@@ -329,6 +321,15 @@ public class PluginGuiManager extends Observable implements Observer {
     /**
      * DOCUMENT ME!
      *
+     * @return DOCUMENT ME!
+     */
+    public final int getNbrPluginGuisLoaded() {
+        return pluginGuisLoaded.size();
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
      * @param index DOCUMENT ME!
      *
      * @return DOCUMENT ME!
@@ -339,6 +340,15 @@ public class PluginGuiManager extends Observable implements Observer {
         } else {
             return null;
         }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     */
+    public final int getNbrPluginGuisToExecute() {
+        return pluginGuisToExecute.size();
     }
 
     /**
@@ -382,10 +392,10 @@ public class PluginGuiManager extends Observable implements Observer {
      */
     public final void changeOrderPluginToExecute(int sourceIndex,
                                                  int destinationIndex) {
-    	if (pluginGuisToExecute.size() > sourceIndex) {
+        if (pluginGuisToExecute.size() > sourceIndex) {
             PluginGui pluginGuiRemoved = (PluginGui) pluginGuisToExecute.remove(sourceIndex);
             pluginGuisToExecute.add(destinationIndex, pluginGuiRemoved);
-    	}
+        }
     }
 
     /**
@@ -407,7 +417,7 @@ public class PluginGuiManager extends Observable implements Observer {
 
         if (currentPluginGui != null) {
             try {
-                controller.getProjectManager().getPluginManager().setCurrentModel(currentPluginGui.getModel());
+                controller.getJobManager().getPluginManager().setCurrentModel(currentPluginGui.getModel());
             } catch (RuntimeException e) {
                 // ignore as plugin manager is not yet reachable and does not worry program flow
             }

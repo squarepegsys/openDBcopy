@@ -22,6 +22,7 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui;
 
+import opendbcopy.config.GUI;
 import opendbcopy.config.XMLTags;
 
 import opendbcopy.controller.MainController;
@@ -35,12 +36,12 @@ import opendbcopy.swing.JDOMTree;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.SystemColor;
+
 import java.io.File;
 
 import java.util.Observable;
 
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -63,21 +64,18 @@ public class PanelConfiguration extends DynamicPanel {
     private DefaultMutableTreeNode top;
     private JPanel                 panelMain;
     private JScrollPane            scrollPaneTree;
-    private ImageIcon              iconFile = new ImageIcon("resource/images/Save24.gif");
-    private ImageIcon              iconDir = new ImageIcon("resource/images/Open24.gif");
-    private ImageIcon              iconConfig = new ImageIcon("resource/images/Preferences24.gif");
 
     /**
      * Creates a new PanelConfiguration object.
      *
      * @param controller DOCUMENT ME!
-     * @param pluginGui DOCUMENT ME!
+     * @param workingMode DOCUMENT ME!
      * @param registerAsObserver DOCUMENT ME!
      *
      * @throws Exception DOCUMENT ME!
      */
     public PanelConfiguration(MainController controller,
-                              PluginGui    workingMode,
+                              PluginGui      workingMode,
                               Boolean        registerAsObserver) throws Exception {
         super(controller, workingMode, registerAsObserver);
         model = super.model;
@@ -113,9 +111,9 @@ public class PanelConfiguration extends DynamicPanel {
                     }
 
                     if (node.isLeaf()) {
-                    	if (node.isEditable()) {
+                        if (node.isEditable()) {
                             provideSelection(node);
-                    	}
+                        }
                     }
                 }
             });
@@ -134,7 +132,7 @@ public class PanelConfiguration extends DynamicPanel {
         // set cell renderer
         ToolTipManager.sharedInstance().registerComponent(tree);
 
-        tree.setCellRenderer(new ConfNodeRenderer(rm, iconDir, iconFile, iconConfig));
+        tree.setCellRenderer(new ConfNodeRenderer(rm, GUI.getImageIconDir(), GUI.getImageIconFile(), GUI.getImageIconConfig()));
 
         scrollPaneTree     = new JScrollPane(tree);
 
@@ -155,48 +153,48 @@ public class PanelConfiguration extends DynamicPanel {
         Object[] possibilitiesBoolean = { "true", "false" };
         Object[] possibilitiesUnicode = { "\u0009 (Unicode Tabulator)", "\u003b (Unicode Semicolon)" };
         Object[] possibilitiesFileDirFilelistSelection = { XMLTags.FILE, XMLTags.DIR, XMLTags.FILELIST };
-        
+
         // see http://www.hibernate.org/hib_docs/api/net/sf/hibernate/dialect/package-summary.html for details
         Object[] possibilitiesHibernateDialect = {
-        		"DB2400", "DB2", "Firebird", "FrontBase", "HSQL", "Informix9", "Informix", 
-				"Ingres", "Interbase", "Mckoi", "MySQL", "Oracle9", "Oracle", "Pointbase", 
-				"PostgreSQL", "Progress", "SAPDB", "SQLServer", "Sybase11_9_2", "SybaseAnywhere", "Sybase", "Generic"
+                                                     "DB2400", "DB2", "Firebird", "FrontBase", "HSQL", "Informix9", "Informix", "Ingres", "Interbase",
+                                                     "Mckoi", "MySQL", "Oracle9", "Oracle", "Pointbase", "PostgreSQL", "Progress", "SAPDB",
+                                                     "SQLServer", "Sybase11_9_2", "SybaseAnywhere", "Sybase", "Generic"
         };
-        
+
         Object[] possibilities = null;
         String   input = null;
 
         if (confNode.getAttributeType().compareToIgnoreCase(XMLTags.STRING) == 0) {
-            input = (String) JOptionPane.showInputDialog(this, rm.getString(confNode.getElementDescription()), rm.getString(confNode.getElementDescription()), JOptionPane.PLAIN_MESSAGE, iconConfig, possibilities, confNode.getAttributeValue());
+            input = (String) JOptionPane.showInputDialog(this, rm.getString(confNode.getElementDescription()), rm.getString(confNode.getElementDescription()), JOptionPane.PLAIN_MESSAGE, GUI.getImageIconConfig(), possibilities, confNode.getAttributeValue());
         }
 
         if (confNode.getAttributeType().compareToIgnoreCase(XMLTags.FILE_DIR_FILELISTS_SELECTION) == 0) {
-            input = (String) JOptionPane.showInputDialog(this, rm.getString(confNode.getElementDescription()), rm.getString(confNode.getElementDescription()), JOptionPane.PLAIN_MESSAGE, iconConfig, possibilitiesFileDirFilelistSelection, confNode.getAttributeValue());
+            input = (String) JOptionPane.showInputDialog(this, rm.getString(confNode.getElementDescription()), rm.getString(confNode.getElementDescription()), JOptionPane.PLAIN_MESSAGE, GUI.getImageIconConfig(), possibilitiesFileDirFilelistSelection, confNode.getAttributeValue());
         }
 
         if (confNode.getAttributeType().compareToIgnoreCase(XMLTags.UNICODE) == 0) {
-            input = (String) JOptionPane.showInputDialog(this, rm.getString(confNode.getElementDescription()), rm.getString(confNode.getElementDescription()), JOptionPane.PLAIN_MESSAGE, iconConfig, possibilitiesUnicode, confNode.getAttributeValue());
-            input = input.substring(0, "\u0009".length());
+            input     = (String) JOptionPane.showInputDialog(this, rm.getString(confNode.getElementDescription()), rm.getString(confNode.getElementDescription()), JOptionPane.PLAIN_MESSAGE, GUI.getImageIconConfig(), possibilitiesUnicode, confNode.getAttributeValue());
+            input     = input.substring(0, "\u0009".length());
         }
 
         if (confNode.getAttributeType().compareToIgnoreCase(XMLTags.BOOLEAN) == 0) {
-            input = (String) JOptionPane.showInputDialog(this, rm.getString(confNode.getElementDescription()), rm.getString(confNode.getElementDescription()), JOptionPane.PLAIN_MESSAGE, iconConfig, possibilitiesBoolean, confNode.getAttributeValue());
+            input = (String) JOptionPane.showInputDialog(this, rm.getString(confNode.getElementDescription()), rm.getString(confNode.getElementDescription()), JOptionPane.PLAIN_MESSAGE, GUI.getImageIconConfig(), possibilitiesBoolean, confNode.getAttributeValue());
         }
 
         if (confNode.getAttributeType().compareToIgnoreCase(XMLTags.INT) == 0) {
-            input = (String) JOptionPane.showInputDialog(this, rm.getString(confNode.getElementDescription()), rm.getString(confNode.getElementDescription()), JOptionPane.PLAIN_MESSAGE, iconConfig, possibilities, confNode.getAttributeValue());
-            
+            input = (String) JOptionPane.showInputDialog(this, rm.getString(confNode.getElementDescription()), rm.getString(confNode.getElementDescription()), JOptionPane.PLAIN_MESSAGE, GUI.getImageIconConfig(), possibilities, confNode.getAttributeValue());
+
             try {
-            	int intInput = Integer.parseInt(input);
+                int intInput = Integer.parseInt(input);
             } catch (NumberFormatException e) {
-            	JOptionPane.showMessageDialog(this, e.getMessage(), e.getMessage(), JOptionPane.ERROR_MESSAGE);
-            	input = null;
+                JOptionPane.showMessageDialog(this, e.getMessage(), e.getMessage(), JOptionPane.ERROR_MESSAGE);
+                input = null;
             }
         }
 
         if (confNode.getAttributeType().compareToIgnoreCase(XMLTags.HIBERNATE_DIALECT) == 0) {
-            input = (String) JOptionPane.showInputDialog(this, rm.getString(confNode.getElementDescription()), rm.getString(confNode.getElementDescription()), JOptionPane.PLAIN_MESSAGE, iconConfig, possibilitiesHibernateDialect, confNode.getAttributeValue());
-            input = XMLTags.HIBERNATE_DIALECT_PACKAGE_PREFIX + "." + input + XMLTags.HIBERNATE_DIALECT_CLASS_SUFFIX;
+            input     = (String) JOptionPane.showInputDialog(this, rm.getString(confNode.getElementDescription()), rm.getString(confNode.getElementDescription()), JOptionPane.PLAIN_MESSAGE, GUI.getImageIconConfig(), possibilitiesHibernateDialect, confNode.getAttributeValue());
+            input     = XMLTags.HIBERNATE_DIALECT_PACKAGE_PREFIX + "." + input + XMLTags.HIBERNATE_DIALECT_CLASS_SUFFIX;
         }
 
         if (confNode.getAttributeType().compareToIgnoreCase(XMLTags.FILE) == 0) {
@@ -204,11 +202,11 @@ public class PanelConfiguration extends DynamicPanel {
         }
 
         if (confNode.getAttributeType().compareToIgnoreCase(XMLTags.DIR) == 0) {
-        	if (confNode.getAttributeValue() != null && confNode.getAttributeValue().length() > 0) {
+            if ((confNode.getAttributeValue() != null) && (confNode.getAttributeValue().length() > 0)) {
                 input = controller.getFrame().getDialogFile().saveDialogAnyFile(rm.getString(confNode.getElementDescription()), true, new File(confNode.getAttributeValue()));
-        	} else {
+            } else {
                 input = controller.getFrame().getDialogFile().saveDialogAnyFile(rm.getString(confNode.getElementDescription()), true, controller.getInoutDir());
-        	}
+            }
         }
 
         if (input != null) {

@@ -22,10 +22,8 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui.database;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.awt.Rectangle;
+import info.clearthought.layout.TableLayout;
+
 import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.util.Iterator;
@@ -42,6 +40,7 @@ import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
 
 import opendbcopy.config.Driver;
+import opendbcopy.config.GUI;
 import opendbcopy.config.OperationType;
 import opendbcopy.config.XMLTags;
 import opendbcopy.controller.MainController;
@@ -67,10 +66,6 @@ public class PanelConnection extends DynamicPanel {
     private boolean        destinationConnectionTested = false;
     private JPanel         panelSource = new JPanel();
     private JPanel         panelDestination = new JPanel();
-    private JPanel         panelMain = new JPanel();
-    private JPanel         panelConnections = new JPanel();
-    private GridLayout     gridLayoutMain = new GridLayout();
-    private GridLayout     gridLayoutConnections = new GridLayout();
     private JButton        buttonTestS = new JButton();
     private JButton        buttonTestD = new JButton();
     private JTextField     tfDriverClassNameS = new JTextField();
@@ -222,14 +217,14 @@ public class PanelConnection extends DynamicPanel {
             comboBoxDriverD.addItem(driver.getName());
 
             // check for default values
-            if ((driver.getDefault(XMLTags.SOURCE_DB) != null) && (driver.getDefault(XMLTags.SOURCE_DB).getName().compareTo(XMLTags.SOURCE_DB) == 0)) {
+            if (driver.isDefault(XMLTags.SOURCE_DB)) {
                 comboBoxDriverS.setSelectedItem(driver.getName());
                 tfDriverClassNameS.setText(driver.getClassName());
                 tfURLS.setText(driver.getDefaultURL(XMLTags.SOURCE_DB));
                 tfUserNameS.setText(driver.getDefaultUsername(XMLTags.SOURCE_DB));
             }
 
-            if ((driver.getDefault(XMLTags.DESTINATION_DB) != null) && (driver.getDefault(XMLTags.DESTINATION_DB).getName().compareTo(XMLTags.DESTINATION_DB) == 0)) {
+            if (driver.isDefault(XMLTags.DESTINATION_DB)) {
                 comboBoxDriverD.setSelectedItem(driver.getName());
                 tfDriverClassNameD.setText(driver.getClassName());
                 tfURLD.setText(driver.getDefaultURL(XMLTags.DESTINATION_DB));
@@ -242,116 +237,86 @@ public class PanelConnection extends DynamicPanel {
      * DOCUMENT ME!
      */
     protected final void guiInit() {
-        gridLayoutMain.setColumns(1);
-        gridLayoutMain.setHgap(10);
-        gridLayoutMain.setRows(1);
-        gridLayoutMain.setVgap(10);
-        this.setLayout(gridLayoutMain);
+        double[][] sizeMain = {
+                { GUI.B, GUI.F, GUI.B }, // Columns
+				{ GUI.B, GUI.F, GUI.VG, GUI.F, GUI.B } // Rows
+        		};
 
-        gridLayoutConnections.setColumns(1);
-        gridLayoutConnections.setHgap(0);
-        gridLayoutConnections.setRows(2);
-        gridLayoutConnections.setVgap(0);
-        panelConnections.setLayout(gridLayoutConnections);
+        double[][] sizeConnectionDetails = {
+                { GUI.B, GUI.P, GUI.HG, 0.6, 20, GUI.P, GUI.HG, 0.4, GUI.B }, // Columns
+				{ GUI.B, GUI.P, GUI.VG, GUI.P, GUI.VG, GUI.P, GUI.VG, GUI.P, GUI.VG, GUI.P, GUI.B } // Rows
+        		};
 
-        // Source layout
-        panelSource.setLayout(null);
-        labelDriverNameS.setText(rm.getString("text.connection.driverName"));
-        labelDriverNameS.setBounds(new Rectangle(12, 30, 110, 15));
-        comboBoxDriverS.setBounds(new Rectangle(140, 30, 300, 20));
-        labelDriverS.setText(rm.getString("text.connection.driverClass"));
-        labelDriverS.setBounds(new Rectangle(12, 60, 110, 15));
-        tfDriverClassNameS.setToolTipText(rm.getString("text.connection.driverClass.toolTip"));
-        tfDriverClassNameS.setBounds(new Rectangle(140, 60, 300, 20));
-        labelURLS.setOpaque(true);
-        labelURLS.setText(rm.getString("text.connection.url") + "(" + rm.getString("text.connection.required") + ")");
-        labelURLS.setBounds(new Rectangle(12, 90, 110, 20));
-        tfURLS.setBounds(new Rectangle(140, 90, 300, 18));
-        labelUserNameS.setText(rm.getString("text.connection.userName"));
-        labelUserNameS.setBounds(new Rectangle(12, 120, 110, 20));
-        labelPasswordS.setText(rm.getString("text.connection.password"));
-        labelPasswordS.setBounds(new Rectangle(12, 150, 110, 15));
-        tfUserNameS.setToolTipText(rm.getString("text.connection.userName"));
-        tfUserNameS.setText("");
-        tfUserNameS.setBounds(new Rectangle(140, 120, 300, 20));
-        tfPasswordS.setMinimumSize(new Dimension(6, 21));
-        tfPasswordS.setPreferredSize(new Dimension(6, 21));
-        tfPasswordS.setToolTipText(rm.getString("text.connection.password"));
-        tfPasswordS.setText("");
-        tfPasswordS.setBounds(new Rectangle(140, 150, 300, 20));
-
-        comboBoxDriverS.addActionListener(new PanelConnection_comboBoxDriverS_actionAdapter(this));
-
-        buttonTestS.setBounds(new Rectangle(460, 90, 180, 24));
-        buttonTestS.setText(rm.getString("button.applyAndTest"));
-        buttonTestS.addActionListener(new PanelConnection_buttonTestS_actionAdapter(this));
-
-        // Destination layout
-        panelDestination.setLayout(null);
-        labelDriverNameD.setText(rm.getString("text.connection.driverName"));
-        labelDriverNameD.setBounds(new Rectangle(12, 30, 110, 15));
-        comboBoxDriverD.setBounds(new Rectangle(140, 30, 300, 20));
-        labelDriverD.setText(rm.getString("text.connection.driverClass"));
-        labelDriverD.setBounds(new Rectangle(12, 60, 110, 15));
-        tfDriverClassNameD.setToolTipText(rm.getString("text.connection.driverClass.toolTip"));
-        tfDriverClassNameD.setBounds(new Rectangle(140, 60, 300, 20));
-        labelURLD.setOpaque(true);
-        labelURLD.setText(rm.getString("text.connection.url") + "(" + rm.getString("text.connection.required") + ")");
-        labelURLD.setBounds(new Rectangle(12, 90, 110, 20));
-        tfURLD.setBounds(new Rectangle(140, 90, 300, 20));
-        labelUserNameD.setText(rm.getString("text.connection.userName"));
-        labelUserNameD.setBounds(new Rectangle(12, 120, 110, 20));
-        labelPasswordD.setText(rm.getString("text.connection.password"));
-        labelPasswordD.setBounds(new Rectangle(12, 150, 110, 15));
-        tfUserNameD.setToolTipText(rm.getString("text.connection.userName"));
-        tfUserNameD.setText("");
-        tfUserNameD.setBounds(new Rectangle(140, 120, 300, 20));
-        tfPasswordD.setMinimumSize(new Dimension(6, 21));
-        tfPasswordD.setPreferredSize(new Dimension(6, 21));
-        tfPasswordD.setToolTipText(rm.getString("text.connection.password"));
-        tfPasswordD.setText("");
-        tfPasswordD.setBounds(new Rectangle(140, 150, 300, 20));
-
-        comboBoxDriverD.addActionListener(new PanelConnection_comboBoxDriverD_actionAdapter(this));
-
-        buttonTestD.setBounds(new Rectangle(460, 90, 180, 24));
-        buttonTestD.setText(rm.getString("button.applyAndTest"));
-        buttonTestD.addActionListener(new PanelConnection_buttonTestD_actionAdapter(this));
+        this.setLayout(new TableLayout(sizeMain));
+        
+		panelSource.setLayout(new TableLayout(sizeConnectionDetails));
+		panelDestination.setLayout(new TableLayout(sizeConnectionDetails));
 
         panelSource.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1), " " + rm.getString("text.connection.sourceDatabaseConnection") + " "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
         panelDestination.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1), " " + rm.getString("text.connection.destinationDatabaseConnection") + " "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 
-        panelSource.add(labelDriverNameS, null);
-        panelSource.add(comboBoxDriverS, null);
-        panelSource.add(labelDriverS, null);
-        panelSource.add(tfDriverClassNameS, null);
-        panelSource.add(tfURLS, null);
-        panelSource.add(tfUserNameS, null);
-        panelSource.add(labelPasswordS, null);
-        panelSource.add(labelUserNameS, null);
-        panelSource.add(labelURLS, null);
-        panelSource.add(tfPasswordS, null);
-        panelSource.add(buttonTestS, null);
+        // Source layout
+        labelDriverNameS.setText(rm.getString("text.connection.driverName"));
+        labelDriverS.setText(rm.getString("text.connection.driverClass"));
+        tfDriverClassNameS.setToolTipText(rm.getString("text.connection.driverClass.toolTip"));
+        labelURLS.setOpaque(true);
+        labelURLS.setText(rm.getString("text.connection.url") + "(" + rm.getString("text.connection.required") + ")");
+        labelUserNameS.setText(rm.getString("text.connection.userName"));
+        labelPasswordS.setText(rm.getString("text.connection.password"));
+        tfUserNameS.setToolTipText(rm.getString("text.connection.userName"));
+        tfUserNameS.setText("");
+        tfPasswordS.setToolTipText(rm.getString("text.connection.password"));
+        tfPasswordS.setText("");
 
-        panelDestination.add(labelDriverNameD, null);
-        panelDestination.add(comboBoxDriverD, null);
-        panelDestination.add(labelDriverD, null);
-        panelDestination.add(tfDriverClassNameD, null);
-        panelDestination.add(tfURLD, null);
-        panelDestination.add(tfUserNameD, null);
-        panelDestination.add(labelPasswordD, null);
-        panelDestination.add(labelUserNameD, null);
-        panelDestination.add(labelURLD, null);
-        panelDestination.add(tfPasswordD, null);
-        panelDestination.add(buttonTestD, null);
+        comboBoxDriverS.addActionListener(new PanelConnection_comboBoxDriverS_actionAdapter(this));
 
-        panelConnections.add(panelSource);
-        panelConnections.add(panelDestination);
+        buttonTestS.setText(rm.getString("button.applyAndTest"));
+        buttonTestS.addActionListener(new PanelConnection_buttonTestS_actionAdapter(this));
 
-        panelMain.setLayout(new BorderLayout());
-        panelMain.add(panelConnections, BorderLayout.CENTER);
+        // Destination layout
+        labelDriverNameD.setText(rm.getString("text.connection.driverName"));
+        labelDriverD.setText(rm.getString("text.connection.driverClass"));
+        tfDriverClassNameD.setToolTipText(rm.getString("text.connection.driverClass.toolTip"));
+        labelURLD.setOpaque(true);
+        labelURLD.setText(rm.getString("text.connection.url") + "(" + rm.getString("text.connection.required") + ")");
+        labelUserNameD.setText(rm.getString("text.connection.userName"));
+        labelPasswordD.setText(rm.getString("text.connection.password"));
+        tfUserNameD.setToolTipText(rm.getString("text.connection.userName"));
+        tfUserNameD.setText("");
+        tfPasswordD.setToolTipText(rm.getString("text.connection.password"));
+        tfPasswordD.setText("");
 
-        this.add(panelMain);
+        comboBoxDriverD.addActionListener(new PanelConnection_comboBoxDriverD_actionAdapter(this));
+
+        buttonTestD.setText(rm.getString("button.applyAndTest"));
+        buttonTestD.addActionListener(new PanelConnection_buttonTestD_actionAdapter(this));
+
+        panelSource.add(labelDriverNameS, "1, 1");
+        panelSource.add(comboBoxDriverS, "3, 1");
+        panelSource.add(labelDriverS, "1, 3");
+        panelSource.add(tfDriverClassNameS, "3, 3");
+        panelSource.add(labelURLS, "1, 5");
+        panelSource.add(tfURLS, "3, 5");
+        panelSource.add(labelUserNameS, "1, 7");
+        panelSource.add(tfUserNameS, "3, 7");
+        panelSource.add(labelPasswordS, "1, 9");
+        panelSource.add(tfPasswordS, "3, 9");
+        panelSource.add(buttonTestS, "7, 1");
+
+        panelDestination.add(labelDriverNameD, "1, 1");
+        panelDestination.add(comboBoxDriverD, "3, 1");
+        panelDestination.add(labelDriverD, "1, 3");
+        panelDestination.add(tfDriverClassNameD, "3, 3");
+        panelDestination.add(labelURLD, "1, 5");
+        panelDestination.add(tfURLD, "3, 5");
+        panelDestination.add(labelUserNameD, "1, 7");
+        panelDestination.add(tfUserNameD, "3, 7");
+        panelDestination.add(labelPasswordD, "1, 9");
+        panelDestination.add(tfPasswordD, "3, 9");
+        panelDestination.add(buttonTestD, "7, 1");
+
+        this.add(panelSource, "1, 1");
+        this.add(panelDestination, "1, 3");
     }
 
     /**
@@ -393,8 +358,7 @@ public class PanelConnection extends DynamicPanel {
                     driver = controller.getSqlDriverManager().saveDriver(null, tfDriverClassNameS.getText(), tfURLS.getText());
                 }
 
-                driver.setDefault(XMLTags.SOURCE_DB, tfURLS.getText(), tfUserNameS.getText());
-
+                controller.getSqlDriverManager().setSourceDriverDefault(driver, tfURLS.getText(), tfUserNameS.getText());
                 controller.getSqlDriverManager().saveDriverFileIntoUserHome();
             } else {
                 tfURLS.setBackground(SystemColor.RED);
@@ -443,8 +407,7 @@ public class PanelConnection extends DynamicPanel {
                     driver = controller.getSqlDriverManager().saveDriver(null, tfDriverClassNameD.getText(), tfURLD.getText());
                 }
 
-                driver.setDefault(XMLTags.DESTINATION_DB, tfURLD.getText(), tfUserNameD.getText());
-
+                controller.getSqlDriverManager().setDestinationDriverDefault(driver, tfURLD.getText(), tfUserNameD.getText());
                 controller.getSqlDriverManager().saveDriverFileIntoUserHome();
             } else {
                 tfURLD.setBackground(SystemColor.RED);
@@ -465,8 +428,17 @@ public class PanelConnection extends DynamicPanel {
                 Driver driver = (Driver) drivers.get(comboBoxDriverS.getSelectedItem());
 
                 if (driver != null) {
-                    this.tfDriverClassNameS.setText(driver.getClassName());
-                    tfURLS.setText(driver.getUrl());
+                	if (driver.getDefault(XMLTags.SOURCE_DB) != null) {
+                		if (driver.getDefaultURL(XMLTags.SOURCE_DB) != null) {
+                    		tfURLS.setText(driver.getDefaultURL(XMLTags.SOURCE_DB));
+                		}
+                		if (driver.getDefaultUsername(XMLTags.SOURCE_DB) != null) {
+                			tfUserNameS.setText(driver.getDefaultUsername(XMLTags.SOURCE_DB));
+                		}
+                	} else {
+                        tfURLS.setText(driver.getUrl());
+                	}
+            		tfDriverClassNameS.setText(driver.getClassName());
                 }
             }
         }

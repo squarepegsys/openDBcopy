@@ -22,16 +22,20 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui;
 
+import com.Ostermiller.util.Browser;
+
 import opendbcopy.action.Actions;
 import opendbcopy.action.NewPluginAction;
 
+import opendbcopy.config.APM;
+import opendbcopy.config.GUI;
 import opendbcopy.config.OperationType;
 import opendbcopy.config.XMLTags;
 
 import opendbcopy.controller.MainController;
 
+import opendbcopy.plugin.JobManager;
 import opendbcopy.plugin.PluginManager;
-import opendbcopy.plugin.ProjectManager;
 
 import opendbcopy.plugin.model.exception.MissingAttributeException;
 
@@ -41,6 +45,8 @@ import org.jdom.Element;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
+
+import java.io.IOException;
 
 import java.util.Vector;
 
@@ -58,25 +64,29 @@ import javax.swing.JMenuItem;
 public class Menu extends JMenuBar {
     private FrameMain            parentFrame;
     private final MainController controller;
-    private ProjectManager       pm;
+    private JobManager           pm;
     private PluginGuiManager     wmm;
     private ResourceManager      rm;
     private PluginManager        pluginManager;
     private Actions              actions;
     private Vector               availableWorkingModes;
-    private JMenu                projectMenu;
+    private JMenu                jobMenu;
     private JMenu                pluginMenu;
     private JMenu                showMenu;
     private JMenu                helpMenu;
     private JMenu                newPluginMenu;
-    private JMenuItem            projectNewItem;
-    private JMenuItem            projectExportItem;
-    private JMenuItem            projectImportItem;
+    private JMenuItem            jobNewItem;
+    private JMenuItem            jobExportItem;
+    private JMenuItem            jobImportItem;
     private JMenuItem            pluginExportItem;
     private JMenuItem            pluginImportItem;
+    private JMenuItem            showConfig;
     private JMenuItem            showConsoleLog;
     private JMenuItem            showExecutionLog;
     private JMenuItem            helpUserManual;
+    private JMenuItem            helpForum;
+    private JMenuItem            helpWebsite;
+    private JMenuItem            helpSourceforge;
     private JMenuItem            exitItem;
 
     /**
@@ -90,7 +100,7 @@ public class Menu extends JMenuBar {
      */
     public Menu(FrameMain      parentFrame,
                 MainController controller,
-                ProjectManager projectManager) throws MissingAttributeException {
+                JobManager     projectManager) throws MissingAttributeException {
         this.parentFrame     = parentFrame;
         this.controller      = controller;
         this.pm              = projectManager;
@@ -104,21 +114,21 @@ public class Menu extends JMenuBar {
         availableWorkingModes     = controller.getPluginGuiManager().getAvailablePluginGuisOrdered();
 
         // menus
-        projectMenu       = new JMenu(rm.getString("menu.project"));
+        jobMenu           = new JMenu(rm.getString("menu.job"));
         pluginMenu        = new JMenu(rm.getString("menu.plugin"));
         showMenu          = new JMenu(rm.getString("menu.show"));
         helpMenu          = new JMenu(rm.getString("menu.help"));
         newPluginMenu     = new JMenu(rm.getString("menu.plugin.new"));
 
         /*
-         * Project Menu
+         * job Menu
          */
-        projectNewItem        = new JMenuItem(actions.projectNewAction);
-        projectExportItem     = new JMenuItem(actions.projectExportAction);
-        projectImportItem     = new JMenuItem(actions.projectImportAction);
+        jobNewItem        = new JMenuItem(actions.jobNewAction);
+        jobExportItem     = new JMenuItem(actions.jobExportAction);
+        jobImportItem     = new JMenuItem(actions.jobImportAction);
 
         // menuItems which are fully implemented in here
-        exitItem = new JMenuItem(rm.getString("menu.project.exit"));
+        exitItem = new JMenuItem(rm.getString("menu.job.exit"));
         exitItem.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     exitItem_actionPerformed(e);
@@ -126,23 +136,23 @@ public class Menu extends JMenuBar {
             });
 
         // put together menu structure
-        projectMenu.add(projectNewItem);
-        projectMenu.addSeparator();
-        projectMenu.add(projectExportItem);
-        projectMenu.add(projectImportItem);
-        projectMenu.addSeparator();
-        projectMenu.add(exitItem);
+        jobMenu.add(jobNewItem);
+        jobMenu.addSeparator();
+        jobMenu.add(jobExportItem);
+        jobMenu.add(jobImportItem);
+        jobMenu.addSeparator();
+        jobMenu.add(exitItem);
 
         /*
          * Plugin Menu
          */
-        pluginExportItem      = new JMenuItem(actions.pluginExportAction);
-        pluginImportItem      = new JMenuItem(actions.pluginImportAction);
+        pluginExportItem     = new JMenuItem(actions.pluginExportAction);
+        pluginImportItem     = new JMenuItem(actions.pluginImportAction);
 
         // create a JMenuItem for each available plugin
         for (int i = 0; i < availableWorkingModes.size(); i++) {
             Element         wm = (Element) availableWorkingModes.get(i);
-            NewPluginAction newPluginAction = new NewPluginAction(OperationType.NEW_PLUGIN, wm.getAttributeValue(XMLTags.IDENTIFIER), rm.getString(wm.getChild(XMLTags.TITLE).getAttributeValue(XMLTags.VALUE)), parentFrame.getNewIcon(), parentFrame, controller);
+            NewPluginAction newPluginAction = new NewPluginAction(OperationType.NEW_PLUGIN, wm.getAttributeValue(XMLTags.IDENTIFIER), rm.getString(wm.getChild(XMLTags.TITLE).getAttributeValue(XMLTags.VALUE)), GUI.getNewIcon(), parentFrame, controller);
             newPluginMenu.add(new JMenuItem(newPluginAction));
         }
 
@@ -154,6 +164,13 @@ public class Menu extends JMenuBar {
         /*
          * Show Menu
          */
+        showConfig = new JMenuItem(rm.getString("menu.show.config"));
+        showConfig.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    showConfig_actionPerformed(e);
+                }
+            });
+
         showConsoleLog = new JMenuItem(rm.getString("menu.show.consoleLog"));
         showConsoleLog.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(ActionEvent e) {
@@ -168,6 +185,7 @@ public class Menu extends JMenuBar {
                 }
             });
 
+        showMenu.add(showConfig);
         showMenu.add(showExecutionLog);
         showMenu.add(showConsoleLog);
 
@@ -177,13 +195,53 @@ public class Menu extends JMenuBar {
         helpUserManual = new JMenuItem(rm.getString("menu.help.userManual"));
         helpUserManual.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    helpUserManual_actionPerformed(e);
+                    try {
+                        helpUserManual_actionPerformed(e);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
+
+        helpForum = new JMenuItem(rm.getString("menu.help.forum"));
+        helpForum.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        helpForum_actionPerformed(e);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
+
+        helpWebsite = new JMenuItem(rm.getString("menu.help.website"));
+        helpWebsite.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        helpWebsite_actionPerformed(e);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
+
+        helpSourceforge = new JMenuItem(rm.getString("menu.help.sourceforge"));
+        helpSourceforge.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        helpSourceforge_actionPerformed(e);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
                 }
             });
 
         helpMenu.add(helpUserManual);
+        helpMenu.add(helpForum);
+        helpMenu.add(helpWebsite);
+        helpMenu.add(helpSourceforge);
 
-        this.add(projectMenu);
+        this.add(jobMenu);
         this.add(pluginMenu);
         this.add(showMenu);
         this.add(helpMenu);
@@ -212,6 +270,15 @@ public class Menu extends JMenuBar {
      *
      * @param e DOCUMENT ME!
      */
+    void showConfig_actionPerformed(ActionEvent e) {
+        controller.getFrame().getDialogConfig().show();
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param e DOCUMENT ME!
+     */
     void showConsoleLog_actionPerformed(ActionEvent e) {
         if (controller.getFrameConsole() != null) {
             controller.getFrameConsole().showMe();
@@ -233,10 +300,43 @@ public class Menu extends JMenuBar {
      * DOCUMENT ME!
      *
      * @param e DOCUMENT ME!
+     *
+     * @throws IOException DOCUMENT ME!
      */
-    void helpUserManual_actionPerformed(ActionEvent e) {
-        if (parentFrame.getFrameShowUserManual() != null) {
-            parentFrame.getFrameShowUserManual().show();
-        }
+    void helpUserManual_actionPerformed(ActionEvent e) throws IOException {
+        Browser.displayURL(controller.getConfigManager().getApplicationProperty(APM.APPLICATION_USER_MANUAL));
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param e DOCUMENT ME!
+     *
+     * @throws IOException DOCUMENT ME!
+     */
+    void helpForum_actionPerformed(ActionEvent e) throws IOException {
+        Browser.displayURL(controller.getConfigManager().getApplicationProperty(APM.APPLICATION_FORUM));
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param e DOCUMENT ME!
+     *
+     * @throws IOException DOCUMENT ME!
+     */
+    void helpWebsite_actionPerformed(ActionEvent e) throws IOException {
+        Browser.displayURL(controller.getConfigManager().getApplicationProperty(APM.APPLICATION_WEBSITE));
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param e DOCUMENT ME!
+     *
+     * @throws IOException DOCUMENT ME!
+     */
+    void helpSourceforge_actionPerformed(ActionEvent e) throws IOException {
+        Browser.displayURL(controller.getConfigManager().getApplicationProperty(APM.APPLICATION_SOURCEFORGE));
     }
 }

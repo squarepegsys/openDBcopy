@@ -55,18 +55,18 @@ import org.jdom.JDOMException;
  * @author Anthony Smith
  * @version $Revision$
  */
-public class ProjectManager extends Observable {
+public class JobManager extends Observable {
     private MainController controller;
     private PluginManager  pluginManager;
-    private Document       project;
+    private Document       job;
     private Document       typeMapping;
 
-    private Element projectRoot;
+    private Element jobRoot;
     private Element plugins;
     private String  encoding;
 
     /**
-     * Creates a new ProjectManager object.
+     * Creates a new JobManager object.
      *
      * @param controller DOCUMENT ME!
      * @param typeMapping DOCUMENT ME!
@@ -86,7 +86,7 @@ public class ProjectManager extends Observable {
      * @throws PluginException DOCUMENT ME!
      * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public ProjectManager(MainController controller,
+    public JobManager(MainController controller,
                           Document       typeMapping,
                           String         pluginsLocation,
                           String         pluginFilename,
@@ -98,17 +98,17 @@ public class ProjectManager extends Observable {
         this.controller      = controller;
         this.typeMapping     = typeMapping;
 
-        initProject(controller.getApplicationProperties());
+        initJob(controller.getApplicationProperties());
 
         this.pluginManager     = new PluginManager(controller, this, plugins, pluginsLocation, pluginFilename, workingModeFilename);
     }
 
     /**
-     * Creates a new ProjectManager object.
+     * Creates a new JobManager object.
      *
      * @param controller DOCUMENT ME!
      * @param typeMapping DOCUMENT ME!
-     * @param project DOCUMENT ME!
+     * @param job DOCUMENT ME!
      * @param pluginsLocation DOCUMENT ME!
      * @param pluginFilename DOCUMENT ME!
      * @param workingModeFilename DOCUMENT ME!
@@ -125,25 +125,25 @@ public class ProjectManager extends Observable {
      * @throws PluginException DOCUMENT ME!
      * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public ProjectManager(MainController controller,
+    public JobManager(MainController controller,
                           Document       typeMapping,
-                          Document       project,
+                          Document       job,
                           String         pluginsLocation,
                           String         pluginFilename,
                           String         workingModeFilename) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, JDOMException, ClassNotFoundException, IllegalAccessException, InstantiationException, InvocationTargetException, IOException, PluginException {
-        if ((controller == null) || (typeMapping == null) || (project == null)) {
-            throw new IllegalArgumentException("Missing arguments values: controller=" + controller + " typeMapping=" + typeMapping + " project=" + project);
+        if ((controller == null) || (typeMapping == null) || (job == null)) {
+            throw new IllegalArgumentException("Missing arguments values: controller=" + controller + " typeMapping=" + typeMapping + " job=" + job);
         }
 
         this.controller      = controller;
         this.typeMapping     = typeMapping;
-        this.project         = project;
+        this.job         = job;
 
-        initProject(controller.getApplicationProperties());
+        initJob(controller.getApplicationProperties());
 
         this.pluginManager     = new PluginManager(controller, this, plugins, pluginsLocation, pluginFilename, workingModeFilename);
 
-        // inform Observers that project has been loaded
+        // inform Observers that job has been loaded
         broadcast();
     }
 
@@ -194,34 +194,34 @@ public class ProjectManager extends Observable {
     public final void execute(Element operation) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, JDOMException, SQLException, IOException, Exception {
         String operationString = operation.getAttributeValue(XMLTags.NAME);
 
-        // export project to xml file
-        if (operationString.compareTo(OperationType.EXPORT_PROJECT) == 0) {
-            if (project != null) {
+        // export job to xml file
+        if (operationString.compareTo(OperationType.EXPORT_JOB) == 0) {
+            if (job != null) {
                 // exisiting plugins in plugins element are removed first and then added in correct process order with process_order attribute
                 pluginManager.addPluginsToProject();
-                ExportToXML.createXML(project, operation.getAttributeValue(XMLTags.FILE));
+                ExportToXML.createXML(job, operation.getAttributeValue(XMLTags.FILE));
             }
         }
-        // import project from xml file
-        else if (operationString.compareTo(OperationType.IMPORT_PROJECT) == 0) {
-            project         = ImportFromXML.importFile(operation.getAttributeValue(XMLTags.FILE));
-            projectRoot     = project.getRootElement();
+        // import job from xml file
+        else if (operationString.compareTo(OperationType.IMPORT_JOB) == 0) {
+            job         = ImportFromXML.importFile(operation.getAttributeValue(XMLTags.FILE));
+            jobRoot     = job.getRootElement();
 
-            if (projectRoot != null) {
-                if (projectRoot.getChild(XMLTags.PLUGINS) != null) {
-                    plugins = projectRoot.getChild(XMLTags.PLUGINS);
+            if (jobRoot != null) {
+                if (jobRoot.getChild(XMLTags.PLUGINS) != null) {
+                    plugins = jobRoot.getChild(XMLTags.PLUGINS);
                     pluginManager.resetModels();
                     pluginManager.loadPluginsFromProject(plugins);
                 } else {
                     throw new MissingElementException(new Element(XMLTags.PLUGINS), XMLTags.PLUGINS);
                 }
             } else {
-                throw new MissingElementException(new Element(XMLTags.PROJECT), XMLTags.PROJECT);
+                throw new MissingElementException(new Element(XMLTags.JOB), XMLTags.JOB);
             }
             broadcast();
         }
-        // create new project model
-        else if (operationString.compareTo(OperationType.NEW_PROJECT) == 0) {
+        // create new job model
+        else if (operationString.compareTo(OperationType.NEW_JOB) == 0) {
             pluginManager.resetModels();
         }
         // add plugin to plugin chain
@@ -275,25 +275,25 @@ public class ProjectManager extends Observable {
      *
      * @param ap DOCUMENT ME!
      */
-    private void initProject(Properties ap) {
-        if (project == null) {
-            projectRoot = new Element(XMLTags.PROJECT);
-            projectRoot.setAttribute(APM.APPLICATION_NAME, ap.getProperty(APM.APPLICATION_NAME));
-            projectRoot.setAttribute(APM.APPLICATION_VERSION, ap.getProperty(APM.APPLICATION_VERSION));
-            projectRoot.setAttribute(APM.APPLICATION_WEBSITE, ap.getProperty(APM.APPLICATION_WEBSITE));
-            projectRoot.setAttribute(XMLTags.SHUTDOWN_ON_COMPLETION, "false");
+    private void initJob(Properties ap) {
+        if (job == null) {
+            jobRoot = new Element(XMLTags.JOB);
+            jobRoot.setAttribute(APM.APPLICATION_NAME, ap.getProperty(APM.APPLICATION_NAME));
+            jobRoot.setAttribute(APM.APPLICATION_VERSION, ap.getProperty(APM.APPLICATION_VERSION));
+            jobRoot.setAttribute(APM.APPLICATION_WEBSITE, ap.getProperty(APM.APPLICATION_WEBSITE));
+            jobRoot.setAttribute(XMLTags.SHUTDOWN_ON_COMPLETION, "false");
 
             plugins = new Element(XMLTags.PLUGINS);
-            projectRoot.addContent(plugins);
+            jobRoot.addContent(plugins);
 
-            project = new Document(projectRoot);
+            job = new Document(jobRoot);
         } else {
-            projectRoot = project.getRootElement();
-            projectRoot.setAttribute(APM.APPLICATION_NAME, ap.getProperty(APM.APPLICATION_NAME));
-            projectRoot.setAttribute(APM.APPLICATION_VERSION, ap.getProperty(APM.APPLICATION_VERSION));
-            projectRoot.setAttribute(APM.APPLICATION_WEBSITE, ap.getProperty(APM.APPLICATION_WEBSITE));
+            jobRoot = job.getRootElement();
+            jobRoot.setAttribute(APM.APPLICATION_NAME, ap.getProperty(APM.APPLICATION_NAME));
+            jobRoot.setAttribute(APM.APPLICATION_VERSION, ap.getProperty(APM.APPLICATION_VERSION));
+            jobRoot.setAttribute(APM.APPLICATION_WEBSITE, ap.getProperty(APM.APPLICATION_WEBSITE));
 
-            plugins = projectRoot.getChild(XMLTags.PLUGINS);
+            plugins = jobRoot.getChild(XMLTags.PLUGINS);
         }
     }
 
@@ -312,7 +312,7 @@ public class ProjectManager extends Observable {
      * @return DOCUMENT ME!
      */
     public boolean isShutdownOnCompletion() {
-        return Boolean.valueOf(projectRoot.getAttributeValue(XMLTags.SHUTDOWN_ON_COMPLETION)).booleanValue();
+        return Boolean.valueOf(jobRoot.getAttributeValue(XMLTags.SHUTDOWN_ON_COMPLETION)).booleanValue();
     }
 
     /**
@@ -321,6 +321,6 @@ public class ProjectManager extends Observable {
      * @param shutdown DOCUMENT ME!
      */
     public void setShutdownOnCompletion(boolean shutdown) {
-        projectRoot.setAttribute(XMLTags.SHUTDOWN_ON_COMPLETION, Boolean.toString(shutdown));
+        jobRoot.setAttribute(XMLTags.SHUTDOWN_ON_COMPLETION, Boolean.toString(shutdown));
     }
 }

@@ -22,31 +22,21 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui;
 
-import opendbcopy.config.OperationType;
+import info.clearthought.layout.TableLayout;
 
-import opendbcopy.controller.MainController;
-
-import opendbcopy.gui.model.PluginListModel;
-
-import opendbcopy.plugin.PluginManager;
-
-import opendbcopy.plugin.model.exception.PluginException;
-
-import opendbcopy.resource.ResourceManager;
-
-import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.Observable;
 import java.util.Observer;
 
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -56,6 +46,14 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import opendbcopy.config.GUI;
+import opendbcopy.config.OperationType;
+import opendbcopy.controller.MainController;
+import opendbcopy.gui.model.PluginListModel;
+import opendbcopy.plugin.PluginManager;
+import opendbcopy.plugin.model.exception.PluginException;
+import opendbcopy.resource.ResourceManager;
+
 
 /**
  * class description
@@ -63,35 +61,29 @@ import javax.swing.event.ListSelectionListener;
  * @author Anthony Smith
  * @version $Revision$
  */
-public class PanelPluginChain extends JPanel implements FocusListener, Observer {
-    private static final ImageIcon imageIconLeft = new ImageIcon("resource/images/left.gif");
-    private static final ImageIcon imageIconRight = new ImageIcon("resource/images/right.gif");
-    private static final ImageIcon imageIconUp = new ImageIcon("resource/images/up.gif");
-    private static final ImageIcon imageIconDown = new ImageIcon("resource/images/down.gif");
-    private static final ImageIcon imageIconDelete = new ImageIcon("resource/images/delete.gif");
-    private static final String    SHIFT_LEFT = "shift_left";
-    private static final String    SHIFT_RIGHT = "shift_right";
-    private FrameMain              frameMain;
-    private MainController         controller;
-    private PluginGuiManager       pluginGuiManager;
-    private PluginManager          pluginManager;
-    private ResourceManager        rm;
-    private JPanel                 panelLists;
-    private JPanel                 panelLeft;
-    private JPanel                 panelRight;
-    private JPanel                 panelControlExecute;
-    private JScrollPane            scrollPaneLeft;
-    private JScrollPane            scrollPaneRight;
-    private JButton                buttonShift;
-    private JButton                buttonShiftUp;
-    private JButton                buttonShiftDown;
-    private JButton                buttonRemoveSelection;
-    private JButton                buttonExecute;
-    private JList                  listLoaded;
-    private JList                  listToExecute;
-    private PluginListModel        modelsLoaded;
-    private PluginListModel        modelsToExecute;
-    private boolean                executionStarted = false;
+public class PanelPluginChain extends JPanel implements ItemListener, FocusListener, Observer {
+    private static final String SHIFT_LEFT = "shift_left";
+    private static final String SHIFT_RIGHT = "shift_right";
+    private FrameMain           frameMain;
+    private MainController      controller;
+    private PluginGuiManager    pluginGuiManager;
+    private PluginManager       pluginManager;
+    private ResourceManager     rm;
+    private JPanel              panelLeft;
+    private JPanel              panelRight;
+    private JScrollPane         scrollPaneLeft;
+    private JScrollPane         scrollPaneRight;
+    private JButton             buttonShift;
+    private JButton             buttonShiftUp;
+    private JButton             buttonShiftDown;
+    private JButton             buttonRemoveSelection;
+    private JButton             buttonExecute;
+    private JList               listLoaded;
+    private JList               listToExecute;
+    private JCheckBox           checkBoxShutdown;
+    private PluginListModel     modelsLoaded;
+    private PluginListModel     modelsToExecute;
+    private boolean             executionStarted = false;
 
     /**
      * Creates a new PanelPluginChain object.
@@ -104,13 +96,13 @@ public class PanelPluginChain extends JPanel implements FocusListener, Observer 
         this.frameMain            = frameMain;
         this.controller           = controller;
         this.pluginGuiManager     = controller.getPluginGuiManager();
-        this.pluginManager        = controller.getProjectManager().getPluginManager();
+        this.pluginManager        = controller.getJobManager().getPluginManager();
         this.rm                   = controller.getResourceManager();
 
         guiInit();
 
         // register as observer on pluginManager
-        controller.getProjectManager().getPluginManager().registerObserver(this);
+        controller.getJobManager().getPluginManager().registerObserver(this);
     }
 
     /**
@@ -125,7 +117,7 @@ public class PanelPluginChain extends JPanel implements FocusListener, Observer 
             buttonExecute.setText(OperationType.EXECUTE);
             buttonExecute.setActionCommand(OperationType.EXECUTE);
 
-            panelLists.updateUI();
+            this.updateUI();
 
             frameMain.getFrameExecutionLog().refreshFile();
 
@@ -139,6 +131,8 @@ public class PanelPluginChain extends JPanel implements FocusListener, Observer 
                 JOptionPane.showMessageDialog(this, rm.getString("text.execute.interrupted"), "Info", JOptionPane.WARNING_MESSAGE);
             }
         }
+
+        checkBoxShutdown.setSelected(controller.getJobManager().isShutdownOnCompletion());
 
         enableComponents();
     }
@@ -172,10 +166,12 @@ public class PanelPluginChain extends JPanel implements FocusListener, Observer 
                 buttonShiftUp.setEnabled(true);
                 buttonShiftDown.setEnabled(true);
                 buttonRemoveSelection.setEnabled(true);
+                checkBoxShutdown.setEnabled(true);
             } else {
                 buttonShiftUp.setEnabled(false);
                 buttonShiftDown.setEnabled(false);
                 buttonRemoveSelection.setEnabled(false);
+                checkBoxShutdown.setEnabled(false);
             }
         }
     }
@@ -184,16 +180,31 @@ public class PanelPluginChain extends JPanel implements FocusListener, Observer 
      * DOCUMENT ME!
      */
     private void guiInit() {
-        panelLists              = new JPanel(new GridLayout(1, 2, 20, 20));
-        panelLeft               = new JPanel(new BorderLayout(20, 20));
-        panelRight              = new JPanel(new BorderLayout(20, 20));
-        panelControlExecute     = new JPanel(new GridLayout(3, 1));
+        double[][] sizeMain = {
+                                  { 0, GUI.F, GUI.HG, GUI.P, GUI.HG, GUI.F, 0 }, // Columns
+        { GUI.B, 25, 93, GUI.F, GUI.B }
+        }; // Rows
+
+        this.setLayout(new TableLayout(sizeMain));
+
+        double[][] sizeRight = {
+                                   { GUI.B, GUI.F, GUI.HG, GUI.P, GUI.B }, // Colums
+        { GUI.B, 30, 1, 30, 1, 30, 3, GUI.P, 3, GUI.P, GUI.B }
+        }; // Rows
+
+        panelLeft      = new JPanel(new GridLayout(1, 1));
+        panelRight     = new JPanel();
+        panelRight.setLayout(new TableLayout(sizeRight));
 
         panelLeft.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1), " " + rm.getString("text.pluginChain.modelsLoaded") + " "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-        panelRight.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1), " " + rm.getString("text.pluginChain.modelsToExecute") + " "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        panelRight.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1), " " + rm.getString("text.pluginChain.modelsToExecute") + " "), BorderFactory.createEmptyBorder(0, 0, 0, 0)));
+
+        checkBoxShutdown = new JCheckBox(" " + rm.getString("text.pluginChain.shutdownAfterDone"));
+        checkBoxShutdown.addItemListener(this);
+        checkBoxShutdown.setSelected(controller.getJobManager().isShutdownOnCompletion());
 
         // set up linked list for models loaded
-        modelsLoaded = new PluginListModel(controller.getProjectManager().getPluginManager().getModelsLoaded());
+        modelsLoaded = new PluginListModel(controller.getJobManager().getPluginManager().getModelsLoaded());
         modelsLoaded.addListDataListener(new javax.swing.event.ListDataListener() {
                 public void intervalAdded(javax.swing.event.ListDataEvent e) {
                 }
@@ -209,7 +220,7 @@ public class PanelPluginChain extends JPanel implements FocusListener, Observer 
         pluginManager.registerObserver(modelsLoaded);
 
         // set up linked list for models to execute
-        modelsToExecute = new PluginListModel(controller.getProjectManager().getPluginManager().getModelsToExecute());
+        modelsToExecute = new PluginListModel(controller.getJobManager().getPluginManager().getModelsToExecute());
         modelsToExecute.addListDataListener(new javax.swing.event.ListDataListener() {
                 public void intervalAdded(javax.swing.event.ListDataEvent e) {
                 }
@@ -219,7 +230,7 @@ public class PanelPluginChain extends JPanel implements FocusListener, Observer 
 
                 public void contentsChanged(javax.swing.event.ListDataEvent e) {
                     listToExecute.updateUI();
-                    listToExecute.setSelectedIndex(controller.getProjectManager().getPluginManager().getCurrentExecuteIndex());
+                    listToExecute.setSelectedIndex(controller.getJobManager().getPluginManager().getCurrentExecuteIndex());
                 }
             });
 
@@ -234,46 +245,44 @@ public class PanelPluginChain extends JPanel implements FocusListener, Observer 
         listLoaded.addListSelectionListener(new ModelsLoadedListSelectionHandler());
         listToExecute.addListSelectionListener(new ModelsToExecuteListSelectionHandler());
 
-        buttonShift = new JButton(imageIconRight);
+        buttonShift = new JButton(GUI.getImageIconRight());
         buttonShift.setActionCommand(SHIFT_RIGHT);
         buttonShift.addActionListener(new FramePluginChain_buttonShift_actionAdapter(this));
 
-        buttonShiftUp = new JButton(imageIconUp);
+        buttonShiftUp = new JButton(GUI.getImageIconUp());
         buttonShiftUp.addActionListener(new FramePluginChain_buttonShiftUp_actionAdapter(this));
 
-        buttonShiftDown = new JButton(imageIconDown);
+        buttonShiftDown = new JButton(GUI.getImageIconDown());
         buttonShiftDown.addActionListener(new FramePluginChain_buttonShiftDown_actionAdapter(this));
 
-        buttonRemoveSelection = new JButton(imageIconDelete);
+        buttonRemoveSelection = new JButton(GUI.getImageIconDelete());
         buttonRemoveSelection.addActionListener(new FramePluginChain_buttonRemoveSelection_actionAdapter(this));
 
         buttonExecute = new JButton();
-        buttonExecute.setText(rm.getString("button.execute"));
+        buttonExecute.setText(rm.getString("button.executeJob"));
         buttonExecute.setActionCommand(OperationType.EXECUTE);
         buttonExecute.addActionListener(new FramePluginChain_buttonExecute_actionAdapter(this));
 
-        panelControlExecute.add(buttonShiftUp);
-        panelControlExecute.add(buttonRemoveSelection);
-        panelControlExecute.add(buttonShiftDown);
-
         scrollPaneLeft = new JScrollPane(listLoaded);
-        panelLeft.add(scrollPaneLeft, BorderLayout.CENTER);
-        panelLeft.add(buttonShift, BorderLayout.EAST);
+        panelLeft.add(scrollPaneLeft, null);
 
         scrollPaneRight = new JScrollPane(listToExecute);
-        panelRight.add(scrollPaneRight, BorderLayout.CENTER);
-        panelRight.add(panelControlExecute, BorderLayout.EAST);
-        panelRight.add(buttonExecute, BorderLayout.AFTER_LAST_LINE);
+
+        panelRight.add(scrollPaneRight, "1, 1, 1, 5");
+        panelRight.add(buttonShiftUp, "3, 1");
+        panelRight.add(buttonRemoveSelection, "3, 3");
+        panelRight.add(buttonShiftDown, "3, 5");
+        panelRight.add(checkBoxShutdown, "1, 7");
+        panelRight.add(buttonExecute, "1, 9");
 
         // add focus listeners
         listLoaded.addFocusListener(this);
         listToExecute.addFocusListener(this);
 
-        panelLists.add(panelLeft);
-        panelLists.add(panelRight);
-
-        this.setLayout(new GridLayout(1, 1));
-        this.add(panelLists);
+        // first line
+        this.add(panelLeft, "1, 1, 1, 3");
+        this.add(buttonShift, "3, 2");
+        this.add(panelRight, "5, 1, 5, 3");
 
         enableComponents();
     }
@@ -283,18 +292,36 @@ public class PanelPluginChain extends JPanel implements FocusListener, Observer 
      *
      * @param e DOCUMENT ME!
      */
+    public void itemStateChanged(ItemEvent e) {
+        Object source = e.getItemSelectable();
+
+        if (source == checkBoxShutdown) {
+            if (e.getStateChange() == ItemEvent.DESELECTED) {
+                controller.getJobManager().setShutdownOnCompletion(false);
+            } else {
+                controller.getJobManager().setShutdownOnCompletion(true);
+            }
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param e DOCUMENT ME!
+     */
     public void focusGained(FocusEvent e) {
         if (e.getSource() == listLoaded) {
-            buttonShift.setIcon(imageIconRight);
+            buttonShift.setIcon(GUI.getImageIconRight());
             buttonShift.setActionCommand(SHIFT_RIGHT);
             enableComponents();
         }
 
         if (e.getSource() == listToExecute) {
-        	if (listToExecute.getModel().getSize() > 0) {
-                buttonShift.setIcon(imageIconLeft);
+            if (listToExecute.getModel().getSize() > 0) {
+                buttonShift.setIcon(GUI.getImageIconLeft());
                 buttonShift.setActionCommand(SHIFT_LEFT);
-        	}
+            }
+
             enableComponents();
         }
     }
@@ -315,35 +342,35 @@ public class PanelPluginChain extends JPanel implements FocusListener, Observer 
      */
     void buttonShift_actionPerformed(ActionEvent e) {
         if (buttonShift.getActionCommand().compareTo(SHIFT_RIGHT) == 0) {
-        	if (listLoaded.getSelectedIndex() >= 0) {
+            if (listLoaded.getSelectedIndex() >= 0) {
                 pluginGuiManager.addPluginGuiToExecuteLast(listLoaded.getSelectedIndex());
                 pluginManager.addPluginToExecuteLast(pluginManager.getModelLoaded(listLoaded.getSelectedIndex()));
-        	} else {
-        		buttonShift.setEnabled(false);
-        	}
+            } else {
+                buttonShift.setEnabled(false);
+            }
         } else {
-        	if (listToExecute.getSelectedIndex() >= 0) {
+            if (listToExecute.getSelectedIndex() >= 0) {
                 pluginGuiManager.addPluginGuiLoadedLast(listToExecute.getSelectedIndex());
                 pluginManager.addPluginLoadedLast(pluginManager.getModelToExecute(listToExecute.getSelectedIndex()));
-        	} else {
-        		buttonShift.setEnabled(false);
-        	}
+            } else {
+                buttonShift.setEnabled(false);
+            }
         }
 
         if (listLoaded.getModel().getSize() == 0) {
             if (listToExecute.getModel().getSize() > 0) {
-                buttonShift.setIcon(imageIconLeft);
+                buttonShift.setIcon(GUI.getImageIconLeft());
                 buttonShift.setActionCommand(SHIFT_LEFT);
                 buttonShift.setEnabled(true);
             } else {
-                buttonShift.setIcon(imageIconRight);
+                buttonShift.setIcon(GUI.getImageIconRight());
                 buttonShift.setActionCommand(SHIFT_RIGHT);
                 buttonShift.setEnabled(false);
             }
         }
 
         if (listToExecute.getModel().getSize() == 0) {
-            buttonShift.setIcon(imageIconRight);
+            buttonShift.setIcon(GUI.getImageIconRight());
             buttonShift.setActionCommand(SHIFT_RIGHT);
 
             if (listLoaded.getModel().getSize() > 0) {

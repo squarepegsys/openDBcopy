@@ -34,7 +34,11 @@ import org.jdom.Element;
 import java.io.File;
 import java.io.FileNotFoundException;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.StringTokenizer;
 
 
@@ -151,6 +155,32 @@ public final class InputOutputHelper {
     }
 
     /**
+     * DOCUMENT ME!
+     *
+     * @param urls DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     */
+    public static Element createURLListElement(URL[] urls) {
+        if (urls == null) {
+            throw new IllegalArgumentException("Missing urls");
+        }
+
+        Element urllist = new Element(XMLTags.URLLIST);
+
+        for (int i = 0; i < urls.length; i++) {
+            URL     url = urls[i];
+            Element urlElement = new Element(XMLTags.URL);
+            urlElement.setAttribute(XMLTags.VALUE, url.toExternalForm());
+            urllist.addContent(urlElement);
+        }
+
+        return urllist;
+    }
+
+    /**
      * Retrieves files in filelist and checks if those exist! ArrayList returned contains files
      *
      * @param filelist DOCUMENT ME!
@@ -193,6 +223,39 @@ public final class InputOutputHelper {
         }
 
         return files;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param urlList DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws MalformedURLException DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     */
+    public static URL[] getURLList(Element urlList) throws MalformedURLException {
+        if (urlList == null) {
+            throw new IllegalArgumentException("Missing urlList");
+        }
+
+        if (urlList.getChildren(XMLTags.URL).size() == 0) {
+            return null;
+        }
+
+        ArrayList urls = new ArrayList();
+
+        Iterator  itUrls = urlList.getChildren(XMLTags.URL).iterator();
+
+        while (itUrls.hasNext()) {
+            Element urlElement = (Element) itUrls.next();
+            urls.add(new URL(urlElement.getAttributeValue(XMLTags.VALUE)));
+        }
+
+        URL[] urlArray = new URL[urls.size()];
+
+        return (URL[]) urls.toArray(urlArray);
     }
 
     /**

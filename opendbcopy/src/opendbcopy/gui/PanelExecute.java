@@ -207,7 +207,7 @@ public class PanelExecute extends DynamicPanel {
 
         panelMain.add(scrollPane, BorderLayout.CENTER);
 
-        this.add(panelPlugin, BorderLayout.NORTH);
+//        this.add(panelPlugin, BorderLayout.NORTH);
         this.add(panelMain, BorderLayout.CENTER);
         this.add(panelControl, BorderLayout.SOUTH);
     }
@@ -257,7 +257,7 @@ public class PanelExecute extends DynamicPanel {
     	
     	// if openDBcopy is loaded from an existing project the reference to pluginManager cannot be loaded before here
     	if (pluginManager == null) {
-    		pluginManager     = controller.getProjectManager().getPluginManager();
+    		pluginManager     = controller.getJobManager().getPluginManager();
 
     		// register this panel as observer of PluginManager
             pluginManager.registerObserver(this);

@@ -22,8 +22,9 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui.database;
 
+import info.clearthought.layout.TableLayout;
+
 import java.awt.GridLayout;
-import java.awt.Rectangle;
 import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.util.Iterator;
@@ -34,6 +35,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
 
+import opendbcopy.config.GUI;
 import opendbcopy.config.XMLTags;
 import opendbcopy.controller.MainController;
 import opendbcopy.gui.DynamicPanel;
@@ -61,13 +63,13 @@ public class PanelFilter extends DynamicPanel {
      * Creates a new PanelConfiguration object.
      *
      * @param controller DOCUMENT ME!
-     * @param pluginGui DOCUMENT ME!
+     * @param workingMode DOCUMENT ME!
      * @param registerAsObserver DOCUMENT ME!
      *
      * @throws Exception DOCUMENT ME!
      */
     public PanelFilter(MainController controller,
-                       PluginGui    workingMode,
+                       PluginGui      workingMode,
                        Boolean        registerAsObserver) throws Exception {
         super(controller, workingMode, registerAsObserver);
         model = (DatabaseModel) super.model;
@@ -112,31 +114,26 @@ public class PanelFilter extends DynamicPanel {
      * @throws Exception DOCUMENT ME!
      */
     private void guiInit() throws Exception {
-        gridLayout.setColumns(1);
-        gridLayout.setHgap(10);
-        gridLayout.setRows(1);
-        gridLayout.setVgap(10);
-        this.setLayout(gridLayout);
-        panelStringFilter.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.BLACK, 1), " String Filters "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-        panelStringFilter.setLayout(null);
+        double[][] size = {
+                              { GUI.B, GUI.F, GUI.B }, // Columns
+        { GUI.B, GUI.P, GUI.VG, GUI.P, GUI.VG, GUI.P, GUI.B }
+        }; // Rows
+
+        this.setLayout(new TableLayout(size));
+        this.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.BLACK, 1), " String Filters "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 
         checkBoxTrim.setText(rm.getString("text.filter.trim"));
-        checkBoxTrim.setBounds(new Rectangle(14, 22, 500, 23));
         checkBoxTrim.addActionListener(new PanelFilter_checkBoxTrim_actionAdapter(this));
 
-        checkBoxRemoveMultipleIntermediateSpaces.setBounds(new Rectangle(14, 45, 500, 23));
         checkBoxRemoveMultipleIntermediateSpaces.setText(rm.getString("text.filter.removeMultipleIntermediateWhitespaces"));
         checkBoxRemoveMultipleIntermediateSpaces.addActionListener(new PanelFilter_checkBoxRemoveMultipleIntermediateSpaces_actionAdapter(this));
 
-        checkBoxSetNull.setBounds(new Rectangle(14, 68, 500, 23));
         checkBoxSetNull.setText(rm.getString("text.filter.setNull"));
         checkBoxSetNull.addActionListener(new PanelFilter_checkBoxSetNull_actionAdapter(this));
 
-        this.add(panelStringFilter, null);
-
-        panelStringFilter.add(checkBoxTrim, null);
-        panelStringFilter.add(checkBoxRemoveMultipleIntermediateSpaces, null);
-        panelStringFilter.add(checkBoxSetNull, null);
+        this.add(checkBoxTrim, "1, 1");
+        this.add(checkBoxRemoveMultipleIntermediateSpaces, "1, 3");
+        this.add(checkBoxSetNull, "1, 5");
     }
 
     /**

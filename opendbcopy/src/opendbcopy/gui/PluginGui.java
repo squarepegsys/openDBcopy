@@ -22,6 +22,9 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui;
 
+import info.clearthought.layout.TableLayout;
+
+import opendbcopy.config.GUI;
 import opendbcopy.config.XMLTags;
 
 import opendbcopy.connection.exception.CloseConnectionException;
@@ -46,8 +49,6 @@ import org.apache.log4j.Logger;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 
@@ -62,7 +63,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -154,8 +154,6 @@ public class PluginGui {
      * DOCUMENT ME!
      *
      * @param model DOCUMENT ME!
-     * @param width DOCUMENT ME!
-     * @param height DOCUMENT ME!
      *
      * @return DOCUMENT ME!
      *
@@ -166,43 +164,43 @@ public class PluginGui {
      * @throws IllegalAccessException DOCUMENT ME!
      * @throws PluginException DOCUMENT ME!
      */
-    public final JPanel load(Model model,
-                             int   width,
-                             int   height) throws MissingAttributeException, ClassNotFoundException, InstantiationException, InvocationTargetException, IllegalAccessException, PluginException {
-        this.model     = model;
+    public final JPanel load(Model model) throws MissingAttributeException, ClassNotFoundException, InstantiationException, InvocationTargetException, IllegalAccessException, PluginException {
+        this.model = model;
 
-        panelPluginGui     = new JPanel(new BorderLayout());
-        panelControl       = new JPanel(new BorderLayout(10, 10));
+        double[][] sizeMain = {
+                                  { GUI.B, GUI.F, GUI.B }, // Columns
+        { GUI.B, GUI.F, GUI.VS, GUI.P, GUI.B }
+        }; // Rows
+
+        double[][] sizeControl = {
+                                     { GUI.B, GUI.F, GUI.HG, GUI.P, GUI.B }, // Columns
+        { GUI.VS, GUI.P, GUI.VS }
+        }; // Rows
+
+        panelPluginGui     = new JPanel(new TableLayout(sizeMain));
+        panelControl       = new JPanel(new TableLayout(sizeControl));
 
         statusBar = new JTextArea();
         statusBar.setEditable(false);
         statusBar.setBackground(null);
 
         buttonNext = new JButton(rm.getString("button.next"));
-        buttonNext.setPreferredSize(new Dimension(160, 40));
         buttonNext.addActionListener(new WorkingMode_buttonNext_actionAdapter(this));
 
-        panelControl.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 10));
-        panelControl.setMinimumSize(new Dimension(600, 40));
-        panelControl.setPreferredSize(new Dimension(600, 45));
+        panelControl.add(statusBar, "1, 1, l, t");
+        panelControl.add(buttonNext, "3, 1, r, t");
 
-        panelControl.add(statusBar, BorderLayout.CENTER);
-        panelControl.add(buttonNext, BorderLayout.EAST);
-
-        JTabbedPane tab = loadDynamically(width, height);
+        JTabbedPane tab = loadDynamically();
         tab.addMouseListener(new WorkingMode_tab_mouseAdapter(this));
 
-        panelPluginGui.add(tab, BorderLayout.CENTER);
-        panelPluginGui.add(panelControl, BorderLayout.SOUTH);
+        panelPluginGui.add(tab, "1, 1");
+        panelPluginGui.add(panelControl, "1, 3");
 
         return panelPluginGui;
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @param width DOCUMENT ME!
-     * @param height DOCUMENT ME!
      *
      * @return DOCUMENT ME!
      *
@@ -211,8 +209,7 @@ public class PluginGui {
      * @throws InvocationTargetException DOCUMENT ME!
      * @throws IllegalAccessException DOCUMENT ME!
      */
-    private JTabbedPane loadDynamically(int width,
-                                        int height) throws ClassNotFoundException, InstantiationException, InvocationTargetException, IllegalAccessException {
+    private JTabbedPane loadDynamically() throws ClassNotFoundException, InstantiationException, InvocationTargetException, IllegalAccessException {
         tab = new JTabbedPane();
 
         for (int i = 0; i < getNbrDynamicPanelsMetadata(); i++) {
@@ -220,11 +217,9 @@ public class PluginGui {
 
             DynamicPanel         dynPanel = (DynamicPanel) dynamicallyLoadPanel(dynPanelMetadata);
 
-            //dynPanel.setSize(width, height - 400);
             tab.add(dynPanel, controller.getResourceManager().getString(dynPanelMetadata.getTitle()));
         }
 
-        tab.setPreferredSize(new Dimension(width - 50, height / 2));
         return tab;
     }
 

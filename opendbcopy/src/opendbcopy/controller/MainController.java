@@ -23,6 +23,7 @@
 package opendbcopy.controller;
 
 import opendbcopy.config.APM;
+import opendbcopy.config.ConfigManager;
 import opendbcopy.config.OperationType;
 import opendbcopy.config.SQLDriverManager;
 import opendbcopy.config.XMLTags;
@@ -37,9 +38,8 @@ import opendbcopy.gui.PluginGuiManager;
 
 import opendbcopy.io.FileHandling;
 import opendbcopy.io.ImportFromXML;
-import opendbcopy.io.PropertiesToFile;
 
-import opendbcopy.plugin.ProjectManager;
+import opendbcopy.plugin.JobManager;
 
 import opendbcopy.plugin.model.Model;
 import opendbcopy.plugin.model.exception.MissingAttributeException;
@@ -87,18 +87,20 @@ import javax.swing.UIManager;
 public class MainController {
     public static final String      fileSep = System.getProperty("file.separator");
     public static final String      lineSep = System.getProperty("line.separator");
+    private static final String     CONF_DIR = "conf";
+    private static final String     APP_PROPERTIES_FILE = "opendbcopy.properties";
     private static Logger           logger = Logger.getLogger(MainController.class.getName());
-    private static Properties       applicationProperties;
     private static File             opendbcopyUserHomeDir;
     private static File             logDir;
     private static File             inoutDir;
-    private static File             personalProjectsDir;
+    private static File             personalJobsDir;
     private static File             personalPluginsDir;
     private static File             personalConfDir;
     private static File             personalSQLDriversFile;
     private static File             executionLogFile;
     private static String           pathFilenameConsoleOut;
-    private static ProjectManager   pm;
+    private static ConfigManager    cm;
+    private static JobManager       jm;
     private static ResourceManager  rm;
     private static FrameMain        frameMain;
     private static FrameConsole     frameConsole;
@@ -133,11 +135,11 @@ public class MainController {
      */
     public MainController(String[] args) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, JDOMException, SQLException, FileNotFoundException, ClassNotFoundException, IllegalAccessException, InstantiationException, InvocationTargetException, IOException, Exception {
         if (isGuiEnabled()) {
-            taskLauncher = new TaskLauncher(this, 5, frameWidth, frameHeight, pathFilenameConsoleOut, applicationProperties.getProperty(APM.OPENDBCOPY_LOGO_FILE));
+            taskLauncher = new TaskLauncher(this, 5, frameWidth, frameHeight, pathFilenameConsoleOut, cm.getApplicationProperty(APM.OPENDBCOPY_LOGO_FILE));
             taskLauncher.go();
         }
 
-        setupLog4j(applicationProperties.getProperty(APM.LOG4J_PROPERTIES_FILE));
+        setupLog4j(cm.getApplicationProperty(APM.LOG4J_PROPERTIES_FILE));
 
         Document project = null;
         Document typeMapping = null;
@@ -145,8 +147,8 @@ public class MainController {
 
         try {
             // set the look and feel. If not existing, set default crossplatform look and feel
-            if (applicationProperties.getProperty(APM.LOOK_AND_FEEL) != null) {
-                if (applicationProperties.getProperty(APM.LOOK_AND_FEEL).compareToIgnoreCase(APM.SYSTEM) == 0) {
+            if (cm.getApplicationProperty(APM.LOOK_AND_FEEL) != null) {
+                if (cm.getApplicationProperty(APM.LOOK_AND_FEEL).compareToIgnoreCase(APM.SYSTEM) == 0) {
                     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                 }
             }
@@ -161,14 +163,14 @@ public class MainController {
 
         if (isGuiEnabled()) {
             try {
-                frameWidth      = Integer.parseInt(applicationProperties.getProperty(APM.FRAME_MAIN_WIDTH));
-                frameHeight     = Integer.parseInt(applicationProperties.getProperty(APM.FRAME_MAIN_HEIGHT));
+                frameWidth      = Integer.parseInt(cm.getApplicationProperty(APM.FRAME_MAIN_WIDTH));
+                frameHeight     = Integer.parseInt(cm.getApplicationProperty(APM.FRAME_MAIN_HEIGHT));
             } catch (Exception e) {
                 frameWidth      = 800;
                 frameHeight     = 650;
             }
 
-            pluginGuiManager = new PluginGuiManager(this, frameWidth, frameHeight);
+            pluginGuiManager = new PluginGuiManager(this);
         }
 
         addMessage(rm.getString("text.controller.workingModeManagerDone"));
@@ -178,13 +180,13 @@ public class MainController {
         addMessage(rm.getString("text.controller.sqlDriversDone"));
 
         // read SQL types mapping
-        typeMapping = ImportFromXML.importFile(applicationProperties.getProperty(APM.SQL_TYPE_MAPPING_CONF_FILE));
+        typeMapping = ImportFromXML.importFile(cm.getApplicationProperty(APM.SQL_TYPE_MAPPING_CONF_FILE));
         addMessage(rm.getString("text.controller.sqlJavaMappingDone"));
 
         if (project == null) {
-            pm = new ProjectManager(this, typeMapping, applicationProperties.getProperty(APM.PLUGINS_DIRECTORY), applicationProperties.getProperty(APM.PLUGINS_CONF_FILE), applicationProperties.getProperty(APM.PLUGINS_GUI_CONF_FILE));
+            jm = new JobManager(this, typeMapping, cm.getApplicationProperty(APM.PLUGINS_DIRECTORY), cm.getApplicationProperty(APM.PLUGINS_CONF_FILE), cm.getApplicationProperty(APM.PLUGINS_GUI_CONF_FILE));
         } else {
-            pm = new ProjectManager(this, typeMapping, project, applicationProperties.getProperty(APM.PLUGINS_DIRECTORY), applicationProperties.getProperty(APM.PLUGINS_CONF_FILE), applicationProperties.getProperty(APM.PLUGINS_GUI_CONF_FILE));
+            jm = new JobManager(this, typeMapping, project, cm.getApplicationProperty(APM.PLUGINS_DIRECTORY), cm.getApplicationProperty(APM.PLUGINS_CONF_FILE), cm.getApplicationProperty(APM.PLUGINS_GUI_CONF_FILE));
         }
 
         addMessage(rm.getString("text.controller.readingPluginDone"));
@@ -195,7 +197,7 @@ public class MainController {
             frameMain = new FrameMain(this, frameWidth, frameHeight);
 
             // add observer for project
-            pm.addObserver(frameMain);
+            jm.addObserver(frameMain);
 
             // add observer for working mode
             pluginGuiManager.registerObserver(frameMain);
@@ -223,10 +225,10 @@ public class MainController {
      */
     public static void main(String[] args) {
         try {
-            applicationProperties = loadApplicationProperties();
+            cm = new ConfigManager(CONF_DIR + fileSep + APP_PROPERTIES_FILE);
 
             System.out.println("reading language specific resources");
-            rm = new ResourceManager(applicationProperties.getProperty(APM.OPENDBCOPY_RESOURCE_NAME), applicationProperties.getProperty(APM.OPENDBCOPY_RESOURCE_BUNDLE_DIR), applicationProperties.getProperty(APM.OPENDBCOPY_RESOURCE_LOAD_ADDITIONAL), applicationProperties.getProperty(APM.LANGUAGE));
+            rm = new ResourceManager(cm.getApplicationProperty(APM.OPENDBCOPY_RESOURCE_BUNDLE_DIR), cm.getApplicationProperty(APM.OPENDBCOPY_RESOURCE_NAME), cm.getApplicationProperty(APM.DEFAULT_LANGUAGE));
 
             setupDirectoriesAndCreateLocalFiles();
             System.out.println(rm.getString("text.controller.checkingDirectoriesDone"));
@@ -240,7 +242,7 @@ public class MainController {
             System.setErr(out);
 
             // check if the gui shall be shown or not
-            if ((applicationProperties.getProperty(APM.SHOW_GUI) != null) && (applicationProperties.getProperty(APM.SHOW_GUI).compareToIgnoreCase("true") == 0)) {
+            if ((cm.getApplicationProperty(APM.SHOW_GUI) != null) && (cm.getApplicationProperty(APM.SHOW_GUI).compareToIgnoreCase("true") == 0)) {
                 isGuiEnabled = true;
             }
 
@@ -249,8 +251,8 @@ public class MainController {
                 frameHeight     = 400;
 
                 try {
-                    frameWidth      = Integer.parseInt(applicationProperties.getProperty(APM.FRAME_CONSOLE_WIDTH));
-                    frameHeight     = Integer.parseInt(applicationProperties.getProperty(APM.FRAME_CONSOLE_HEIGHT));
+                    frameWidth      = Integer.parseInt(cm.getApplicationProperty(APM.FRAME_CONSOLE_WIDTH));
+                    frameHeight     = Integer.parseInt(cm.getApplicationProperty(APM.FRAME_CONSOLE_HEIGHT));
                 } catch (Exception e) {
                     // use default values as specified above
                 }
@@ -291,7 +293,7 @@ public class MainController {
             throw new IllegalArgumentException("Missing operation");
         }
 
-        pm.execute(operation);
+        jm.execute(operation);
     }
 
     /**
@@ -307,7 +309,7 @@ public class MainController {
         }
 
         // register project observer
-        pm.addObserver(observer);
+        jm.addObserver(observer);
     }
 
     /**
@@ -322,7 +324,7 @@ public class MainController {
             throw new IllegalArgumentException("Missing observer");
         }
 
-        pm.deleteObserver(observer);
+        jm.deleteObserver(observer);
     }
 
     /**
@@ -430,25 +432,19 @@ public class MainController {
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     *
-     * @throws FileNotFoundException DOCUMENT ME!
-     * @throws IOException DOCUMENT ME!
-     */
-    private static Properties loadApplicationProperties() throws FileNotFoundException, IOException {
-        return PropertiesToFile.importPropertiesFromFile("conf/opendbcopy.properties");
-    }
-
-    /**
      * Creates required directories in user_home for opendbcopy.
      *
      * @throws IOException DOCUMENT ME!
      */
     private static void setupDirectoriesAndCreateLocalFiles() throws IOException {
         // check that user's home directory for opendbcopy exists
-        String userDir = System.getProperty("user.home") + fileSep + applicationProperties.getProperty(APM.OPENDBCOPY_USER_HOME_DIR);
+        String userDir = null;
+
+        if (Boolean.valueOf(cm.getApplicationProperty(APM.OPENDBCOPY_USER_HOME_DIR_IS_ABSOLUTE)).booleanValue()) {
+            userDir = cm.getApplicationProperty(APM.OPENDBCOPY_USER_HOME_DIR);
+        } else {
+            userDir = System.getProperty("user.home") + fileSep + cm.getApplicationProperty(APM.OPENDBCOPY_USER_HOME_DIR);
+        }
 
         try {
             opendbcopyUserHomeDir = FileHandling.getFile(userDir);
@@ -464,29 +460,29 @@ public class MainController {
         logDir     = setupDirInOpendbcopyUserHome("log");
 
         // check that personal conf directory exists, else create it
-        personalConfDir     = setupDirInOpendbcopyUserHome("conf");
+        personalConfDir     = setupDirInOpendbcopyUserHome(CONF_DIR);
 
         // check that plugin in out dir exists, else create it
-        inoutDir     = setupDirInOpendbcopyUserHome(applicationProperties.getProperty(APM.PLUGIN_IN_OUT_DIR));
+        inoutDir     = setupDirInOpendbcopyUserHome(cm.getApplicationProperty(APM.PLUGIN_IN_OUT_DIR));
 
         // check that local plugins folder exists, else create it
-        personalPluginsDir     = setupDirInOpendbcopyUserHome(applicationProperties.getProperty(APM.PLUGINS_DIRECTORY));
+        personalPluginsDir     = setupDirInOpendbcopyUserHome(cm.getApplicationProperty(APM.PLUGINS_DIRECTORY));
 
         // check that local projects folder exists, else create it
-        personalProjectsDir     = setupDirInOpendbcopyUserHome(applicationProperties.getProperty(APM.PROJECTS_DIRECTORY));
+        personalJobsDir     = setupDirInOpendbcopyUserHome(cm.getApplicationProperty(APM.JOBS_DIRECTORY));
 
         // create path filenames for console output
         pathFilenameConsoleOut = logDir.getAbsolutePath() + fileSep + "application_log.txt";
 
         // check if opendbcopy user home dir contains sql driver file, if not, copy a standard copy into this directory
-        File   standardSQLDriverFile = FileHandling.getFile(applicationProperties.getProperty(APM.DRIVERS_CONF_FILE));
+        File   standardSQLDriverFile = FileHandling.getFile(cm.getApplicationProperty(APM.DRIVERS_CONF_FILE));
         String standardSQLDriverFilename = standardSQLDriverFile.getName();
-        String personalSQLDriverPathFilename = opendbcopyUserHomeDir.getAbsolutePath() + fileSep + applicationProperties.getProperty(APM.DRIVERS_CONF_FILE);
+        String personalSQLDriverPathFilename = opendbcopyUserHomeDir.getAbsolutePath() + fileSep + cm.getApplicationProperty(APM.DRIVERS_CONF_FILE);
 
         personalSQLDriversFile = FileHandling.getFileInDirectory(personalConfDir, standardSQLDriverFilename);
 
         if (personalSQLDriversFile == null) {
-            personalSQLDriversFile = new File(opendbcopyUserHomeDir.getAbsolutePath() + fileSep + applicationProperties.getProperty(APM.DRIVERS_CONF_FILE));
+            personalSQLDriversFile = new File(opendbcopyUserHomeDir.getAbsolutePath() + fileSep + cm.getApplicationProperty(APM.DRIVERS_CONF_FILE));
 
             FileHandling.copyFile(standardSQLDriverFile, personalSQLDriversFile);
         }
@@ -534,8 +530,8 @@ public class MainController {
      *
      * @return DOCUMENT ME!
      */
-    public final ProjectManager getProjectManager() {
-        return pm;
+    public final JobManager getJobManager() {
+        return jm;
     }
 
     /**
@@ -544,7 +540,7 @@ public class MainController {
      * @return DOCUMENT ME!
      */
     public final Properties getApplicationProperties() {
-        return applicationProperties;
+        return cm.getApplicationProperties();
     }
 
     /**
@@ -553,7 +549,11 @@ public class MainController {
      * @return DOCUMENT ME!
      */
     public static final String getEncoding() {
-        return applicationProperties.getProperty(APM.ENCODING);
+        if (cm != null) {
+            return cm.getApplicationProperty(APM.ENCODING);
+        } else {
+            return "UTF-8";
+        }
     }
 
     /**
@@ -673,10 +673,10 @@ public class MainController {
     /**
      * DOCUMENT ME!
      *
-     * @return Returns the personalProjectsDir.
+     * @return Returns the personalJobsDir.
      */
-    public final File getPersonalProjectsDir() {
-        return personalProjectsDir;
+    public final File getPersonalJobsDir() {
+        return personalJobsDir;
     }
 
     /**
@@ -695,6 +695,15 @@ public class MainController {
      */
     public final void setFrameConsole(FrameConsole frameConsole) {
         MainController.frameConsole = frameConsole;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return Returns the configManager
+     */
+    public final ConfigManager getConfigManager() {
+        return cm;
     }
 
     /**

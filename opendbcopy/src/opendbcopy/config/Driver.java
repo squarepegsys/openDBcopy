@@ -195,6 +195,8 @@ public class Driver {
     	dbElement.addContent(urlElement);
     	dbElement.addContent(usernameElement);
     	
+    	dbElement.setAttribute(XMLTags.LAST_SELECTED, Boolean.toString(true));
+    	
     	defaultElement.addContent(dbElement);
     	
     	if (driver.getChild(XMLTags.DEFAULT) == null) {
@@ -210,15 +212,25 @@ public class Driver {
     	driver.getChild(XMLTags.DEFAULT).removeChild(database);
     }
 
+    public void setLastSelected(String database, boolean enable) {
+    	if (database == null) {
+    		throw new IllegalArgumentException("Missing database");
+    	}
+    	
+    	if (driver.getChild(XMLTags.DEFAULT) != null && driver.getChild(XMLTags.DEFAULT).getChild(database) != null) {
+    		driver.getChild(XMLTags.DEFAULT).getChild(database).setAttribute(XMLTags.LAST_SELECTED, Boolean.toString(enable));
+    	}
+    }
+    
     /**
      * DOCUMENT ME!
      *
      * @return DOCUMENT ME!
      */
-    private boolean isDefault(String database) {
+    public boolean isDefault(String database) {
     	if (driver.getChild(XMLTags.DEFAULT) != null) {
-            if (driver.getChild(XMLTags.DEFAULT).getChild(database) != null) {
-                return true;
+            if (driver.getChild(XMLTags.DEFAULT).getChild(database) != null && driver.getChild(XMLTags.DEFAULT).getChild(database).getAttributeValue(XMLTags.LAST_SELECTED) != null) {
+                return Boolean.valueOf(driver.getChild(XMLTags.DEFAULT).getChild(database).getAttributeValue(XMLTags.LAST_SELECTED)).booleanValue();
             } else {
             	return false;
             }    		

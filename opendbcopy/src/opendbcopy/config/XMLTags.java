@@ -30,7 +30,7 @@ package opendbcopy.config;
  */
 public final class XMLTags {
     // root node
-    public static final String PROJECT = "project";
+    public static final String JOB = "job";
 
     // children of root or specific database
     public static final String OPERATION = "operation";
@@ -106,6 +106,7 @@ public final class XMLTags {
     public static final String SHOW_QUALIFIED_TABLE_NAME = "show_qualified_table_name";
     public static final String UNICODE = "unicode";
     public static final String SHUTDOWN_ON_COMPLETION = "shutdown_on_completion";
+    public static final String USE_QUALIFIED_TABLE_NAME = "use_qualified_table_name";
 
     // primary key attributes
     public static final String TABLE_CAT = "table_cat"; // String => table catalog (may be null)
@@ -170,6 +171,7 @@ public final class XMLTags {
     public static final String DIRSET = "dirset";
     public static final String FILESET = "fileset";
     public static final String FILELIST = "filelist";
+    public static final String URLLIST = "urllist";
     public static final String FILELISTS = "filelists";
     public static final String FILE_DIR_FILELISTS_SELECTION = "file_dir_filelists_selection";
     public static final String INCLUDE = "include";
@@ -196,6 +198,7 @@ public final class XMLTags {
     // SQLDriver tags
     public static final String DRIVERS = "drivers";
     public static final String DEFAULT = "default";
+    public static final String LAST_SELECTED = "last_selected";
 
     // Plugin Gui
     public static final String GUI = "gui";
@@ -215,4 +218,7 @@ public final class XMLTags {
     public static final String RESUMED = "resumed";
     public static final String DONE = "done";
     public static final String EXCEPTION_OCCURED = "exception occured";
+    
+    // key properties
+    public static final String COMPOSITE_ID = "composite-id";
 }

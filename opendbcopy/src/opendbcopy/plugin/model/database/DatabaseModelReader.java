@@ -236,7 +236,6 @@ public abstract class DatabaseModelReader {
      * DOCUMENT ME!
      *
      * @param db_element DOCUMENT ME!
-     * @param operation DOCUMENT ME!
      *
      * @return DOCUMENT ME!
      *
@@ -247,10 +246,9 @@ public abstract class DatabaseModelReader {
      * @throws SQLException DOCUMENT ME!
      * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public static Element readModel(Element db_element,
-                                    Element operation) throws MissingAttributeException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, SQLException {
-        if ((db_element == null) || (operation == null)) {
-            throw new IllegalArgumentException("Missing arguments values: db_element=" + db_element + " operation=" + operation);
+    public static Element readModel(Element db_element) throws MissingAttributeException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, SQLException {
+        if (db_element == null) {
+            throw new IllegalArgumentException("Missing arguments values: db_element=" + db_element);
         }
 
         DatabaseMetaData metadata = null;
@@ -258,9 +256,10 @@ public abstract class DatabaseModelReader {
         Element          model = null;
         Element          connection = null;
 
-        boolean          primary_keys_enabled = true;
-        boolean          foreign_keys_enabled = true;
-        boolean          indexes_enabled = true;
+        /** The following variables are disabled in case the driver does not support a certain feature. Enabling / disabling  is set by the user */
+        boolean primary_keys_enabled = true;
+        boolean foreign_keys_enabled = true;
+        boolean indexes_enabled = true;
 
         try {
             connection = db_element.getChild(XMLTags.CONNECTION);
@@ -282,9 +281,10 @@ public abstract class DatabaseModelReader {
                 }
 
                 if (db_element.getChild(XMLTags.MODEL) != null) {
-                    db_element.removeChild(XMLTags.MODEL);
-                    model = new Element(XMLTags.MODEL);
-                    db_element.addContent(model);
+                	model = db_element.getChild(XMLTags.MODEL);
+                	
+                	// remove tables which maybe have been captured in a previous action
+                	model.removeChildren(XMLTags.TABLE);
                 }
 
                 while (rs.next()) {
@@ -303,12 +303,6 @@ public abstract class DatabaseModelReader {
                     Element table = ((Element) iterator.next());
                     String  tableName = table.getAttributeValue(XMLTags.NAME);
                     readTableColumns(metadata, table, dbProductName, db_element.getChild(XMLTags.SCHEMA).getAttributeValue(XMLTags.VALUE), db_element.getChild(XMLTags.CATALOG).getAttributeValue(XMLTags.VALUE));
-
-                    // the following methods are not mandatory
-                    // 1. copy attributes from operation into this model
-                    model.setAttribute(XMLTags.READ_PRIMARY_KEYS, operation.getAttributeValue(XMLTags.READ_PRIMARY_KEYS));
-                    model.setAttribute(XMLTags.READ_FOREIGN_KEYS, operation.getAttributeValue(XMLTags.READ_FOREIGN_KEYS));
-                    model.setAttribute(XMLTags.READ_INDEXES, operation.getAttributeValue(XMLTags.READ_INDEXES));
 
                     // now only read what is requested
                     if (Boolean.valueOf(model.getAttributeValue(XMLTags.READ_PRIMARY_KEYS)).booleanValue()) {

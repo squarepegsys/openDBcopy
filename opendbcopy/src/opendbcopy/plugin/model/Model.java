@@ -91,7 +91,7 @@ public class Model extends Observable {
     }
 
     /**
-     * Override this method in subclass if operations shall be executed on model, passed in by Controller -> ProjectManager
+     * Override this method in subclass if operations shall be executed on model, passed in by Controller -> JobManager
      *
      * @param operation DOCUMENT ME!
      *

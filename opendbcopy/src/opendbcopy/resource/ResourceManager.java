@@ -22,6 +22,8 @@
  * --------------------------------------------------------------------------*/
 package opendbcopy.resource;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.StringTokenizer;
@@ -39,15 +41,16 @@ public class ResourceManager {
     /**
      * Creates a new ResourceManager object.
      *
+     * @param resourceDir DOCUMENT ME!
      * @param defaultResourceName DOCUMENT ME!
-     * @param resourceBundleDir DOCUMENT ME!
-     * @param resourceBundleLoadAdditional DOCUMENT ME!
      * @param defaultLanguage DOCUMENT ME!
+     *
+     * @throws FileNotFoundException DOCUMENT ME!
+     * @throws IOException DOCUMENT ME!
      */
-    public ResourceManager(String defaultResourceName,
-                           String resourceBundleDir,
-                           String resourceBundleLoadAdditional,
-                           String defaultLanguage) {
+    public ResourceManager(String resourcePath,
+                           String defaultResourceName,
+                           String defaultLanguage) throws FileNotFoundException, IOException {
         this.defaultResourceName = defaultResourceName;
 
         // override the default locale for this JVM
@@ -55,16 +58,7 @@ public class ResourceManager {
             Locale.setDefault(new Locale(defaultLanguage));
         }
 
-        // load default language resources
-        addResourceBundle(resourceBundleDir + defaultResourceName);
-
-        // add additional language resources
-        StringTokenizer st = new StringTokenizer(resourceBundleLoadAdditional, ",");
-
-        while (st.hasMoreElements()) {
-            String languageAppendix = ((String) st.nextElement()).trim();
-            addResourceBundle(resourceBundleDir + defaultResourceName + "_" + languageAppendix);
-        }
+        addResourceBundle(resourcePath + defaultResourceName);
     }
 
     /**
