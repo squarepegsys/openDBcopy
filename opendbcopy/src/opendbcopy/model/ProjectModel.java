@@ -19,25 +19,23 @@
  * TITLE $Id$
  * ---------------------------------------------------------------------------
  * $Log$
- * Revision 1.1  2004/01/09 18:11:52  iloveopensource
- * first release
- *
  * --------------------------------------------------------------------------*/
 package opendbcopy.model;
+
+import opendbcopy.config.APM;
+import opendbcopy.config.XMLTags;
+
+import opendbcopy.model.dependency.Dependency;
+import opendbcopy.model.dependency.Mapper;
+
+import org.jdom.Document;
+import org.jdom.Element;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.TreeMap;
 import java.util.Vector;
-
-import opendbcopy.config.APM;
-import opendbcopy.config.XMLTags;
-import opendbcopy.model.dependency.Dependency;
-import opendbcopy.model.dependency.Mapper;
-
-import org.jdom.Document;
-import org.jdom.Element;
 
 
 /**
@@ -85,7 +83,8 @@ public class ProjectModel {
     }
 
     // Constructor using existing project
-    public ProjectModel(Properties applicationProperties, Document project) throws Exception {
+    public ProjectModel(Properties applicationProperties,
+                        Document   project) throws Exception {
         initProject(applicationProperties, project);
 
         if (getDbMode() == DUAL_MODE) {
@@ -302,7 +301,11 @@ public class ProjectModel {
      */
     public final String getQualifiedSourceTableName(String tableName) throws Exception {
         if (getSourceCatalog().length() > 0) {
-            return getSourceCatalog() + "." + tableName;
+            if (getSourceDatabaseName().compareToIgnoreCase("PostgreSQL") == 0) {
+                return tableName;
+            } else {
+                return getSourceCatalog() + getSourceCatalogSeparator() + tableName;
+            }
         } else {
             if (getSourceSchema().compareTo("%") == 0) {
                 return tableName;
@@ -323,7 +326,11 @@ public class ProjectModel {
      */
     public final String getQualifiedDestinationTableName(String tableName) throws Exception {
         if (getDestinationCatalog().length() > 0) {
-            return getDestinationCatalog() + "." + tableName;
+            if (getDestinationDatabaseName().compareToIgnoreCase("PostgreSQL") == 0) {
+                return tableName;
+            } else {
+                return getDestinationCatalog() + getDestinationCatalogSeparator() + tableName;
+            }
         } else {
             if (getDestinationSchema().compareTo("%") == 0) {
                 return tableName;
@@ -656,8 +663,9 @@ public class ProjectModel {
      * @throws Exception NullPointerException if element(s) not available
      */
     public final void setSourceSchema(String schemaName) throws Exception {
-    	if (schemaName != null)
-        	sourceSchema.setAttribute(XMLTags.VALUE, schemaName);
+        if (schemaName != null) {
+            sourceSchema.setAttribute(XMLTags.VALUE, schemaName);
+        }
     }
 
     /**
@@ -679,8 +687,9 @@ public class ProjectModel {
      * @throws Exception NullPointerException if element(s) not available
      */
     public final void setDestinationSchema(String schemaName) throws Exception {
-    	if (schemaName != null)
-        	destinationSchema.setAttribute(XMLTags.VALUE, schemaName);
+        if (schemaName != null) {
+            destinationSchema.setAttribute(XMLTags.VALUE, schemaName);
+        }
     }
 
     /**
@@ -702,8 +711,9 @@ public class ProjectModel {
      * @throws Exception NullPointerException if element(s) not available
      */
     public final void setSourceCatalog(String catalogName) throws Exception {
-    	if (catalogName != null)
-        	sourceCatalog.setAttribute(XMLTags.VALUE, catalogName);
+        if (catalogName != null) {
+            sourceCatalog.setAttribute(XMLTags.VALUE, catalogName);
+        }
     }
 
     /**
@@ -725,8 +735,9 @@ public class ProjectModel {
      * @throws Exception NullPointerException if element(s) not available
      */
     public final void setDestinationCatalog(String catalogName) throws Exception {
-    	if (catalogName != null)
-        	destinationCatalog.setAttribute(XMLTags.VALUE, catalogName);
+        if (catalogName != null) {
+            destinationCatalog.setAttribute(XMLTags.VALUE, catalogName);
+        }
     }
 
     /**
@@ -759,10 +770,11 @@ public class ProjectModel {
      * @throws Exception NullPointerException if element(s) not available
      */
     public final void setSourceTablePattern(String tablePattern) throws Exception {
-    	if (tablePattern.length() > 0)
-        	sourceTablePattern.setAttribute(XMLTags.TABLE_PATTERN, tablePattern);
-        else
-			sourceTablePattern.setAttribute(XMLTags.TABLE_PATTERN, "%");
+        if (tablePattern.length() > 0) {
+            sourceTablePattern.setAttribute(XMLTags.TABLE_PATTERN, tablePattern);
+        } else {
+            sourceTablePattern.setAttribute(XMLTags.TABLE_PATTERN, "%");
+        }
     }
 
     /**
@@ -773,10 +785,11 @@ public class ProjectModel {
      * @throws Exception NullPointerException if element(s) not available
      */
     public final void setDestinationTablePattern(String tablePattern) throws Exception {
-		if (tablePattern.length() > 0)
-	        destinationTablePattern.setAttribute(XMLTags.TABLE_PATTERN, tablePattern);
-	    else
-			destinationTablePattern.setAttribute(XMLTags.TABLE_PATTERN, "%");
+        if (tablePattern.length() > 0) {
+            destinationTablePattern.setAttribute(XMLTags.TABLE_PATTERN, tablePattern);
+        } else {
+            destinationTablePattern.setAttribute(XMLTags.TABLE_PATTERN, "%");
+        }
     }
 
     /**
@@ -1193,7 +1206,7 @@ public class ProjectModel {
         root.setAttribute(APM.APPLICATION_NAME, applicationProperties.getProperty(APM.APPLICATION_NAME));
         root.setAttribute(APM.APPLICATION_VERSION, applicationProperties.getProperty(APM.APPLICATION_VERSION));
         root.setAttribute(APM.APPLICATION_WEBSITE, applicationProperties.getProperty(APM.APPLICATION_WEBSITE));
-        
+
         project     = new Document(root);
 
         sourceDb     = new Element(XMLTags.SOURCE_DB);
@@ -1290,7 +1303,8 @@ public class ProjectModel {
      *
      * @throws Exception NullPointerException if element(s) not available
      */
-    private void initProject(Properties applicationProperties, Document importedProject) throws Exception {
+    private void initProject(Properties applicationProperties,
+                             Document   importedProject) throws Exception {
         project     = new Document(importedProject.getRootElement().detach());
         root        = project.getRootElement();
 
@@ -1538,5 +1552,49 @@ public class ProjectModel {
      */
     public void setSourceMetadata(Element element) {
         sourceMetadata = element;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     */
+    public String getSourceDatabaseName() {
+        return getSourceMetadata().getChild(XMLTags.DB_PRODUCT_NAME).getAttributeValue(XMLTags.VALUE);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     */
+    public String getDestinationDatabaseName() {
+        return getDestinationMetadata().getChild(XMLTags.DB_PRODUCT_NAME).getAttributeValue(XMLTags.VALUE);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     */
+    public String getSourceCatalogSeparator() {
+        if (getSourceMetadata().getChild(XMLTags.CATALOG_SEPARATOR) != null) {
+            return getSourceMetadata().getChild(XMLTags.CATALOG_SEPARATOR).getAttributeValue(XMLTags.VALUE);
+        } else {
+            return ".";
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     */
+    public String getDestinationCatalogSeparator() {
+        if (getDestinationMetadata().getChild(XMLTags.CATALOG_SEPARATOR) != null) {
+            return getDestinationMetadata().getChild(XMLTags.CATALOG_SEPARATOR).getAttributeValue(XMLTags.VALUE);
+        } else {
+            return ".";
+        }
     }
 }
