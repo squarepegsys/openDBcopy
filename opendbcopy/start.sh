@@ -118,7 +118,7 @@ if [ ! -f "$JAVAC_JAR" ]; then
    fi
 fi
 
-OPENDBCOPY_CLASSPATH="$CLASSPATH:$OPENDBCOPY_CLASSPATH:$DIRNAME/lib/xerces.jar:$DIRNAME/lib/log4j-1.2.8.jar:$DIRNAME/lib/jdom.jar:$JAVAC_JAR"
+OPENDBCOPY_CLASSPATH="$CLASSPATH:$runjar:$DIRNAME/lib/xerces.jar:$DIRNAME/lib/log4j-1.2.8.jar:$DIRNAME/lib/jdom.jar:$JAVAC_JAR"
 
 # If JAVA_OPTS is not set try check for Hotspot
 if [ "x$JAVA_OPTS" = "x" ]; then
