@@ -15,8 +15,8 @@
 
    	<property name="sources.dir" value="${basedir}/src"/>
    	<property name="lib.dir" value="${basedir}/lib"/>
-   	<property name="build.dir" value="${basedir}/classes"/>
    	<property name="dist.dir" value="${basedir}/dist"/>
+   	<property name="build.dir" value="${basedir}/classes"/>
    	<property name="javadoc.dir" value="${basedir}/apidocs"/>
    	<property name="izpack.dir" value="c:/Programme/IzPack"/>
 
@@ -41,6 +41,7 @@
    	<target name="prepare">
       	<mkdir dir="${build.dir}"/>
       	<mkdir dir="${lib.dir}"/>
+      	<mkdir dir="${dist.dir}"/>
    	</target>
 
    	<!-- ============================================================= -->
@@ -85,7 +86,7 @@
    	<!-- Create the zip file                                           -->
    	<!-- ============================================================= -->
    	<target name="zip">
-      	<zip zipfile="../opendbcopy.zip" basedir="."></zip>
+      	<zip zipfile="opendbcopy.zip" basedir="."></zip>
    	</target>
    
 	<!-- ============================================================= -->
@@ -126,7 +127,7 @@
          	destdir="${javadoc.dir}"
          	author="true"
          	version="true"
-         	windowtitle="opendbcopy API 0.41"
+         	windowtitle="opendbcopy API 0.41.1"
          	doctitle="opendbcopy"
          	bottom="Copyright &#169; 2004 by Anthony Smith, Puzzle ITC GmbH"
         />
