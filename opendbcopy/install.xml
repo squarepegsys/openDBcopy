@@ -30,9 +30,9 @@
         The ids must be these ones if you want to use the LicencePanel and/or the InfoPanel.
     -->
     <resources>
-        <res id="LicencePanel.licence" src="LICENCE.txt"/>
+        <res id="LicencePanel.licence" src="LICENSE.txt"/>
         <res id="InfoPanel.info" src="README.txt"/>
-	  <res src="c:\opendbcopy\shortcutSpec.xml" id="shortcutSpec.xml"/>    
+	  	<res id="shortcutSpec.xml" src="c:\opendbcopy\shortcutSpec.xml"/>
     </resources>
     
     <!-- 
@@ -46,33 +46,43 @@
         <panel classname="TargetPanel"/> 
         <panel classname="PacksPanel"/>
         <panel classname="InstallPanel"/>
-        <panel classname="FinishPanel"/>
   	    <panel classname="ShortcutPanel"/>
+        <panel classname="FinishPanel"/>
     </panels>
     
     <packs>
         <pack name="Base" required="yes" preselected="yes">
-            <description>The base files</description>
+            <description>Opendbcopy</description>
             <file src="README.txt" targetdir="$INSTALL_PATH"/>
-            <file src="LICENCE.txt" targetdir="$INSTALL_PATH"/>
+            <file src="LICENSE.txt" targetdir="$INSTALL_PATH"/>
             <file src="WHATSNEW.txt" targetdir="$INSTALL_PATH"/>
             <file src="AUTHORS.txt" targetdir="$INSTALL_PATH"/>
             <file src="KNOWNBUGS.txt" targetdir="$INSTALL_PATH"/>
             <file src="ChangeLog.txt" targetdir="$INSTALL_PATH"/>
-            <file src="Start.bat" targetdir="$INSTALL_PATH"/>
-            <file src="build" targetdir="$INSTALL_PATH"/>
+            <file src="start.bat" targetdir="$INSTALL_PATH"/>
+            <file src="start.sh" targetdir="$INSTALL_PATH"/>
             <file src="log" targetdir="$INSTALL_PATH"/>
-            <file src="config" targetdir="$INSTALL_PATH"/>
+            <file src="conf" targetdir="$INSTALL_PATH"/>
             <file src="plugins" targetdir="$INSTALL_PATH"/>
-        </pack>
-        <pack name="Libraries" required="yes" preselected="yes">
-            <description>External Libraries</description>
-            <file src="lib" targetdir="$INSTALL_PATH"/> <!-- Reccursive adding -->
+            <file src="lib" targetdir="$INSTALL_PATH"/>
         </pack>
 
-        <pack name="Sources" required="no">
-            <description>The sources</description>
+        <pack name="Documentation" required="no" preselected="yes">
+            <description>The complete documentation (see http://opendbcopy.sourceforge.net/</description>
+            <file src="docs" targetdir="$INSTALL_PATH"/>
+        </pack>
+
+        <pack name="Sources" required="no" preselected="no">
+            <description>Source Codes (for developers only)</description>
             <file src="src" targetdir="$INSTALL_PATH"/>
+            <file src=".project" targetdir="$INSTALL_PATH"/>
+            <file src=".classpath" targetdir="$INSTALL_PATH"/>
+            <file src="jalopy_settings_opendbcopy.xml" targetdir="$INSTALL_PATH"/>
+        </pack>
+
+        <pack name="API Docs" required="no" preselected="no">
+            <description>API Docs (for developers only)</description>
+            <file src="apidocs" targetdir="$INSTALL_PATH"/>
         </pack>
     </packs>
     
