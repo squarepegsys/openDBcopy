@@ -70,8 +70,7 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
     private int           counterRecords = 0;
     private int           counterTables = 0;
     private int           append_file_after_records = 0;
-    private String        delimiterString = "";
-    private String        delimiterOriginalString = "";
+    private char        delimiter = (char) 9;
     private String        newLine = "";
     private String        fileType = "";
     private boolean       show_header = false;
@@ -119,10 +118,6 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
             show_header                   = Boolean.valueOf(conf.getChild(XMLTags.SHOW_HEADER).getAttributeValue(XMLTags.VALUE)).booleanValue();
             show_null_values              = Boolean.valueOf(conf.getChild("show_null_values").getAttributeValue(XMLTags.VALUE)).booleanValue();
             append_file_after_records     = Integer.parseInt(conf.getChild(XMLTags.APPEND_FILE_AFTER_RECORDS).getAttributeValue(XMLTags.VALUE));
-
-            delimiterOriginalString     = conf.getChild(XMLTags.DELIMITER).getAttributeValue(XMLTags.VALUE);
-
-            delimiterString     = new String(delimiterOriginalString);
 
             // get connection
             connSource     = DBConnection.getConnection(model.getSourceConnection());
@@ -199,12 +194,12 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
                         String input = rs.getString(colCounter);
 
                         if (!rs.wasNull()) {
-                            recordBuffer.append(input + delimiterString);
+                            recordBuffer.append(input + delimiter);
                         } else {
                             if (show_null_values) {
-                                recordBuffer.append("null" + delimiterString);
+                                recordBuffer.append("null" + delimiter);
                             } else {
-                                recordBuffer.append("" + delimiterString);
+                                recordBuffer.append("" + delimiter);
                             }
                         }
                     }
@@ -283,7 +278,7 @@ public class DumpDataToFileDelimitedPlugin extends DynamicPluginThread {
 
         // set the column headings
         while (itProcessColumns.hasNext()) {
-            recordBuffer.append(((Element) itProcessColumns.next()).getAttributeValue(XMLTags.NAME) + delimiterString);
+            recordBuffer.append(((Element) itProcessColumns.next()).getAttributeValue(XMLTags.NAME) + delimiter);
         }
 
         recordBuffer.append(newLine);

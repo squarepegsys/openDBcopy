@@ -4,7 +4,7 @@
       name="openDBcopy"
       target="$INSTALL_PATH\bin\start.bat"
       commandLine=""
-      workingDirectory="$INSTALL_PATH"
+      workingDirectory="$INSTALL_PATH\bin"
       description="openDBcopy"
       initialState="normal"
       programGroup="yes"

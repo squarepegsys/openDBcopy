@@ -25,13 +25,23 @@
 
 <plugin identifier="jsch" model_class="opendbcopy.plugin.model.simple.SimpleModel">
 	<conf>
-		<!-- path may be relative or absolute -->
-		<path value="inout/" />
-		<file value="statistics" />			
-		<file_type value="csv" />
-		
-		<!-- for a tab delimiter enter \n as value -->
-		<delimiter value=";" />
+		<operation required="true" value="scp_to" type="string" description="plugin.opendbcopy.jsch.conf.operation" />
+		<scp_to>			
+			<!-- remote path must be absolute -->
+			<remote_dir required="true" value="" type="string" description="plugin.opendbcopy.jsch.conf.remoteDir" />	
+			<host required="true" value="" type="string" description="plugin.opendbcopy.jsch.conf.host" />
+			<port required="true" value="" type="int" description="plugin.opendbcopy.jsch.conf.port" />
+			<username required="true" value="" type="string" description="plugin.opendbcopy.jsch.conf.userName" />
+			<password value="" type="string" description="plugin.opendbcopy.jsch.conf.password" />
+			<input>
+				<file_dir_filelists_selection required="true" value="file" type="file_dir_filelists_selection" description="plugin.opendbcopy.jsch.conf.input.selection" />
+				<file value="" type="file" description="plugin.opendbcopy.jsch.conf.input.inputFile" />
+				<dir value="" type="dir" description="plugin.opendbcopy.jsch.conf.input.inputDir" />
+			</input>
+			<output>
+				<filelist value="jsch" type="string" description="plugin.opendbcopy.jsch.conf.output.filelistIdentifier" />
+			</output>			
+		</scp_to>
 	</conf>
 	<threads>
 		<thread thread_class="opendbcopy.plugin.jsch.JschPlugin" description="title.plugin.opendbcopy.jsch" />

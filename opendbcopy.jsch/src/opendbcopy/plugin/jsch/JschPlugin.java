@@ -23,32 +23,16 @@
 package opendbcopy.plugin.jsch;
 
 import opendbcopy.config.XMLTags;
-
 import opendbcopy.controller.MainController;
-
+import opendbcopy.plugin.jsch.module.ScpTo;
 import opendbcopy.plugin.model.DynamicPluginThread;
 import opendbcopy.plugin.model.Model;
-import opendbcopy.plugin.model.database.DatabaseModel;
 import opendbcopy.plugin.model.exception.MissingAttributeException;
 import opendbcopy.plugin.model.exception.MissingElementException;
 import opendbcopy.plugin.model.exception.PluginException;
-
-import opendbcopy.util.InputOutputHelper;
+import opendbcopy.plugin.model.simple.SimpleModel;
 
 import org.jdom.Element;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.zip.Deflater;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 
 /**
@@ -75,7 +59,7 @@ public class JschPlugin extends DynamicPluginThread {
     public JschPlugin(MainController controller,
                       Model          baseModel) throws PluginException {
         super(controller, baseModel);
-        this.model = (DatabaseModel) baseModel;
+        this.model = (SimpleModel) baseModel;
     }
 
     /**
@@ -97,7 +81,11 @@ public class JschPlugin extends DynamicPluginThread {
             if (conf.getChild(XMLTags.OPERATION).getAttributeValue(XMLTags.VALUE) == null) {
                 throw new PluginException(new MissingAttributeException(conf.getChild(XMLTags.OPERATION), XMLTags.VALUE));
             } else {
-                operation = conf.getChild(XMLTags.OPERATION).getAttributeValue(XMLTags.VALUE);
+            	if (conf.getChild(XMLTags.OPERATION).getAttributeValue(XMLTags.VALUE).length() == 0) {
+            		throw new PluginException("Missing Operation");
+            	} else {
+                    operation = conf.getChild(XMLTags.OPERATION).getAttributeValue(XMLTags.VALUE);
+            	}
             }
         }
 
@@ -119,79 +107,8 @@ public class JschPlugin extends DynamicPluginThread {
      * @throws PluginException DOCUMENT ME!
      */
     public final void execute() throws PluginException {
-        List fileLists = input.getChildren(XMLTags.FILELIST);
-
-        if ((fileLists == null) || (fileLists.size() == 0)) {
-            throw new PluginException(new MissingElementException(input, XMLTags.FILELIST));
-        }
-
-        Iterator itFileLists = fileLists.iterator();
-
-        while (itFileLists.hasNext()) {
-            Element filelist = (Element) itFileLists.next();
-            String  identifier = filelist.getAttributeValue(XMLTags.ID);
-            String  dir = filelist.getAttributeValue(XMLTags.DIR);
-
-            if (identifier == null) {
-                throw new PluginException(new MissingAttributeException(filelist, XMLTags.ID));
-            }
-
-            try {
-                ArrayList files = InputOutputHelper.getFileList(filelist);
-
-                // Create a buffer for reading the files
-                byte[] buf = new byte[1024];
-
-                // Create the ZIP file
-                String          outFilename = dir + "/" + identifier + ".zip";
-                ZipOutputStream out = new ZipOutputStream(new FileOutputStream(outFilename));
-
-                // Set the compression ratio
-                out.setLevel(Deflater.BEST_COMPRESSION);
-
-                // Compress the files
-                for (int i = 0; i < files.size(); i++) {
-                    File            file = (File) files.get(i);
-
-                    FileInputStream in = new FileInputStream(file.getAbsolutePath());
-
-                    // Add ZIP entry to output stream.
-                    out.putNextEntry(new ZipEntry(dir + "/" + file.getName()));
-
-                    // Transfer bytes from the file to the ZIP file
-                    int len;
-
-                    while ((len = in.read(buf)) > 0) {
-                        out.write(buf, 0, len);
-                    }
-
-                    // Complete the entry
-                    out.closeEntry();
-                    in.close();
-                }
-
-                // Complete the ZIP file
-                out.close();
-
-                // set output of plugin
-                Element outputFileList = InputOutputHelper.createFileListElement(new File(outFilename), identifier);
-
-                if (output == null) {
-                    output = new Element(XMLTags.OUTPUT);
-                }
-
-                output.addContent(outputFileList);
-            } catch (MissingAttributeException e) {
-                throw new PluginException(e);
-            } catch (MissingElementException e) {
-                throw new PluginException(e);
-            } catch (FileNotFoundException e) {
-                throw new PluginException(e);
-            } catch (IOException e) {
-                throw new PluginException(e);
-            }
-        }
-
-        model.setOutput(output);
+    	if (operation.compareToIgnoreCase(Operation.SCP_TO) == 0) {
+    		ScpTo.execute(logger, conf.getChild(operation.toLowerCase().trim()), input, output);
+    	}
     }
 }
