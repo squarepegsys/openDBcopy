@@ -1,16 +1,45 @@
 <shortcuts>
-   <programGroup defaultName="opendbcopy" location="applications/startMenu"/>
+   <programGroup defaultName="opendbcopy 0.41" location="applications/startMenu"/>
    <shortcut
-      name="opendbcopy"
+      name="opendbcopy launcher"
       target="$INSTALL_PATH\start.bat"
       commandLine=""
       workingDirectory="$INSTALL_PATH"
       description="start opendbcopy"
       initialState="normal"
-      programGroup="no"
+      programGroup="yes"
       desktop="yes"
-      applications="yes"
+      applications="no"
       startMenu="no"
       startup="no">
+   	  <createForPack name="Base"/>
+   </shortcut>
+   <shortcut
+      name="opendbcopy documentation"
+      target="$INSTALL_PATH\docs\index.html"
+      commandLine=""
+      workingDirectory="$INSTALL_PATH"
+      description="opendbcopy documentation"
+      initialState="normal"
+      programGroup="yes"
+      desktop="no"
+      applications="no"
+      startMenu="no"
+      startup="no">
+   	  <createForPack name="Documentation"/>
+   </shortcut>
+   <shortcut
+      name="API Docs"
+      target="$INSTALL_PATH\apidocs\index.html"
+      commandLine=""
+      workingDirectory="$INSTALL_PATH"
+      description="API Docs"
+      initialState="normal"
+      programGroup="yes"
+      desktop="no"
+      applications="no"
+      startMenu="no"
+      startup="no">
+   	  <createForPack name="API Docs"/>
    </shortcut>
 </shortcuts>

@@ -1,11 +1,13 @@
 HOW TO INSTALL OPENDBCOPY
 *************************
-If you are using JDK 1.4.2 you can directly extract the binary distribution into a local folder.
+opendbcopy is distributed using an IzPack installer. You can choose to install source code 
+and API Docs additionally.
 
-To run opendbcopy using ANT (see README) enter the following command
-
+To run opendbcopy you can either:
 USING ANT:
 ant run
+
+USING start.bat/start.sh
 
 USING JAVA directly:
 java opendbcopy.controller.MainController
@@ -21,9 +23,10 @@ JDBC driver is in your environments classpath or within the lib directory of ope
 HOW TO COMPILE OPENDBCOPY
 *************************
 
-In order to compile or to run the application, the Ant build tool is required.
+In order to compile or to run the application, the Ant build tool or Eclipse with
+its provided .project file in the root directory is required... or you set it up all yourself ;-)
 Ant can be found at: http://jakarta.apache.org. The binaries included in the distribution
-are compile using JDK 1.4.2 (http://java.sun.com).
+are compile using JDK 1.4.2 (http://java.sun.com), compatible to JDK 1.3.
 
 using ANT:
 ant rebuild (to clean and then compile)

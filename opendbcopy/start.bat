@@ -8,22 +8,8 @@ rem -------------------------------------------------------------------------
 
 set DIRNAME=.\
 if "%OS%" == "Windows_NT" set DIRNAME=%~dp0%
-set PROGNAME=run.bat
-if "%OS%" == "Windows_NT" set PROGNAME=%~nx0%
-
-rem Read all command line arguments
-
-set ARGS=
-:loop
-if [%1] == [] goto endloop
-        set ARGS=%ARGS% %1
-        shift
-        goto loop
-:endloop
 
 if not "%JAVA_HOME%" == "" goto ADD_TOOLS
-
-set JAVA=java
 
 echo JAVA_HOME is not set.  Unexpected results may occur.
 echo Set JAVA_HOME to the directory of your local JDK to avoid this message.
@@ -39,12 +25,10 @@ echo Make sure that JAVA_HOME points to a JDK and not a JRE.
 
 :SKIP_TOOLS
 
-set OPENDBCOPY_CLASSPATH=%DIRNAME%build;%DIRNAME%lib\log4j-1.2.8.jar;%DIRNAME%lib\jdom.jar;%DIRNAME%lib\xerces.jar;%JAVAC_JAR%;%RUNJAR%
-
-set JAVA_OPTS=%JAVA_OPTS% -Dprogram.name=%PROGNAME%
+set OPENDBCOPY_CLASSPATH=%CLASSPATH%;%DIRNAME%lib\opendbcopy.jar;%DIRNAME%lib\log4j-1.2.8.jar;%DIRNAME%lib\xerces.jar;%DIRNAME%lib\jdom.jar;%JAVAC_JAR%;%RUNJAR%
 
 rem Sun JVM memory allocation pool parameters. Uncomment and modify as appropriate.
-rem set JAVA_OPTS=%JAVA_OPTS% -Xms128m -Xmx512m
+set JAVA_OPTS=-Xms128m -Xmx512m
 
 echo ===============================================================================
 echo .
@@ -58,12 +42,11 @@ echo   CLASSPATH: %OPENDBCOPY_CLASSPATH%
 echo .
 echo ===============================================================================
 echo .
+echo loading opendbcopy ...
 
 :RESTART
-"%JAVA%" %JAVA_OPTS% -classpath "%OPENDBCOPY_CLASSPATH%" opendbcopy.controller.MainController %ARGS%
+java %JAVA_OPTS% -classpath "%OPENDBCOPY_CLASSPATH%" opendbcopy.controller.MainController
 IF ERRORLEVEL 10 GOTO RESTART
 
 :END
-if "%NOPAUSE%" == "" pause
-
-:END_NO_PAUSE
+echo bye
