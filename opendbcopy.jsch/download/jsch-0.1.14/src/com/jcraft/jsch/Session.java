@@ -1206,7 +1206,7 @@ break;
   public void setProxy(Proxy proxy){ this.proxy=proxy; }
   public void setHost(String host){ this.host=host; }
   public void setPort(int port){ this.port=port; }
-  void setUserName(String foo){ this.username=foo; }
+  public void setUserName(String foo){ this.username=foo; }
   public void setPassword(String foo){ this.password=foo; }
   public void setUserInfo(UserInfo userinfo){ this.userinfo=userinfo; }
   public void setInputStream(InputStream in){ this.in=in; }
