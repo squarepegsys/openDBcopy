@@ -8,7 +8,7 @@
 
     <info>
         <appname>opendbcopy</appname>
-        <appversion>0.41.2</appversion>
+        <appversion>0.50</appversion>
         <authors>
             <author name="Anthony Smith" email="smith@puzzle.ch"/>
         </authors>
@@ -32,8 +32,8 @@
     <resources>
         <res id="LicencePanel.licence" src="COPYING"/>
         <res id="InfoPanel.info" src="README"/>
-	  	<res id="shortcutSpec.xml" src="c:\opendbcopy\shortcutSpec.xml"/>
-	  	<res id="Installer.image" src="c:\opendbcopy\xdocs\images\opendbcopy_logo_small.gif" />
+	  	<res id="shortcutSpec.xml" src="shortcutSpec.xml"/>
+	  	<res id="Installer.image" src="xdocs/images/opendbcopy_logo_small.gif" />
     </resources>
     
     <!-- 

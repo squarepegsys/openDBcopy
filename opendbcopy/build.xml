@@ -11,28 +11,32 @@
    	<property name="build.sysclasspath" value="ignore"/>
 
    	<property name="name" value="opendbcopy"/>
-   	<property name="version" value="0.41.2"/>
+   	<property name="version" value="0.50"/>
 
    	<property name="sources.dir" value="${basedir}/src"/>
    	<property name="lib.dir" value="${basedir}/lib"/>
    	<property name="log.dir" value="${basedir}/log"/>
+   	<property name="hbm.dir" value="${basedir}/hbm"/>
    	<property name="dist.dir" value="${basedir}/dist"/>
    	<property name="build.dir" value="${basedir}/classes"/>
    	<property name="javadoc.dir" value="${basedir}/apidocs"/>
-   	<property name="izpack.dir" value="c:/Programme/IzPack"/>
 
    	<property name="packages" value="opendbcopy.*"/>
    
-	<taskdef name="izpack" classpath="${izpack.dir}/lib/compiler.jar"
-		classname="com.izforge.izpack.ant.IzPackTask"/>
 
    	<!-- ============================================================= -->
    	<!-- Classpath with libraries needed to compile this application   -->
    	<!-- ============================================================= -->
-   	<path id="compile.classpath">
+   	<path id="opendbcopy.classpath">
       	<fileset dir="${lib.dir}">
          	<include name="**/*.zip"/>
          	<include name="**/*.jar"/>
+      	</fileset>
+   	</path>
+
+   	<path id="hibernate.classpath">
+      	<fileset dir="${hbm.dir}/classes">
+         	<include name="**/*.class"/>
       	</fileset>
    	</path>
 
@@ -46,18 +50,22 @@
       	<mkdir dir="${log.dir}"/>
    	</target>
 
+   	<target name="preparehbm">
+      	<mkdir dir="${hbm.dir}"/>
+      	<mkdir dir="${hbm.dir}/src"/>
+      	<mkdir dir="${hbm.dir}/classes"/>
+   	</target>
+
    	<!-- ============================================================= -->
    	<!-- Compiles the source code                                      -->
    	<!-- ============================================================= -->
    	<target name="compile" depends="prepare">
-
     	<javac srcdir="${sources.dir}"
          	destdir="${build.dir}"
          	debug="on"
          	optimize="on">
-         	<classpath refid="compile.classpath"/>
+         	<classpath refid="opendbcopy.classpath"/>
       	</javac>
-
    	</target>
 
    	<!-- ============================================================= -->
@@ -65,6 +73,15 @@
    	<!-- ============================================================= -->
    	<target name="clean">
       	<delete quiet="true" dir="${build.dir}"/>
+   	</target>
+   	
+   	<target name="cleanhbm" depends="preparehbm">
+      	<delete quiet="true">
+           	<fileset dir="${hbm.dir}">
+               <include name="**/*.java"/>
+               <include name="**/*.class"/>
+           </fileset>
+      	</delete>
    	</target>
 
    	<!-- ============================================================= -->
@@ -112,6 +129,9 @@
    	<!-- Create IzPack installable jar                                 -->
    	<!-- ============================================================= -->
 	<target name="installer" depends="jar">
+	
+		<taskdef name="izpack" classpath="${basedir}/tools/IzPack/lib/compiler.jar"
+			classname="com.izforge.izpack.ant.IzPackTask"/>	
 		
 		<!-- as there may be test files in log.dir which should not be in distribution -->
 		<delete quiet="true" dir="${log.dir}"/>
@@ -121,7 +141,7 @@
 			output="${dist.dir}/${name}-${version}-install.jar"
 			installerType="standard-kunststoff"
 			basedir="${basedir}"
-			izPackDir="${izpack.dir}"/>		
+			izPackDir="${basedir}/tools/IzPack"/>		
 		<echo>Please ensure that maven generated site documentation before installer and</echo>
 		<echo>version was changed in project.xml, install.xml, build.xml</echo>
 	</target>
@@ -136,10 +156,102 @@
          	destdir="${javadoc.dir}"
          	author="true"
          	version="true"
-         	windowtitle="opendbcopy API 0.41.1"
+         	windowtitle="opendbcopy API"
          	doctitle="opendbcopy"
          	bottom="Copyright &#169; 2004 by Anthony Smith, Puzzle ITC GmbH"
         />
    </target>
 
+   <target name="hbm2java" depends="cleanhbm">        
+        <taskdef name="hbm2java"
+            classname="net.sf.hibernate.tool.hbm2java.Hbm2JavaTask">
+            <classpath>
+                <path refid="opendbcopy.classpath" />
+                <path refid="hibernate.classpath" />                
+            </classpath>
+		</taskdef>            
+      
+        <hbm2java 
+    	    output="${hbm.dir}/src">
+           	<fileset dir="${hbm.dir}">
+               <include name="**/*.hbm.xml"/>
+           </fileset>
+        </hbm2java>
+        
+        <!-- compile classes -->
+        <javac srcdir="${hbm.dir}/src"
+         	destdir="${hbm.dir}/classes"
+         	debug="on"
+         	optimize="on">
+         	<classpath>
+                <path refid="opendbcopy.classpath" />
+                <path refid="hibernate.classpath" />                
+            </classpath>
+      	</javac>
+      	
+      	<!-- generate jar file of classes and copy it to standard build dir -->
+      	<jar jarfile="${lib.dir}/schema.jar">
+         	<fileset dir="${hbm.dir}/classes"/>
+      	</jar>     	
+        
+    </target>
+   
+   <target name="schema-create" depends="hbm2java">        
+        <taskdef name="schema-create"
+            classname="net.sf.hibernate.tool.hbm2ddl.SchemaExportTask">
+            <classpath>
+                <path refid="opendbcopy.classpath" />
+            </classpath>
+		</taskdef>            
+      
+        <schema-create 
+        	properties="${hbm.dir}/hibernate.properties"
+        	quiet="no" 
+	        text="no" 
+    	    drop="no"
+    	    delimiter=";" 
+    	    output="${hbm.dir}/schema-export.sql">
+           	<fileset dir="${hbm.dir}">
+               <include name="**/*.hbm.xml"/>
+	        </fileset>
+        </schema-create>
+    </target>
+        
+	<target name="schema-update" depends="hbm2java">
+	    <taskdef name="schema-update"
+	        classname="net.sf.hibernate.tool.hbm2ddl.SchemaUpdateTask">
+            <classpath>
+                <path refid="opendbcopy.classpath" />
+                <path refid="hibernate.classpath" />                
+            </classpath>
+		</taskdef>            
+	    
+	    <schema-update
+        	properties="${hbm.dir}/hibernate.properties"
+	        quiet="no">
+           	<fileset dir="${hbm.dir}">
+               <include name="**/*.hbm.xml"/>
+           </fileset>
+	    </schema-update>
+	</target>        
+
+   <target name="schema-drop" depends="hbm2java">        
+        <taskdef name="schemaexport"
+            classname="net.sf.hibernate.tool.hbm2ddl.SchemaExportTask">
+            <classpath>
+                <path refid="opendbcopy.classpath" />
+                <path refid="hibernate.classpath" />                
+            </classpath>
+		</taskdef>            
+      
+        <schemaexport 
+        	properties="${hbm.dir}/hibernate.properties"
+        	quiet="no" 
+	        text="no" 
+    	    drop="yes">
+           	<fileset dir="${log.dir}">
+               <include name="**/*.hbm.xml"/>
+           </fileset>
+        </schemaexport>
+    </target>
 </project>
