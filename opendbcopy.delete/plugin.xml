@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 
+===============================================================
+ Plugin to create Hibernate Mapping Files
+
+ Copyright (C) 2003 Anthony Smith
+===============================================================
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ as published by the Free Software Foundation; either version 2
+ of the License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+=============================================================== 
+-->
+
+<plugin identifier="delete" model_class="opendbcopy.plugin.statistics.DatabaseModel">
+	<conf>
+		<!-- path may be relative or absolute -->
+		<path value="inout/" />
+		<file value="statistics" />			
+		<file_type value="csv" />
+		
+		<!-- for a tab delimiter enter \n as value -->
+		<delimiter value=";" />
+	</conf>
+	<threads>
+		<thread thread_class="opendbcopy.plugin.delete.DeleteTablesPlugin" description="title.plugin.opendbcopy.delete" />
+	</threads>
+	<input />
+	<output />
+	<source_db>
+      <driver />
+      <metadata />
+      <connection />
+      <catalog value="" />
+      <schema value="%" />
+      <table_pattern value="%" />
+      <model />
+   </source_db>
+</plugin>

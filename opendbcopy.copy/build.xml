@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 
+===============================================================
+ Ant build file                                                 
+
+ Copyright (C) 2003 Anthony Smith
+===============================================================
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ as published by the Free Software Foundation; either version 2
+ of the License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+=============================================================== 
+-->
+
+<project name="plugin" default="deploy" basedir=".">
+
+	<property file="build.properties"/>
+
+   	<property name="basedir" value="."/>
+
+   	<!-- ============================================================= -->
+   	<!-- Classpath with libraries needed to compile this application   -->
+   	<!-- ============================================================= -->
+   	<path id="plugin.classpath">
+   	   	<fileset dir="${lib.dir}">
+         	<include name="**/*.zip"/>
+         	<include name="**/*.jar"/>
+      	</fileset>
+   	</path>
+
+   	<!-- ============================================================= -->
+   	<!-- Prepares the project                                          -->
+   	<!-- ============================================================= -->
+   	<target name="prepare">
+   		<mkdir dir="${lib.dir}"/>
+      	<mkdir dir="${build.dir}"/>
+      	<mkdir dir="${dist.dir}/${plugin.name}"/>
+      	<mkdir dir="${javadoc.dir}"/>
+      	<mkdir dir="${resource.dir}"/>
+   	</target>
+
+   	<!-- ============================================================= -->
+   	<!-- Compiles the source code                                      -->
+   	<!-- ============================================================= -->
+   	<target name="compile" depends="prepare">
+   		<!-- copy resource dir into build dir -->
+	   	<copy todir="${build.dir}">
+    		<fileset dir="${resource.dir}"/>
+		</copy>
+   		
+    	<javac srcdir="${sources.dir}"
+         	destdir="${build.dir}"
+         	debug="on"
+         	optimize="on">
+         	<classpath refid="plugin.classpath"/>
+      	</javac>
+   	</target>
+
+   	<!-- ============================================================= -->
+   	<!-- Clean up all files that are generated.                        -->
+   	<!-- ============================================================= -->
+   	<target name="clean">
+      	<delete quiet="true" dir="${build.dir}"/>
+   	</target>
+   	
+   	<!-- ============================================================= -->
+   	<!-- Clean and then compile the project                            -->
+   	<!-- ============================================================= -->
+   	<target name="rebuild">
+      	<antcall target="clean"/>
+      	<antcall target="compile"/>
+   	</target>
+
+   	<!-- ============================================================= -->
+   	<!-- Create the jar file containing binaries and sources           -->
+   	<!-- ============================================================= -->
+   	<target name="jar" depends="compile">
+      	<jar jarfile="${lib.dir}/${package.name}.jar">
+         	<fileset dir="${build.dir}"/>
+         	<fileset dir="${sources.dir}"/>
+      	</jar>
+   	</target>
+   	
+   	<!-- ============================================================= -->
+   	<!-- Copies plugin configuration and binaries into destination lib -->
+   	<!-- NOTE: contains path to opendbcopy! Change in build.properties -->
+   	<!-- ============================================================= -->
+   	<target name="deploy" depends="clean, jar">
+   		<!-- delete destination dir -->
+   		<delete quiet="true" dir="${OPENDBCOPY_HOME}/plugins/${plugin.name}"/>
+   		
+   		<!-- copy configuration to destination dir -->
+	   	<copy file="${plugin.file}" todir="${OPENDBCOPY_HOME}/plugins/${plugin.name}"/>
+		<copy file="${workingMode.file}" todir="${OPENDBCOPY_HOME}/plugins/${plugin.name}"/>
+
+		<!-- copy lib dir to destination dir -->
+	   	<copy todir="${OPENDBCOPY_HOME}/plugins/${plugin.name}/lib">
+    		<fileset dir="${lib.dir}"/>
+		</copy>
+   	</target>
+
+   	<!-- ============================================================= -->
+   	<!-- Creates a package for distribution                            -->
+   	<!-- ============================================================= -->
+	<target name="dist" depends="clean, jar, javadoc">
+		<!-- clean dist and javadoc -->
+	   	<delete quiet="true" dir="${dist.dir}"/>
+	
+		<!-- copy plugin configuration and working mode into distribution -->
+	   	<copy file="${plugin.file}" todir="${dist.dir}/${plugin.name}"/>
+		<copy file="${workingMode.file}" todir="${dist.dir}/${plugin.name}"/>
+		
+		<!-- copy lib dir into distribution -->
+	   	<copy todir="${dist.dir}/${plugin.name}/lib">
+    		<fileset dir="${lib.dir}"/>
+		</copy>
+
+		<!-- copy sources dir into distribution -->
+	   	<copy todir="${dist.dir}/${plugin.name}/src">
+    		<fileset dir="${sources.dir}"/>
+		</copy>
+
+		<!-- copy resource dir into distribution -->
+	   	<copy todir="${dist.dir}/${plugin.name}/resource">
+    		<fileset dir="${resource.dir}"/>
+		</copy>
+
+		<!-- copy apidocs dir into distribution -->
+	   	<copy todir="${dist.dir}/${plugin.name}/apidocs">
+    		<fileset dir="${javadoc.dir}"/>
+		</copy>
+		<zip zipfile="${dist.dir}/${package.name}.zip" basedir="${dist.dir}"/>		
+	</target>
+	
+   	<!-- ============================================================= -->
+   	<!-- Creates the API documentation                                 -->
+   	<!-- ============================================================= -->
+   	<target name="javadoc" depends="compile">
+      	<javadoc packagenames="${packages}"
+         	sourcepath="${sources.dir}"
+         	destdir="${javadoc.dir}"
+         	author="true"
+         	version="true"
+         	windowtitle="${plugin.name} API"
+         	doctitle="${plugin.name}"
+         	bottom="Copyright &#169; ${plugin.copyright}"
+        />
+   </target>
+</project>
