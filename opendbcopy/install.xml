@@ -1,45 +1,32 @@
 <?xml version="1.0" encoding="iso-8859-1" standalone="yes" ?>
 
-<!-- 
-    Installation configuration for opendbcopy us IzPack
--->
-
 <installation version="1.0">
 
     <info>
-        <appname>opendbcopy</appname>
-        <appversion>0.5alpha</appversion>
+        <appname>openDBcopy</appname>
+        <appversion>0.51rc1</appversion>
         <authors>
             <author name="Anthony Smith" email="smith@puzzle.ch"/>
         </authors>
-        <url>http://opendbcopy.sourceforge.net/</url>
+        <url>http://opendbcopy.org/</url>
     </info>
     
-    <guiprefs width="640" height="480" resizable="yes"/>
-
     <native type="izpack" name="ShellLink.dll"/>
+
+    <guiprefs width="640" height="480" resizable="yes"/>
     
     <locale>
         <langpack iso3="eng"/>
-	    <langpack iso3="deu"/>
-        <langpack iso3="fra"/>
+        <langpack iso3="deu"/>
     </locale>
     
-    <!-- 
-        The resources section.
-        The ids must be these ones if you want to use the LicencePanel and/or the InfoPanel.
-    -->
     <resources>
         <res id="LicencePanel.licence" src="COPYING"/>
         <res id="InfoPanel.info" src="README"/>
+        <res id="installer.langsel.img" src="xdocs/images/opendbcopy_logo.gif" />
 	  	<res id="shortcutSpec.xml" src="shortcutSpec.xml"/>
-	  	<res id="Installer.image" src="xdocs/images/opendbcopy_logo_small.gif" />
     </resources>
     
-    <!-- 
-        The panels section.
-        We indicate here which panels we want to use. The order will be respected.
-    -->
     <panels>
         <panel classname="HelloPanel"/>
         <panel classname="InfoPanel"/>
@@ -47,20 +34,20 @@
         <panel classname="TargetPanel"/> 
         <panel classname="PacksPanel"/>
         <panel classname="InstallPanel"/>
-  	<panel classname="ShortcutPanel"/>
+        <panel classname="ShortcutPanel"/>
         <panel classname="FinishPanel"/>
     </panels>
     
     <packs>
-        <pack name="Base" required="yes" preselected="yes">
-            <description>Opendbcopy 0.5 including Plugin Binaries as is</description>
+        <pack name="Base Programme" required="yes" preselected="yes">
+            <description>openDBcopy Core Component including Plugin Binaries as is</description>
             <file src="README" targetdir="$INSTALL_PATH"/>
             <file src="COPYING" targetdir="$INSTALL_PATH"/>
             <file src="NEWS" targetdir="$INSTALL_PATH"/>
             <file src="AUTHORS" targetdir="$INSTALL_PATH"/>
             <file src="ChangeLog" targetdir="$INSTALL_PATH"/>
-            <file src="start.bat" targetdir="$INSTALL_PATH"/>
-            <file src="start.sh" targetdir="$INSTALL_PATH"/>
+            <file src="bin/start.bat" targetdir="$INSTALL_PATH/bin"/>
+            <file src="bin/start.sh" targetdir="$INSTALL_PATH/bin"/>
             <file src="resource" targetdir="$INSTALL_PATH"/>
             <file src="conf" targetdir="$INSTALL_PATH"/>
             <file src="plugins" targetdir="$INSTALL_PATH"/>
@@ -69,25 +56,24 @@
             <file src="lib/xerces.jar" targetdir="$INSTALL_PATH/lib"/>
             <file src="lib/log4j-1.2.8.jar" targetdir="$INSTALL_PATH/lib"/>
 			<file src="lib/commons-lang-2.0.jar" targetdir="$INSTALL_PATH/lib"/>
+			<file src="lib/TableLayout.jar" targetdir="$INSTALL_PATH/lib"/>
+			<file src="lib/ostermillerutils_1_03_00.jar" targetdir="$INSTALL_PATH/lib"/>
+			<executable stage="never" targetfile="$INSTALL_PATH/lib/start.sh"/>
         </pack>
-
-        <pack name="Documentation" required="no" preselected="yes">
-            <description>NOTE Version 0.41 The complete documentation (see http://opendbcopy.sourceforge.net/)</description>
-            <file src="docs" targetdir="$INSTALL_PATH"/>
+        <pack name="User Manual" required="no" preselected="yes">
+            <description>User Manual</description>
+            <file src="docs/user-manual.pdf" targetdir="$INSTALL_PATH/docs"/>
         </pack>
-
-        <pack name="Sources" required="no" preselected="no">
-            <description>0.5 Source Codes (for developers only)</description>
+        <pack name="Developer Pack" required="no" preselected="no">
+            <description>Source Codes, Developer Manual and API Docs (for developers only)</description>
             <file src="src" targetdir="$INSTALL_PATH"/>
             <file src=".project" targetdir="$INSTALL_PATH"/>
             <file src=".classpath" targetdir="$INSTALL_PATH"/>
             <file src="jalopy_settings_opendbcopy.xml" targetdir="$INSTALL_PATH"/>
             <file src="build.xml" targetdir="$INSTALL_PATH"/>
-        </pack>
-
-        <pack name="API Docs" required="no" preselected="no">
-            <description>0.5 API Docs (for developers only)</description>
+            <file src="build.properties" targetdir="$INSTALL_PATH"/>
             <file src="apidocs" targetdir="$INSTALL_PATH"/>
+            <file src="docs/developer-manual.pdf" targetdir="$INSTALL_PATH/docs"/>
         </pack>
     </packs>
     

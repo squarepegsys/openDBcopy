@@ -63,11 +63,6 @@
    	<!-- ============================================================= -->
    	<target name="clean">
       	<delete quiet="true" dir="${build.dir}"/>
-      	
-      	<!-- delete standard jars in plugin directories -->
-      	<delete>
-		    <fileset dir="plugins" includes="**/opendbcopy.jar, **/jdom.jar, **/log4j-1.2.8.jar, **/commons-lang-2.0.jar, **/xerces.jar"/>
-		</delete>
    	</target>
 
    	<!-- ============================================================= -->
@@ -123,17 +118,30 @@
    	<!-- Create IzPack installable jar                                 -->
    	<!-- ============================================================= -->
 	<target name="installer" depends="jar">
-	
+      	<!-- delete standard jars in plugin directories -->
+      	<delete>
+		    <fileset dir="plugins" includes="**/opendbcopy.jar, **/jdom.jar, **/log4j-1.2.8.jar, **/commons-lang-2.0.jar, **/xerces.jar, **/TableLayout.jar, **/ostermillerutils_1_03_00.jar"/>
+		</delete>
+   		
+   		<!-- opendbcopy.schemageneration requires additional libs and hbm directory removed -->
+   		<copy file="${lib.dir}/log4j-1.2.8.jar" todir="plugins/opendbcopy.schemageneration/lib"/>
+   		<copy file="${lib.dir}/commons-lang-2.0.jar" todir="plugins/opendbcopy.schemageneration/lib"/>
+   		<copy file="${lib.dir}/xerces.jar" todir="plugins/opendbcopy.schemageneration/lib"/>
+   		<delete>
+		    <fileset dir="plugins/opendbcopy.schemageneration" includes="**/hibernate.properties, **/*.hbm.xml"/>
+		</delete>   		
+		
 		<taskdef name="izpack" classpath="${basedir}/tools/IzPack/lib/compiler.jar"
 			classname="com.izforge.izpack.ant.IzPackTask"/>	
-		
+
 		<izpack input="${install.file}"
 			output="${dist.dir}/${installable.jar}"
 			installerType="${install.type}"
 			basedir="${basedir}"
 			izPackDir="${basedir}/tools/IzPack"/>		
-		<echo>Please ensure that maven generated site documentation before installer and</echo>
-		<echo>version was changed in project.xml, install.xml, build.xml</echo>
+		<echo>1) Please ensure that maven site:generate has been executed before installer</echo>
+		<echo>2) App Version was changed in project.xml, install.xml, build.xml</echo>
+		<echo>3) opendbcopy.properties are public (show_gui, language, browser_paths)</echo>
 	</target>
 	
    	<!-- ============================================================= -->

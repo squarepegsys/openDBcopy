@@ -3,7 +3,7 @@
 <project>
   <pomVersion>3</pomVersion>
   <groupId>opendbcopy</groupId>
-  <currentVersion>0.5 alpha</currentVersion>
+  <currentVersion>0.51rc1</currentVersion>
   <logo>/images/opendbcopy_logo.gif</logo>
   <organization>
     <name>Puzzle ITC GmbH</name>
@@ -15,18 +15,18 @@
   <package>opendbcopy</package>
   
   <shortDescription>
-	opendbcopy - an open-source database migration utility (Java)
+	openDBcopy - an open-source database migration utility (Java)
   </shortDescription>
   
   <description>
-	opendbcopy is a universal database utility to migrate data 
+	openDBcopy is a universal database utility to migrate data 
 	from and to any database given a JDBC driver. Standard filters 
 	are included, custom plugins can be added. 
 	Complete migration project saved as XML for easy re-use. 
 	Run with GUI or as batch.
   </description>
   
-  <url>http://opendbcopy.sourceforge.net/</url>
+  <url>http://opendbcopy.org/</url>
   
   <issueTrackingUrl>
     http://sourceforge.net/tracker/?group_id=91406
@@ -37,20 +37,7 @@
     <url>http://cvs.sourceforge.net/viewcvs.py/opendbcopy</url>
   </repository>
  
-  <mailingLists>
-    <mailingList>
-      <name>Opendbcopy User List</name>
-      <subscribe>opendbcopy-user-request@lists.sourceforge.net?body=subscribe</subscribe>
-      <unsubscribe>opendbcopy-user-request@lists.sourceforge.net?body=unsubscribe</unsubscribe>
-      <archive>http://sourceforge.net/mailarchive/forum.php?forum=opendbcopy-user-request</archive>
-    </mailingList>
-    <mailingList>
-      <name>Opendbcopy Developer List</name>
-      <subscribe>opendbcopy-dev-request@lists.sourceforge.net?body=subscribe</subscribe>
-      <unsubscribe>opendbcopy-dev-request@lists.sourceforge.net?body=unsubscribe</unsubscribe>
-      <archive>http://sourceforge.net/mailarchive/forum.php?forum=opendbcopy-dev-request</archive>
-    </mailingList>
-  </mailingLists>
+  <mailingLists/>
   
   <developers>
     <developer>
@@ -85,6 +72,7 @@
            <version>b9</version>
            <url>http://www.jdom.org/dist/binary/</url>
         </dependency>
+        
         <dependency>
            <groupId>xerces</groupId>
            <artifactId>xerces</artifactId>
@@ -102,12 +90,27 @@
 
 		<!-- commons -->
         <dependency>
-        <groupId>log4j</groupId>
+        <groupId>commons-lang</groupId>
            <artifactId>commons-lang</artifactId>
            <version>2.0</version>
            <url>http://www.apache.org/dist/commons</url>
         </dependency>
 
+		<!-- TableLayout -->
+        <dependency>
+        <groupId>layout-manager</groupId>
+           <artifactId>TableLayout</artifactId>
+           <version>1.0</version>
+           <url>http://www.clearthought.info/software/TableLayout/</url>
+        </dependency>
+
+		<!-- Browser Runner -->
+        <dependency>
+        <groupId>ostermillerutils</groupId>
+           <artifactId>ostermillerutils</artifactId>
+           <version>1_03_00</version>
+           <url>http://ostermiller.org/utils/</url>
+        </dependency>
   </dependencies>
   
   <build>
@@ -124,18 +127,18 @@
   </build>
 
   <reports>
-    <report>maven-jdepend-plugin</report>
+    <!--report>maven-jdepend-plugin</report-->
     <!--report>maven-checkstyle-plugin</report-->
-    <report>maven-changes-plugin</report>
-    <report>maven-changelog-plugin</report>
-    <report>maven-file-activity-plugin</report>
-    <report>maven-developer-activity-plugin</report>
+    <!--report>maven-changes-plugin</report-->
+    <!--report>maven-changelog-plugin</report-->
+    <!--report>maven-file-activity-plugin</report-->
+    <!--report>maven-developer-activity-plugin</report-->
     <report>maven-javadoc-plugin</report>
     <!--report>maven-jxr-plugin</report-->
     <!--report>maven-junit-report-plugin</report-->
     <!--report>maven-tasklist-plugin</report-->
     <!--report>maven-pmd-plugin</report-->
-    <report>maven-faq-plugin</report>
+    <!--report>maven-faq-plugin</report-->
   </reports>
 
 </project>

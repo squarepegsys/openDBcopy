@@ -1,27 +1,8 @@
-openDBcopy version 0.5 alpha
+openDBcopy version 0.51
 
 Copyright (C) 2004 Anthony Smith <smith@puzzle.ch>
 
 =============================================================================================
-
-*********************************************************************************
-*                                   IMPORTANT                                   *
-*********************************************************************************
-DOCUMENTATION
-The documentation of this release except the API docs are still of version 0.41.
-Any help to update documentation is very appreciated, especially for the user manual.
-
-MIGRATING DATABASE SCHEMAS
-openDBcopy currently generates Hibernate Mapping Files, which is an XML file containing
-information about the table structure beneath and their relations. To generate the DDL
-and required Java files, representing the Mappings, please use Apache's Ant Builder.
-See build.xml in plugins/openDBcopy.schemageneration. Don't forget to place the 
-destination JDBC driver within the lib directory of plugins/openDBcopy.schemageneration.
-Please note that this plugin has not yet been tested on constraints and indexes. Any 
-help is very appreciated as I cannot test all databases.
-
-Have fun ;-)
-
 
 WHAT IS OPENDBCOPY
 ******************
@@ -60,6 +41,8 @@ openDBcopy requires the following jar files in the lib directory to run.
 -- log4j-1.2.8.jar
 -- xerces.jar
 -- commons-lang-2.0.jar
+-- TableLayout.jar
+-- ostermillerutils_1_03_00.jar
 
 -- and appropriate JDBC drivers for the databases you want to interact with
 
@@ -72,7 +55,7 @@ Forgive me if it is not yet complete... I do what I can.
 
 UTILTIES AND LIBRARIES USED
 ***************************
-This program has been developed using Eclipse 3.0M7. Its source code has been formatted 
+This program has been developed using Eclipse 3.0. Its source code has been formatted 
 using Jalopy (source code formatter plugin for Eclipse, see jalopy.sourceforge.net). 
 This program includes software developed by the Apache Software Foundation (http://www.apache.org), 
 as well as JDOM APIs from http://www.jdom.org.
