@@ -18,17 +18,17 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.io;
 
-import org.apache.log4j.Logger;
-
 import org.jdom.Document;
+import org.jdom.JDOMException;
 
 import org.jdom.input.SAXBuilder;
 
 import java.io.File;
+import java.io.IOException;
 
 
 /**
@@ -38,8 +38,6 @@ import java.io.File;
  * @version $Revision$
  */
 public final class ImportFromXML {
-    private static Logger logger = Logger.getLogger(ImportFromXML.class.getName());
-
     /**
      * DOCUMENT ME!
      *
@@ -47,9 +45,15 @@ public final class ImportFromXML {
      *
      * @return DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws IOException DOCUMENT ME!
+     * @throws JDOMException DOCUMENT ME!
      */
-    public static final Document importFile(String fileName) throws Exception {
+    public static final Document importFile(String fileName) throws IllegalArgumentException, IOException, JDOMException {
+        if ((fileName == null) || (fileName.length() == 0)) {
+            throw new IllegalArgumentException("Missing fileName");
+        }
+
         Document   doc = null;
 
         SAXBuilder parser = new SAXBuilder();

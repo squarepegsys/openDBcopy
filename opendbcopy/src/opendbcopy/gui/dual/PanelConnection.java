@@ -18,19 +18,16 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
-package opendbcopy.gui;
+package opendbcopy.gui.dual;
 
 import opendbcopy.config.OperationType;
 import opendbcopy.config.XMLTags;
 
 import opendbcopy.controller.MainController;
 
-import opendbcopy.model.ProjectManager;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import opendbcopy.gui.DynamicPanel;
 
 import org.jdom.Element;
 
@@ -45,11 +42,9 @@ import java.awt.event.ActionEvent;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Observable;
-import java.util.Observer;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -64,17 +59,12 @@ import javax.swing.border.TitledBorder;
  * @author Anthony Smith
  * @version $Revision$
  */
-public class PanelConnection extends JPanel implements Observer {
-    private static Logger  logger = Logger.getLogger(PanelConnection.class.getName());
-    private FrameMain      parentFrame;
-    private MainController controller;
-    private ProjectManager pm;
+public class PanelConnection extends DynamicPanel {
     private boolean        sourceConnectionTested = false;
     private boolean        destinationConnectionTested = false;
     private JPanel         panelSource = new JPanel();
     private JPanel         panelDestination = new JPanel();
     private JPanel         panelMain = new JPanel();
-    private JPanel         panelControl = new JPanel();
     private JPanel         panelConnections = new JPanel();
     private GridLayout     gridLayoutMain = new GridLayout();
     private GridLayout     gridLayoutConnections = new GridLayout();
@@ -88,11 +78,10 @@ public class PanelConnection extends JPanel implements Observer {
     private JTextField     tfURLD = new JTextField();
     private JTextField     tfUserNameD = new JTextField();
     private JPasswordField tfPasswordD = new JPasswordField();
-    private JCheckBox      checkBoxDbMode = new JCheckBox();
     private JComboBox      comboBoxDriverS = new JComboBox();
     private JComboBox      comboBoxDriverD = new JComboBox();
-    private JLabel labelDriverNameS = new JLabel();
-    private JLabel labelDriverNameD = new JLabel();
+    private JLabel         labelDriverNameS = new JLabel();
+    private JLabel         labelDriverNameD = new JLabel();
     private JLabel         labelDriverS = new JLabel();
     private JLabel         labelURLS = new JLabel();
     private JLabel         labelUserNameS = new JLabel();
@@ -106,24 +95,14 @@ public class PanelConnection extends JPanel implements Observer {
     /**
      * Creates a new PanelConnection object.
      *
-     * @param parentFrame DOCUMENT ME!
      * @param controller DOCUMENT ME!
-     * @param projectManager DOCUMENT ME!
+     *
+     * @throws Exception DOCUMENT ME!
      */
-    public PanelConnection(FrameMain      parentFrame,
-                           MainController controller,
-                           ProjectManager projectManager) {
-        this.parentFrame     = parentFrame;
-        this.controller      = controller;
-        this.pm              = projectManager;
-
-        //        Element connection = new Element(XMLTags.CONNECTION);
-        try {
-        	retrieveDrivers();
-            guiInit();
-        } catch (Exception e) {
-            logger.error(e.toString());
-        }
+    public PanelConnection(MainController controller) throws Exception {
+        super(controller);
+        retrieveDrivers();
+        guiInit();
     }
 
     /**
@@ -135,15 +114,6 @@ public class PanelConnection extends JPanel implements Observer {
     public final void update(Observable o,
                              Object     obj) {
         try {
-            // db_mode
-            if (pm.getProjectModel().getDbMode() == pm.getProjectModel().SINGLE_MODE) {
-                checkBoxDbMode.setSelected(true);
-                panelDestination.setVisible(false);
-            } else {
-                checkBoxDbMode.setSelected(false);
-                panelDestination.setVisible(true);
-            }
-
             // source connection
             if (pm.getProjectModel().getSourceConnection().getAttributes().size() > 0) {
                 tfDriverClassNameS.setText(pm.getProjectModel().getSourceConnection().getAttributeValue(XMLTags.DRIVER_CLASS));
@@ -152,41 +122,15 @@ public class PanelConnection extends JPanel implements Observer {
                 tfPasswordS.setText(pm.getProjectModel().getSourceConnection().getAttributeValue(XMLTags.PASSWORD));
             }
 
-            if (pm.getProjectModel().getDbMode() == pm.getProjectModel().DUAL_MODE) {
-                // destination connection
-                if (pm.getProjectModel().getDestinationConnection().getAttributes().size() > 0) {
-                    tfDriverClassNameD.setText(pm.getProjectModel().getDestinationConnection().getAttributeValue(XMLTags.DRIVER_CLASS));
-                    tfURLD.setText(pm.getProjectModel().getDestinationConnection().getAttributeValue(XMLTags.URL));
-                    tfUserNameD.setText(pm.getProjectModel().getDestinationConnection().getAttributeValue(XMLTags.USERNAME));
-                    tfPasswordD.setText(pm.getProjectModel().getDestinationConnection().getAttributeValue(XMLTags.PASSWORD));
-                }
+            // destination connection
+            if (pm.getProjectModel().getDestinationConnection().getAttributes().size() > 0) {
+                tfDriverClassNameD.setText(pm.getProjectModel().getDestinationConnection().getAttributeValue(XMLTags.DRIVER_CLASS));
+                tfURLD.setText(pm.getProjectModel().getDestinationConnection().getAttributeValue(XMLTags.URL));
+                tfUserNameD.setText(pm.getProjectModel().getDestinationConnection().getAttributeValue(XMLTags.USERNAME));
+                tfPasswordD.setText(pm.getProjectModel().getDestinationConnection().getAttributeValue(XMLTags.PASSWORD));
             }
         } catch (Exception e) {
-            logger.error(e.toString());
-            parentFrame.setStatusBar(e.toString(), Level.ERROR);
-        }
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
-     */
-    public final boolean canContinue() throws Exception {
-        if (pm.getProjectModel().getDbMode() == pm.getProjectModel().DUAL_MODE) {
-            if ((pm.getProjectModel().getSourceConnection().getAttributes().size() > 0) && (pm.getProjectModel().getDestinationConnection().getAttributes().size() > 0)) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            if (pm.getProjectModel().getSourceConnection().getAttributes().size() > 0) {
-                return true;
-            } else {
-                return false;
-            }
+            postException(e);
         }
     }
 
@@ -201,10 +145,10 @@ public class PanelConnection extends JPanel implements Observer {
 
             comboBoxDriverS.removeAllItems();
             comboBoxDriverD.removeAllItems();
-            
+
             comboBoxDriverS.addItem("pick a driver");
             comboBoxDriverD.addItem("pick a driver");
-            
+
             while (itDrivers.hasNext()) {
                 Element driver = (Element) itDrivers.next();
 
@@ -215,8 +159,7 @@ public class PanelConnection extends JPanel implements Observer {
                 }
             }
         } catch (Exception e) {
-            logger.error(e.toString());
-            parentFrame.setStatusBar(e.toString(), Level.ERROR);
+            postException(e);
         }
     }
 
@@ -225,24 +168,18 @@ public class PanelConnection extends JPanel implements Observer {
      *
      * @throws Exception DOCUMENT ME!
      */
-    private void guiInit() throws Exception {
+    protected final void guiInit() throws Exception {
         gridLayoutMain.setColumns(1);
         gridLayoutMain.setHgap(10);
         gridLayoutMain.setRows(1);
         gridLayoutMain.setVgap(10);
         this.setLayout(gridLayoutMain);
 
-        panelControl.setLayout(new GridLayout(1, 1));
-
         gridLayoutConnections.setColumns(1);
         gridLayoutConnections.setHgap(0);
         gridLayoutConnections.setRows(2);
         gridLayoutConnections.setVgap(0);
         panelConnections.setLayout(gridLayoutConnections);
-
-        checkBoxDbMode.setText(" Single Database Mode");
-        checkBoxDbMode.setSelected(false);
-        checkBoxDbMode.addActionListener(new PanelConnection_checkBoxDbMode_actionAdapter(this));
 
         // Source layout
         panelSource.setLayout(null);
@@ -271,7 +208,7 @@ public class PanelConnection extends JPanel implements Observer {
         tfPasswordS.setBounds(new Rectangle(110, 150, 240, 20));
 
         comboBoxDriverS.addActionListener(new PanelConnection_comboBoxDriverS_actionAdapter(this));
-        
+
         buttonTestS.setBounds(new Rectangle(380, 90, 180, 24));
         buttonTestS.setText("Apply and Test");
         buttonTestS.addActionListener(new PanelConnection_buttonTestS_actionAdapter(this));
@@ -303,12 +240,11 @@ public class PanelConnection extends JPanel implements Observer {
         tfPasswordD.setBounds(new Rectangle(110, 150, 240, 20));
 
         comboBoxDriverD.addActionListener(new PanelConnection_comboBoxDriverD_actionAdapter(this));
-        
+
         buttonTestD.setBounds(new Rectangle(380, 90, 180, 24));
         buttonTestD.setText("Apply and Test");
         buttonTestD.addActionListener(new PanelConnection_buttonTestD_actionAdapter(this));
-        
-        panelControl.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1), " Choose between working with two databases or only one "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+
         panelSource.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1), " Source Database Connection "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
         panelDestination.setBorder(BorderFactory.createCompoundBorder(new TitledBorder(BorderFactory.createLineBorder(SystemColor.controlText, 1), " Destination Database Connection "), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 
@@ -336,13 +272,10 @@ public class PanelConnection extends JPanel implements Observer {
         panelDestination.add(tfPasswordD, null);
         panelDestination.add(buttonTestD, null);
 
-        panelControl.add(checkBoxDbMode);
-
         panelConnections.add(panelSource);
         panelConnections.add(panelDestination);
 
         panelMain.setLayout(new BorderLayout());
-        panelMain.add(panelControl, BorderLayout.NORTH);
         panelMain.add(panelConnections, BorderLayout.CENTER);
 
         this.add(panelMain);
@@ -351,66 +284,33 @@ public class PanelConnection extends JPanel implements Observer {
     /**
      * DOCUMENT ME!
      *
-     * @param visible DOCUMENT ME!
-     */
-    public void showPanelDestination(boolean visible) {
-        panelDestination.setVisible(visible);
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param e DOCUMENT ME!
-     */
-    void checkBoxDbMode_actionPerformed(ActionEvent e) {
-        try {
-            if (checkBoxDbMode.isSelected()) {
-                pm.getProjectModel().setDbMode(pm.getProjectModel().SINGLE_MODE);
-                pm.broadcast();
-            } else {
-                pm.getProjectModel().setDbMode(pm.getProjectModel().DUAL_MODE);
-                pm.broadcast();
-            }
-        } catch (Exception ex) {
-            logger.error(ex.toString());
-            parentFrame.setStatusBar(ex.toString(), Level.ERROR);
-        }
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
      * @param e DOCUMENT ME!
      */
     void buttonTestS_actionPerformed(ActionEvent e) {
-        if (tfURLS.getText().length() > 0) {
-            tfURLS.setBackground(Color.WHITE);
+        try {
+            if (tfURLS.getText().length() > 0) {
+                tfURLS.setBackground(Color.WHITE);
 
-            Element connection = pm.getProjectModel().getSourceConnection();
-            connection.setAttribute(XMLTags.DRIVER_CLASS, tfDriverClassNameS.getText());
-            connection.setAttribute(XMLTags.URL, tfURLS.getText());
-            connection.setAttribute(XMLTags.USERNAME, tfUserNameS.getText());
+                Element connection = pm.getProjectModel().getSourceConnection();
+                connection.setAttribute(XMLTags.DRIVER_CLASS, tfDriverClassNameS.getText());
+                connection.setAttribute(XMLTags.URL, tfURLS.getText());
+                connection.setAttribute(XMLTags.USERNAME, tfUserNameS.getText());
 
-            if (this.tfPasswordS.getPassword() != null) {
-                connection.setAttribute(XMLTags.PASSWORD, new String(tfPasswordS.getPassword()));
+                if (this.tfPasswordS.getPassword() != null) {
+                    connection.setAttribute(XMLTags.PASSWORD, new String(tfPasswordS.getPassword()));
+                } else {
+                    connection.setAttribute(XMLTags.PASSWORD, "");
+                }
+
+                Element operation = new Element(XMLTags.OPERATION);
+                operation.setAttribute(XMLTags.NAME, OperationType.TEST_SOURCE);
+
+                execute(operation, "Connection to source db " + this.tfURLS.getText() + " successful");
             } else {
-                connection.setAttribute(XMLTags.PASSWORD, "");
+                tfURLS.setBackground(Color.RED);
             }
-
-            Element operation = new Element(XMLTags.OPERATION);
-            operation.setAttribute(XMLTags.NAME, OperationType.TEST_SOURCE);
-
-            try {
-                this.controller.execute(operation);
-                this.parentFrame.setStatusBar("Connection to " + tfURLS.getText() + " successful", Level.INFO);
-
-                sourceConnectionTested = true;
-            } catch (Exception ex) {
-                logger.error(ex.toString());
-                parentFrame.setStatusBar(ex.toString(), Level.ERROR);
-            }
-        } else {
-            tfURLS.setBackground(Color.RED);
+        } catch (Exception ex) {
+            postException(ex);
         }
     }
 
@@ -420,85 +320,31 @@ public class PanelConnection extends JPanel implements Observer {
      * @param e DOCUMENT ME!
      */
     void buttonTestD_actionPerformed(ActionEvent e) {
-        if (tfURLD.getText().length() > 0) {
-            tfURLD.setBackground(Color.WHITE);
+        try {
+            if (tfURLD.getText().length() > 0) {
+                tfURLD.setBackground(Color.WHITE);
 
-            Element connection = pm.getProjectModel().getDestinationConnection();
-            connection.setAttribute(XMLTags.DRIVER_CLASS, this.tfDriverClassNameD.getText());
-            connection.setAttribute(XMLTags.URL, this.tfURLD.getText());
-            connection.setAttribute(XMLTags.USERNAME, this.tfUserNameD.getText());
+                Element connection = pm.getProjectModel().getDestinationConnection();
+                connection.setAttribute(XMLTags.DRIVER_CLASS, this.tfDriverClassNameD.getText());
+                connection.setAttribute(XMLTags.URL, this.tfURLD.getText());
+                connection.setAttribute(XMLTags.USERNAME, this.tfUserNameD.getText());
 
-            if (this.tfPasswordD.getPassword() != null) {
-                connection.setAttribute(XMLTags.PASSWORD, new String(this.tfPasswordD.getPassword()));
+                if (this.tfPasswordD.getPassword() != null) {
+                    connection.setAttribute(XMLTags.PASSWORD, new String(this.tfPasswordD.getPassword()));
+                } else {
+                    connection.setAttribute(XMLTags.PASSWORD, "");
+                }
+
+                Element operation = new Element(XMLTags.OPERATION);
+                operation.setAttribute(XMLTags.NAME, OperationType.TEST_DESTINATION);
+
+                execute(operation, "Connection to destination db " + this.tfURLD.getText() + " successful");
             } else {
-                connection.setAttribute(XMLTags.PASSWORD, "");
+                tfURLD.setBackground(Color.RED);
             }
-
-            Element operation = new Element(XMLTags.OPERATION);
-            operation.setAttribute(XMLTags.NAME, OperationType.TEST_DESTINATION);
-
-            try {
-                this.controller.execute(operation);
-                this.parentFrame.setStatusBar("Connection to " + this.tfURLD.getText() + " successful", Level.INFO);
-
-                destinationConnectionTested = true;
-            } catch (Exception ex) {
-                logger.error(ex.toString());
-                this.parentFrame.setStatusBar(ex.toString(), Level.ERROR);
-            }
-        } else {
-            tfURLD.setBackground(Color.RED);
+        } catch (Exception ex) {
+            postException(ex);
         }
-    }
-    
-    void comboBoxDriverS_actionPerformed(ActionEvent e) {
-    	if (!comboBoxDriverS.getSelectedItem().equals("")) {
-    		Element driver = null;
-    		
-    		if (driversHashtable.containsKey(comboBoxDriverS.getSelectedItem())) {
-    			driver = (Element) driversHashtable.get(comboBoxDriverS.getSelectedItem());
-    			
-    			if (driver != null) {
-    				this.tfDriverClassNameS.setText(driver.getChild(XMLTags.CLASS).getAttributeValue(XMLTags.NAME));
-    				tfURLS.setText(driver.getChild(XMLTags.URL).getAttributeValue(XMLTags.VALUE));
-    			}
-    		} 
-     	}    	
-    }
-
-    void comboBoxDriverD_actionPerformed(ActionEvent e) {
-    	if (!comboBoxDriverD.getSelectedItem().equals("")) {
-    		Element driver = null;
-    		
-    		if (driversHashtable.containsKey(comboBoxDriverD.getSelectedItem())) {
-    			driver = (Element) driversHashtable.get(comboBoxDriverD.getSelectedItem());
-    			
-    			if (driver != null) {
-    				tfDriverClassNameD.setText(driver.getChild(XMLTags.CLASS).getAttributeValue(XMLTags.NAME));
-    				tfURLD.setText(driver.getChild(XMLTags.URL).getAttributeValue(XMLTags.VALUE));
-    			}
-    		}
-    	}    	
-    }
-}
-
-
-/**
- * class description
- *
- * @author smi
- * @version $Revision$
- */
-class PanelConnection_checkBoxDbMode_actionAdapter implements java.awt.event.ActionListener {
-    PanelConnection adaptee;
-
-    /**
-     * Creates a new PanelFilter_checkBoxTrim_actionAdapter object.
-     *
-     * @param adaptee DOCUMENT ME!
-     */
-    PanelConnection_checkBoxDbMode_actionAdapter(PanelConnection adaptee) {
-        this.adaptee = adaptee;
     }
 
     /**
@@ -506,8 +352,39 @@ class PanelConnection_checkBoxDbMode_actionAdapter implements java.awt.event.Act
      *
      * @param e DOCUMENT ME!
      */
-    public final void actionPerformed(ActionEvent e) {
-        adaptee.checkBoxDbMode_actionPerformed(e);
+    void comboBoxDriverS_actionPerformed(ActionEvent e) {
+        if (!comboBoxDriverS.getSelectedItem().equals("")) {
+            Element driver = null;
+
+            if (driversHashtable.containsKey(comboBoxDriverS.getSelectedItem())) {
+                driver = (Element) driversHashtable.get(comboBoxDriverS.getSelectedItem());
+
+                if (driver != null) {
+                    this.tfDriverClassNameS.setText(driver.getChild(XMLTags.CLASS).getAttributeValue(XMLTags.NAME));
+                    tfURLS.setText(driver.getChild(XMLTags.URL).getAttributeValue(XMLTags.VALUE));
+                }
+            }
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param e DOCUMENT ME!
+     */
+    void comboBoxDriverD_actionPerformed(ActionEvent e) {
+        if (!comboBoxDriverD.getSelectedItem().equals("")) {
+            Element driver = null;
+
+            if (driversHashtable.containsKey(comboBoxDriverD.getSelectedItem())) {
+                driver = (Element) driversHashtable.get(comboBoxDriverD.getSelectedItem());
+
+                if (driver != null) {
+                    tfDriverClassNameD.setText(driver.getChild(XMLTags.CLASS).getAttributeValue(XMLTags.NAME));
+                    tfURLD.setText(driver.getChild(XMLTags.URL).getAttributeValue(XMLTags.VALUE));
+                }
+            }
+        }
     }
 }
 
@@ -569,46 +446,60 @@ class PanelConnection_buttonTestD_actionAdapter implements java.awt.event.Action
     }
 }
 
+
+/**
+ * class description
+ *
+ * @author Anthony Smith
+ * @version $Revision$
+ */
 class PanelConnection_comboBoxDriverS_actionAdapter implements java.awt.event.ActionListener {
-	PanelConnection adaptee;
+    PanelConnection adaptee;
 
-	/**
-	 * Creates a new PanelFilter_checkBoxTrim_actionAdapter object.
-	 *
-	 * @param adaptee DOCUMENT ME!
-	 */
-	PanelConnection_comboBoxDriverS_actionAdapter(PanelConnection adaptee) {
-		this.adaptee = adaptee;
-	}
+    /**
+     * Creates a new PanelFilter_checkBoxTrim_actionAdapter object.
+     *
+     * @param adaptee DOCUMENT ME!
+     */
+    PanelConnection_comboBoxDriverS_actionAdapter(PanelConnection adaptee) {
+        this.adaptee = adaptee;
+    }
 
-	/**
-	 * DOCUMENT ME!
-	 *
-	 * @param e DOCUMENT ME!
-	 */
-	public final void actionPerformed(ActionEvent e) {
-		adaptee.comboBoxDriverS_actionPerformed(e);
-	}
+    /**
+     * DOCUMENT ME!
+     *
+     * @param e DOCUMENT ME!
+     */
+    public final void actionPerformed(ActionEvent e) {
+        adaptee.comboBoxDriverS_actionPerformed(e);
+    }
 }
 
+
+/**
+ * class description
+ *
+ * @author Anthony Smith
+ * @version $Revision$
+ */
 class PanelConnection_comboBoxDriverD_actionAdapter implements java.awt.event.ActionListener {
-	PanelConnection adaptee;
+    PanelConnection adaptee;
 
-	/**
-	 * Creates a new PanelFilter_checkBoxTrim_actionAdapter object.
-	 *
-	 * @param adaptee DOCUMENT ME!
-	 */
-	PanelConnection_comboBoxDriverD_actionAdapter(PanelConnection adaptee) {
-		this.adaptee = adaptee;
-	}
+    /**
+     * Creates a new PanelFilter_checkBoxTrim_actionAdapter object.
+     *
+     * @param adaptee DOCUMENT ME!
+     */
+    PanelConnection_comboBoxDriverD_actionAdapter(PanelConnection adaptee) {
+        this.adaptee = adaptee;
+    }
 
-	/**
-	 * DOCUMENT ME!
-	 *
-	 * @param e DOCUMENT ME!
-	 */
-	public final void actionPerformed(ActionEvent e) {
-		adaptee.comboBoxDriverD_actionPerformed(e);
-	}
+    /**
+     * DOCUMENT ME!
+     *
+     * @param e DOCUMENT ME!
+     */
+    public final void actionPerformed(ActionEvent e) {
+        adaptee.comboBoxDriverD_actionPerformed(e);
+    }
 }

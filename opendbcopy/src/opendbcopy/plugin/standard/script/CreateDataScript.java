@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin.standard.script;
 
@@ -26,14 +26,22 @@ import opendbcopy.config.XMLTags;
 
 import opendbcopy.connection.DBConnection;
 
+import opendbcopy.connection.exception.CloseConnectionException;
+
 import opendbcopy.io.Writer;
 
 import opendbcopy.model.ProjectModel;
+
+import opendbcopy.model.exception.MissingAttributeException;
+import opendbcopy.model.exception.MissingElementException;
+import opendbcopy.model.exception.UnsupportedAttributeValueException;
 
 import opendbcopy.model.typeinfo.TypeInfo;
 import opendbcopy.model.typeinfo.TypeInfoHelper;
 
 import opendbcopy.plugin.ExecuteSkeleton;
+
+import opendbcopy.plugin.exception.PluginException;
 
 import opendbcopy.task.TaskExecute;
 
@@ -72,21 +80,45 @@ public class CreateDataScript extends ExecuteSkeleton {
     String                newLine = "";
     String                database = "";
     String                identifierQuoteStringOut = "";
+
     //char identifierQuoteStringOut = '';
-    private boolean       show_qualified_table_name = false;
-    private int           counterRecords = 0;
-    private int           counterTables = 0;
+    private boolean show_qualified_table_name = false;
+    private int     counterRecords = 0;
+    private int     counterTables = 0;
 
     /**
      * Creates a new CopyMapping object.
      *
      * @param task DOCUMENT ME!
      * @param projectModel DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws PluginException DOCUMENT ME!
      */
     public CreateDataScript(TaskExecute  task,
-                            ProjectModel projectModel) {
+                            ProjectModel projectModel) throws IllegalArgumentException, PluginException {
+        if ((task == null) || (projectModel == null)) {
+            throw new IllegalArgumentException("Missing arguments values: task=" + task + " projectModel=" + projectModel);
+        }
+
         this.task             = task;
         this.projectModel     = projectModel;
+
+        // execute unprocessed tables
+        doExecute(task, projectModel);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param task DOCUMENT ME!
+     * @param projectModel DOCUMENT ME!
+     *
+     * @throws PluginException DOCUMENT ME!
+     */
+    public final void doExecute(TaskExecute  task,
+                                ProjectModel projectModel) throws PluginException {
+        List processTables = null;
 
         try {
             newLine     = System.getProperty("line.separator");
@@ -107,40 +139,18 @@ public class CreateDataScript extends ExecuteSkeleton {
             // get connection
             connSource = DBConnection.getConnection(projectModel.getSourceConnection());
 
-            // execute unprocessed tables
-            doExecute(task, projectModel);
-        }
-        // hummm ... check error log
-         catch (Exception e) {
-            logger.error(e.toString());
-        }
-    }
+            // extract the tables to dump
+            if (projectModel.getDbMode() == projectModel.DUAL_MODE) {
+                processTables = projectModel.getDestinationTablesToProcessOrdered();
+            } else {
+                processTables = projectModel.getSourceTablesToProcessOrdered();
+            }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param task DOCUMENT ME!
-     * @param projectModel DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
-     */
-    public final void doExecute(TaskExecute  task,
-                                ProjectModel projectModel) throws Exception {
-        List processTables = null;
+            int nbrTables = processTables.size();
 
-        // extract the tables to dump
-        if (projectModel.getDbMode() == projectModel.DUAL_MODE) {
-            processTables = projectModel.getDestinationTablesToProcessOrdered();
-        } else {
-            processTables = projectModel.getSourceTablesToProcessOrdered();
-        }
+            // now set the number of tables that need to be copied
+            task.setLengthOfTaskTable(nbrTables);
 
-        int nbrTables = processTables.size();
-
-        // now set the number of tables that need to be copied
-        task.setLengthOfTaskTable(nbrTables);
-
-        try {
             stmSource = connSource.createStatement();
 
             String   sourceTableName = "";
@@ -215,9 +225,16 @@ public class CreateDataScript extends ExecuteSkeleton {
             } else {
                 this.task.setTaskStatus(this.task.interrupted);
             }
-        } catch (Exception e) {
-            DBConnection.closeConnection(connSource, false);
-            throw e;
+        } catch (SQLException sqle) {
+            throw new PluginException(sqle.getMessage(), sqle.getSQLState(), sqle.getErrorCode());
+        } catch (Exception e1) {
+            try {
+                DBConnection.closeConnection(connSource);
+            } catch (CloseConnectionException e2) {
+                // bad luck ... don't worry
+            }
+
+            throw new PluginException(e1.getMessage());
         }
     }
 
@@ -230,14 +247,17 @@ public class CreateDataScript extends ExecuteSkeleton {
      * @param processColumns DOCUMENT ME!
      * @param sbScript DOCUMENT ME!
      *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      * @throws SQLException DOCUMENT ME!
-     * @throws Exception DOCUMENT ME!
      */
     private void genInserts(ResultSet    srcResult,
                             String       tableName,
                             String       qualifiedTableName,
                             List         processColumns,
-                            StringBuffer sbScript) throws SQLException, Exception {
+                            StringBuffer sbScript) throws IllegalArgumentException, UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, SQLException {
         Iterator     itProcessColumns = processColumns.iterator();
         StringBuffer sbColumnNames = new StringBuffer();
 

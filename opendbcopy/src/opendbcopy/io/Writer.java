@@ -18,12 +18,13 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.io;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 
 
 /**
@@ -39,10 +40,15 @@ public final class Writer {
      * @param stringBuffer DOCUMENT ME!
      * @param fileName DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws IOException DOCUMENT ME!
      */
     public static final void write(StringBuffer stringBuffer,
-                                   String       fileName) throws Exception {
+                                   String       fileName) throws IllegalArgumentException, IOException {
+        if ((stringBuffer == null) || (fileName == null) || (fileName.length() == 0)) {
+            throw new IllegalArgumentException("Missing arguments values: stringBuffer=" + stringBuffer + " fileName=" + fileName);
+        }
+
         FileWriter fileWriter = new FileWriter(new File(fileName));
 
         fileWriter.write(stringBuffer.toString());

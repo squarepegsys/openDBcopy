@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin;
 
@@ -27,6 +27,8 @@ import opendbcopy.config.XMLTags;
 import opendbcopy.filter.StringConverter;
 
 import opendbcopy.model.ProjectModel;
+
+import opendbcopy.plugin.exception.PluginException;
 
 import opendbcopy.sql.SQL;
 
@@ -57,11 +59,9 @@ public abstract class ExecuteSkeleton implements Execute {
      * @param datasourceSource
      * @param datasourceDestination
      * @param copyProperties
-     *
-     * @throws SQLException
      */
     abstract public void doExecute(TaskExecute  task,
-                                   ProjectModel projectModel) throws Exception;
+                                   ProjectModel projectModel) throws PluginException;
 
     /**
      * DOCUMENT ME!

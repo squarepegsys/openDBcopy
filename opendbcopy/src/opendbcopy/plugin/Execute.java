@@ -18,11 +18,13 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin;
 
 import opendbcopy.model.ProjectModel;
+
+import opendbcopy.plugin.exception.PluginException;
 
 import opendbcopy.task.TaskExecute;
 
@@ -42,9 +44,7 @@ public interface Execute {
      * @param datasourceSource DOCUMENT ME!
      * @param datasourceDestination DOCUMENT ME!
      * @param copyProperties DOCUMENT ME!
-     *
-     * @throws SQLException DOCUMENT ME!
      */
     public void doExecute(TaskExecute  task,
-                          ProjectModel projectModel) throws Exception;
+                          ProjectModel projectModel) throws PluginException;
 }

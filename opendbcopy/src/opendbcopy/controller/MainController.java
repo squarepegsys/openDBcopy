@@ -18,12 +18,16 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.controller;
 
 import opendbcopy.config.APM;
 import opendbcopy.config.XMLTags;
+
+import opendbcopy.connection.exception.CloseConnectionException;
+import opendbcopy.connection.exception.DriverNotFoundException;
+import opendbcopy.connection.exception.OpenConnectionException;
 
 import opendbcopy.gui.FrameMain;
 
@@ -32,13 +36,21 @@ import opendbcopy.io.PropertiesToFile;
 
 import opendbcopy.model.ProjectManager;
 
+import opendbcopy.model.exception.MissingAttributeException;
+import opendbcopy.model.exception.MissingElementException;
+import opendbcopy.model.exception.UnsupportedAttributeValueException;
+
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+
+import java.sql.SQLException;
 
 import java.util.Observer;
 import java.util.Properties;
@@ -62,8 +74,20 @@ public class MainController {
      * default Constructor args may be null or contain parameters
      *
      * @param args DOCUMENT ME!
+     *
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws DriverNotFoundException DOCUMENT ME!
+     * @throws OpenConnectionException DOCUMENT ME!
+     * @throws CloseConnectionException DOCUMENT ME!
+     * @throws JDOMException DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
+     * @throws FileNotFoundException DOCUMENT ME!
+     * @throws IOException DOCUMENT ME!
+     * @throws Exception DOCUMENT ME!
      */
-    public MainController(String[] args) {
+    public MainController(String[] args) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, JDOMException, SQLException, FileNotFoundException, IOException, Exception {
         applicationProperties = loadApplicationProperties();
 
         setupLog4j(applicationProperties.getProperty(APM.LOG4J_PROPERTIES_FILE));
@@ -71,6 +95,8 @@ public class MainController {
         Document plugins = null;
         Document drivers = null;
         Document project = null;
+        Document typeMapping = null;
+        Document workingMode = null;
 
         try {
             // set the look and feel. If not existing, set default crossplatform look and feel
@@ -79,35 +105,40 @@ public class MainController {
                     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                 }
             }
-
-            // evaluate arguments
-            project     = Arguments.process(args);
-
-            // read drivers file
-            drivers     = ImportFromXML.importFile(applicationProperties.getProperty(APM.DRIVERS_CONF_FILE));
-
-            // read plugin file        
-            plugins = ImportFromXML.importFile(applicationProperties.getProperty(APM.PLUGINS_CONF_FILE));
-
-            if ((plugins != null) && (drivers != null) && (project != null)) {
-                // in case operation is included to execute
-                if ((project.getRootElement().getChild(XMLTags.OPERATION) != null) && (project.getRootElement().getChild(XMLTags.PLUGIN) != null)) {
-                    Element operation = project.getRootElement().getChild(XMLTags.OPERATION).detach();
-                    Element plugin = project.getRootElement().getChild(XMLTags.PLUGIN).detach();
-                    operation.addContent(plugin);
-
-                    initialiseMainController(plugins, drivers, project);
-
-                    // now execute immediately
-                    execute(operation);
-                } else {
-                    initialiseMainController(plugins, project);
-                }
-            } else if ((plugins != null) && (project == null)) {
-                initialiseMainController(plugins, drivers);
-            }
         } catch (Exception e) {
-            logger.error(e.toString());
+            System.err.println("Cannot set Look and Feel");
+        }
+
+        // evaluate arguments
+        project     = Arguments.process(args);
+
+        workingMode     = ImportFromXML.importFile(applicationProperties.getProperty(APM.WORKING_MODE_CONF_FILE));
+
+        // read drivers file
+        drivers     = ImportFromXML.importFile(applicationProperties.getProperty(APM.DRIVERS_CONF_FILE));
+
+        // read plugin file        
+        plugins     = ImportFromXML.importFile(applicationProperties.getProperty(APM.PLUGINS_CONF_FILE));
+
+        // read SQL types mapping
+        typeMapping = ImportFromXML.importFile(applicationProperties.getProperty(APM.SQL_TYPE_MAPPING_CONF_FILE));
+
+        if ((workingMode != null) && (plugins != null) && (drivers != null) && (project != null)) {
+            // in case operation is included to execute
+            if ((project.getRootElement().getChild(XMLTags.OPERATION) != null) && (project.getRootElement().getChild(XMLTags.PLUGIN) != null)) {
+                Element operation = project.getRootElement().getChild(XMLTags.OPERATION).detach();
+                Element plugin = project.getRootElement().getChild(XMLTags.PLUGIN).detach();
+                operation.addContent(plugin);
+
+                initialiseMainController(workingMode, plugins, typeMapping, drivers, project);
+
+                // now execute immediately
+                execute(operation);
+            } else {
+                initialiseMainController(workingMode, plugins, typeMapping, project);
+            }
+        } else if ((workingMode != null) && (plugins != null) && (project == null)) {
+            initialiseMainController(workingMode, plugins, typeMapping, drivers);
         }
     }
 
@@ -121,12 +152,14 @@ public class MainController {
             ClasspathLoader.addLibDirectoryToClasspath();
 
             new MainController(args);
+        } catch (FileNotFoundException e) {
+            System.err.println(e.getMessage());
+            System.exit(0);
         } catch (IOException e) {
             System.err.println(e.getMessage());
             System.exit(0);
         } catch (Exception e) {
             System.err.println(e.getMessage());
-            System.exit(0);
         }
     }
 
@@ -135,9 +168,23 @@ public class MainController {
      *
      * @param operation DOCUMENT ME!
      *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws DriverNotFoundException DOCUMENT ME!
+     * @throws OpenConnectionException DOCUMENT ME!
+     * @throws CloseConnectionException DOCUMENT ME!
+     * @throws JDOMException DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
+     * @throws IOException DOCUMENT ME!
      * @throws Exception DOCUMENT ME!
      */
-    public final void execute(Element operation) throws Exception {
+    public final void execute(Element operation) throws IllegalArgumentException, UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, JDOMException, SQLException, IOException, Exception {
+        if (operation == null) {
+            throw new IllegalArgumentException("Missing operation");
+        }
+
         pm.execute(operation);
     }
 
@@ -145,9 +192,43 @@ public class MainController {
      * register observers on the fly
      *
      * @param observer DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public final void registerObserver(Observer observer) {
+    public final void registerObserver(Observer observer) throws IllegalArgumentException {
+        if (observer == null) {
+            throw new IllegalArgumentException("Missing observer");
+        }
+
         pm.addObserver(observer);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param observer DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     */
+    public final void deleteObserver(Observer observer) throws IllegalArgumentException {
+        if (observer == null) {
+            throw new IllegalArgumentException("Missing observer");
+        }
+
+        pm.deleteObserver(observer);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws FileNotFoundException DOCUMENT ME!
+     * @throws IOException DOCUMENT ME!
+     */
+    private static Properties loadApplicationProperties() throws IllegalArgumentException, FileNotFoundException, IOException {
+        return PropertiesToFile.importPropertiesFromFile("conf/opendbcopy.properties");
     }
 
     /**
@@ -155,16 +236,8 @@ public class MainController {
      *
      * @return DOCUMENT ME!
      */
-    private static Properties loadApplicationProperties() {
-        try {
-            return PropertiesToFile.importPropertiesFromFile("conf/opendbcopy.properties");
-        } catch (Exception e) {
-            logger.error(e.toString());
-            logger.error("cannot launch opendbcopy without conf/opendbcopy.properties. Bye bye.");
-            System.exit(0);
-        }
-
-        return null;
+    public final ProjectManager getProjectManager() {
+        return pm;
     }
 
     /**
@@ -188,44 +261,59 @@ public class MainController {
     /**
      * DOCUMENT ME!
      *
+     * @param workingMode DOCUMENT ME!
      * @param plugins DOCUMENT ME!
+     * @param typeMapping DOCUMENT ME!
+     * @param drivers DOCUMENT ME!
      * @param project DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    private void initialiseMainController(Document plugins,
+    private void initialiseMainController(Document workingMode,
+                                          Document plugins,
+                                          Document typeMapping,
                                           Document drivers,
-                                          Document project) {
-        try {
-            String runlevel = project.getRootElement().getAttributeValue(XMLTags.RUNLEVEL);
+                                          Document project) throws IllegalArgumentException, UnsupportedAttributeValueException, MissingAttributeException, MissingElementException {
+        if ((workingMode == null) || (plugins == null) || (typeMapping == null) || (drivers == null) || (project == null)) {
+            throw new IllegalArgumentException("missing argument(s) to initialise MainController");
+        }
 
-            pm = new ProjectManager(this, plugins, drivers, project);
+        String runlevel = project.getRootElement().getAttributeValue(XMLTags.RUNLEVEL);
 
-            if (runlevel != null) {
-                if (runlevel.compareTo("5") == 0) {
-                    frameMain = new FrameMain(this, pm);
-                    pm.addObserver(frameMain);
-                    frameMain.setVisible(true);
-                }
-            } else {
-                frameMain = new FrameMain(this, pm);
+        pm = new ProjectManager(this, plugins, typeMapping, drivers, project);
+
+        if (runlevel != null) {
+            if (runlevel.compareTo("5") == 0) {
+                frameMain = new FrameMain(this, workingMode, pm);
                 pm.addObserver(frameMain);
                 frameMain.setVisible(true);
             }
-        } catch (Exception e) {
-            logger.error(e.getMessage());
+        } else {
+            frameMain = new FrameMain(this, workingMode, pm);
+            pm.addObserver(frameMain);
+            frameMain.setVisible(true);
         }
     }
 
     /**
      * DOCUMENT ME!
      *
+     * @param workingMode DOCUMENT ME!
      * @param plugins DOCUMENT ME!
+     * @param typeMapping DOCUMENT ME!
+     * @param drivers DOCUMENT ME!
      */
-    private void initialiseMainController(Document plugins,
+    private void initialiseMainController(Document workingMode,
+                                          Document plugins,
+                                          Document typeMapping,
                                           Document drivers) {
-        pm = new ProjectManager(this, plugins, drivers);
+        pm = new ProjectManager(this, plugins, typeMapping, drivers);
 
         try {
-            frameMain = new FrameMain(this, pm);
+            frameMain = new FrameMain(this, workingMode, pm);
             pm.addObserver(frameMain);
             frameMain.setVisible(true);
         } catch (Exception e) {

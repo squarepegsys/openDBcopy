@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui;
 
@@ -45,8 +45,6 @@ public class DialogFile extends JFrame {
     private static final String POINT = ".";
     private static final String EMPTY_STRING = "";
     private Component           parent;
-    private String              title;
-    private String              fileType;
     private String              fileName = "";
     private JFileChooser        chooser;
 
@@ -54,15 +52,9 @@ public class DialogFile extends JFrame {
      * Creates a new DialogFile object.
      *
      * @param parent DOCUMENT ME!
-     * @param title DOCUMENT ME!
-     * @param fileType DOCUMENT ME!
      */
-    public DialogFile(Component parent,
-                      String    title,
-                      String    fileType) {
-        this.parent       = parent;
-        this.title        = title;
-        this.fileType     = fileType;
+    public DialogFile(Component parent) {
+        this.parent     = parent;
 
         // this is a workaround for http://developer.java.sun.com/developer/bugParade/bugs/4458949.html, fixed in jre 1.4.0
         /*      SecurityManager backup = System.getSecurityManager();
@@ -76,18 +68,22 @@ public class DialogFile extends JFrame {
     /**
      * DOCUMENT ME!
      *
+     * @param title DOCUMENT ME!
+     * @param fileType DOCUMENT ME!
+     *
      * @return DOCUMENT ME!
      */
-    public final String openDialog() {
+    public final String openDialog(String title,
+                                   String fileType) {
         boolean fileEndingOk = false;
         int     DialogReturnValue = 0;
 
-        chooser.setDialogTitle(this.title);
+        chooser.setDialogTitle(title);
 
         ExampleFileFilter filter = new ExampleFileFilter();
 
-        filter.addExtension(this.fileType);
-        filter.setDescription(this.fileType);
+        filter.addExtension(fileType);
+        filter.setDescription(fileType);
         chooser.setFileFilter(filter);
 
         DialogReturnValue = chooser.showOpenDialog(this.parent);
@@ -96,7 +92,7 @@ public class DialogFile extends JFrame {
             if (DialogReturnValue == JFileChooser.APPROVE_OPTION) {
                 this.fileName = chooser.getSelectedFile().getAbsolutePath();
 
-                if (checkFileEnding()) {
+                if (checkFileEnding(fileType)) {
                     fileEndingOk = true;
                 } else {
                     chooser.setApproveButtonToolTipText(filter.getDescription());
@@ -115,18 +111,22 @@ public class DialogFile extends JFrame {
     /**
      * DOCUMENT ME!
      *
+     * @param title DOCUMENT ME!
+     * @param fileType DOCUMENT ME!
+     *
      * @return DOCUMENT ME!
      */
-    public final String saveDialog() {
+    public final String saveDialog(String title,
+                                   String fileType) {
         boolean fileEndingOk = false;
         int     dialogReturnValue = 0;
 
-        chooser.setDialogTitle(this.title);
+        chooser.setDialogTitle(title);
 
         ExampleFileFilter filter = new ExampleFileFilter();
 
-        filter.addExtension(this.fileType);
-        filter.setDescription(this.fileType);
+        filter.addExtension(fileType);
+        filter.setDescription(fileType);
         chooser.setFileFilter(filter);
 
         dialogReturnValue = chooser.showSaveDialog(this.parent);
@@ -135,10 +135,10 @@ public class DialogFile extends JFrame {
             if (dialogReturnValue == JFileChooser.APPROVE_OPTION) {
                 this.fileName = chooser.getSelectedFile().getAbsolutePath();
 
-                if (checkFileEnding()) {
+                if (checkFileEnding(fileType)) {
                     fileEndingOk = true;
                 } else {
-                    this.fileName += ("." + this.fileType);
+                    this.fileName += ("." + fileType);
                     fileEndingOk = true;
                 }
             }
@@ -154,9 +154,11 @@ public class DialogFile extends JFrame {
     /**
      * DOCUMENT ME!
      *
+     * @param fileType DOCUMENT ME!
+     *
      * @return DOCUMENT ME!
      */
-    private boolean checkFileEnding() {
+    private boolean checkFileEnding(String fileType) {
         boolean         validFileEnding = false;
         String          token = "";
 
@@ -165,35 +167,35 @@ public class DialogFile extends JFrame {
         while (st.hasMoreTokens()) {
             token = st.nextToken();
 
-            if (this.fileType.compareTo(FileType.HTML_FILE) == 0) {
+            if (fileType.compareTo(FileType.HTML_FILE) == 0) {
                 if (token.compareToIgnoreCase(FileType.HTML_FILE) == 0) {
                     validFileEnding = true;
                 }
             }
 
             // file ending must be pdf
-            if (this.fileType.compareToIgnoreCase(FileType.PDF_FILE) == 0) {
+            if (fileType.compareToIgnoreCase(FileType.PDF_FILE) == 0) {
                 if (token.compareToIgnoreCase(FileType.PDF_FILE) == 0) {
                     validFileEnding = true;
                 }
             }
 
             // file ending must be xml
-            if (this.fileType.compareToIgnoreCase(FileType.XML_FILE) == 0) {
+            if (fileType.compareToIgnoreCase(FileType.XML_FILE) == 0) {
                 if (token.compareToIgnoreCase(FileType.XML_FILE) == 0) {
                     validFileEnding = true;
                 }
             }
 
             // file ending must be sql
-            if (this.fileType.compareToIgnoreCase(FileType.SQL_FILE) == 0) {
+            if (fileType.compareToIgnoreCase(FileType.SQL_FILE) == 0) {
                 if (token.compareToIgnoreCase(FileType.SQL_FILE) == 0) {
                     validFileEnding = true;
                 }
             }
 
             // file ending must be properties
-            if (this.fileType.compareToIgnoreCase(FileType.PROPERTIES_FILE) == 0) {
+            if (fileType.compareToIgnoreCase(FileType.PROPERTIES_FILE) == 0) {
                 if (token.compareToIgnoreCase(FileType.PROPERTIES_FILE) == 0) {
                     validFileEnding = true;
                 }

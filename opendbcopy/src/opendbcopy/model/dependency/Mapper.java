@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.model.dependency;
 
@@ -26,7 +26,7 @@ import opendbcopy.config.XMLTags;
 
 import opendbcopy.model.ProjectModel;
 
-import org.apache.log4j.Logger;
+import opendbcopy.model.exception.MissingElementException;
 
 import org.jdom.Element;
 
@@ -42,18 +42,19 @@ import java.util.Vector;
  * @version $Revision$
  */
 public class Mapper {
-    private static Logger logger = Logger.getLogger(Mapper.class.getName());
-    private ProjectModel  projectModel;
-    private Element       mapping;
-    private Element       source_db_model;
-    private Element       destination_db_model;
+    private ProjectModel projectModel;
+    private Element      mapping;
+    private Element      source_db_model;
+    private Element      destination_db_model;
 
     /**
      * Creates a new LinkingModel object.
      *
      * @param projectModel DOCUMENT ME!
+     *
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public Mapper(ProjectModel projectModel) {
+    public Mapper(ProjectModel projectModel) throws MissingElementException {
         this.projectModel = projectModel;
 
         if (projectModel.getMapping() != null) {
@@ -67,10 +68,10 @@ public class Mapper {
     /**
      * DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final void createInitialMapping() throws Exception {
-        // remove all children if existing -> debug only
+    public final void createInitialMapping() throws MissingElementException {
+        // remove all children first
         mapping.getChildren().clear();
 
         source_db_model          = projectModel.getSourceModel();
@@ -111,10 +112,8 @@ public class Mapper {
 
     /**
      * DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
      */
-    public final void findInitalMatches() throws Exception {
+    public final void findInitalMatches() {
         List     tables = mapping.getChildren(XMLTags.TABLE);
 
         Iterator itTables = tables.iterator();
@@ -153,9 +152,14 @@ public class Mapper {
      *
      * @param sourceTableName DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final void checkForMappings(String sourceTableName) throws Exception {
+    public final void checkForMappings(String sourceTableName) throws IllegalArgumentException, MissingElementException {
+        if (sourceTableName == null) {
+            throw new IllegalArgumentException("Missing sourceTableName");
+        }
+
         Element mapping_table = projectModel.getMappingSourceTable(sourceTableName);
 
         if ((mapping_table != null) && (mapping_table.getAttributeValue(XMLTags.DESTINATION_DB).length() > 0)) {
@@ -185,9 +189,14 @@ public class Mapper {
      *
      * @return DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final Vector getUnmappedColumns(String tableName) throws Exception {
+    public final Vector getUnmappedColumns(String tableName) throws IllegalArgumentException, MissingElementException {
+        if (tableName == null) {
+            throw new IllegalArgumentException("Missing tableName");
+        }
+
         Vector  unmatchedColumns = new Vector();
         Element tableDestination = projectModel.getDestinationTable(tableName);
 
@@ -214,9 +223,13 @@ public class Mapper {
      *
      * @return DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
-    private Element findMatchingTable(String tableName) throws Exception {
+    private Element findMatchingTable(String tableName) throws IllegalArgumentException {
+        if (tableName == null) {
+            throw new IllegalArgumentException("Missing tableName");
+        }
+
         Iterator itTables = destination_db_model.getChildren(XMLTags.TABLE).iterator();
 
         while (itTables.hasNext()) {
@@ -239,10 +252,14 @@ public class Mapper {
      *
      * @return DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
     private Element findMatchingColumn(Element table,
-                                       String  columnName) throws Exception {
+                                       String  columnName) throws IllegalArgumentException {
+        if ((table == null) || (columnName == null)) {
+            throw new IllegalArgumentException("Missing arguments values: table=" + table + " columnName=" + columnName);
+        }
+
         Iterator itColumns = table.getChildren(XMLTags.COLUMN).iterator();
 
         while (itColumns.hasNext()) {
@@ -259,10 +276,8 @@ public class Mapper {
 
     /**
      * DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
      */
-    private void setProcessOrder() throws Exception {
+    private void setProcessOrder() {
         Iterator itMappingTables = mapping.getChildren(XMLTags.TABLE).iterator();
 
         int      order = 0;

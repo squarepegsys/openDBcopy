@@ -18,10 +18,11 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.action;
 
+import opendbcopy.config.OperationType;
 import opendbcopy.config.XMLTags;
 
 import opendbcopy.controller.MainController;
@@ -50,7 +51,8 @@ public class OpenFileAction extends AbstractAction {
     private MainController controller;
     private FrameMain      frame;
     private Element        operation;
-
+    private DialogFile dialogFile;
+    
     /**
      * Creates a new OpenFileAction object.
      *
@@ -71,6 +73,7 @@ public class OpenFileAction extends AbstractAction {
 
         this.controller     = controller;
         this.frame          = frame;
+        this.dialogFile = frame.getDialogFile();
     }
 
     /**
@@ -79,19 +82,25 @@ public class OpenFileAction extends AbstractAction {
      * @param evt DOCUMENT ME!
      */
     public void actionPerformed(ActionEvent evt) {
-        DialogFile dialogFile = new DialogFile(this.frame, this.operation.getAttributeValue(XMLTags.NAME), this.operation.getAttributeValue(XMLTags.FILE_TYPE));
-
-        operation.setAttribute(XMLTags.FILE, dialogFile.openDialog());
+        operation.setAttribute(XMLTags.FILE, dialogFile.openDialog(operation.getAttributeValue(XMLTags.NAME), operation.getAttributeValue(XMLTags.FILE_TYPE)));
 
         if (operation.getAttributeValue(XMLTags.FILE).length() > 0) {
             try {
+
+                if (operation.getAttributeValue(XMLTags.NAME).compareTo(OperationType.IMPORT_PROJECT) == 0) {
+                	try {
+                    	frame.loadWorkingMode(controller.getProjectManager().getProjectModel().getWorkingMode());
+                	} catch (Exception e) {
+                		frame.postException(e, Level.ERROR);
+                	}
+                }
+
+                // call as last method so that possible new DynamicPanels can update themselves, if required
                 controller.execute(operation);
+
             } catch (Exception e) {
-                logger.error(e.toString());
-                frame.setStatusBar(e.toString(), Level.ERROR);
+                frame.postException(e, Level.ERROR);
             }
         }
-
-        dialogFile = null;
     }
 }

@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin.standard.copy;
 
@@ -26,20 +26,21 @@ import opendbcopy.config.XMLTags;
 
 import opendbcopy.connection.DBConnection;
 
+import opendbcopy.connection.exception.CloseConnectionException;
+
 import opendbcopy.io.Writer;
 
 import opendbcopy.model.ProjectModel;
 
 import opendbcopy.plugin.ExecuteSkeleton;
 
+import opendbcopy.plugin.exception.PluginException;
+
 import opendbcopy.task.TaskExecute;
 
 import org.apache.log4j.Logger;
 
 import org.jdom.Element;
-
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -89,37 +90,20 @@ public class CopyMapping extends ExecuteSkeleton {
      *
      * @param task DOCUMENT ME!
      * @param projectModel DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws PluginException DOCUMENT ME!
      */
     public CopyMapping(TaskExecute  task,
-                       ProjectModel projectModel) {
-        this.task     = task;
-
-        newLine     = System.getProperty("line.separator");
-
-        // read the plugin configuration
-        conf          = projectModel.getPlugin().getChild(XMLTags.CONF);
-        path          = conf.getChild(XMLTags.PATH).getAttributeValue(XMLTags.VALUE);
-        fileType      = conf.getChild(XMLTags.FILE_TYPE).getAttributeValue(XMLTags.VALUE);
-        delimiter     = conf.getChild(XMLTags.DELIMITER).getAttributeValue(XMLTags.VALUE);
-        log_error     = Boolean.valueOf(conf.getChild(XMLTags.LOG_ERROR).getAttributeValue(XMLTags.VALUE)).booleanValue();
-
-        if (log_error) {
-            recordBuffer          = new StringBuffer();
-            recordErrorBuffer     = new StringBuffer();
+                       ProjectModel projectModel) throws IllegalArgumentException, PluginException {
+        if ((task == null) || (projectModel == null)) {
+            throw new IllegalArgumentException("Missing arguments values: task=" + task + " projectModel=" + projectModel);
         }
 
-        try {
-            // get connections
-            connSource          = DBConnection.getConnection(projectModel.getSourceConnection());
-            connDestination     = DBConnection.getConnection(projectModel.getDestinationConnection());
+        this.task = task;
 
-            // execute unprocessed tables
-            doExecute(task, projectModel);
-        }
-        // hummm ... check error log
-         catch (Exception e) {
-            logger.error(e.toString());
-        }
+        // execute unprocessed tables
+        doExecute(task, projectModel);
     }
 
     /**
@@ -128,19 +112,35 @@ public class CopyMapping extends ExecuteSkeleton {
      * @param task DOCUMENT ME!
      * @param projectModel DOCUMENT ME!
      *
-     * @throws SocketTimeoutException DOCUMENT ME!
-     * @throws SocketException DOCUMENT ME!
-     * @throws Exception DOCUMENT ME!
+     * @throws PluginException DOCUMENT ME!
      */
     public final void doExecute(TaskExecute  task,
-                                ProjectModel projectModel) throws SocketTimeoutException, SocketException, Exception {
-        // extract the tables to copy
-        processTables = projectModel.getDestinationTablesToProcessOrdered();
-
-        // now set the number of tables that need to be copied
-        task.setLengthOfTaskTable(processTables.size());
-
+                                ProjectModel projectModel) throws PluginException {
         try {
+            newLine     = System.getProperty("line.separator");
+
+            // read the plugin configuration
+            conf          = projectModel.getPlugin().getChild(XMLTags.CONF);
+            path          = conf.getChild(XMLTags.PATH).getAttributeValue(XMLTags.VALUE);
+            fileType      = conf.getChild(XMLTags.FILE_TYPE).getAttributeValue(XMLTags.VALUE);
+            delimiter     = conf.getChild(XMLTags.DELIMITER).getAttributeValue(XMLTags.VALUE);
+            log_error     = Boolean.valueOf(conf.getChild(XMLTags.LOG_ERROR).getAttributeValue(XMLTags.VALUE)).booleanValue();
+
+            if (log_error) {
+                recordBuffer          = new StringBuffer();
+                recordErrorBuffer     = new StringBuffer();
+            }
+
+            // get connections
+            connSource          = DBConnection.getConnection(projectModel.getSourceConnection());
+            connDestination     = DBConnection.getConnection(projectModel.getDestinationConnection());
+
+            // extract the tables to copy
+            processTables = projectModel.getDestinationTablesToProcessOrdered();
+
+            // now set the number of tables that need to be copied
+            task.setLengthOfTaskTable(processTables.size());
+
             Iterator itColumns;
             Element  tableProcess;
             Element  columnDestination;
@@ -282,8 +282,8 @@ public class CopyMapping extends ExecuteSkeleton {
             stmSource.close();
             pstmtDestination.close();
 
-            DBConnection.closeConnection(connSource, true);
-            DBConnection.closeConnection(connDestination, true);
+            DBConnection.closeConnection(connSource);
+            DBConnection.closeConnection(connDestination);
 
             if (!task.isInterrupted()) {
                 logger.info(counterTables + " table(s) processed");
@@ -292,10 +292,18 @@ public class CopyMapping extends ExecuteSkeleton {
                 logger.info("interrupted by user");
                 this.task.setTaskStatus(this.task.interrupted);
             }
-        } catch (Exception e) {
-            DBConnection.closeConnection(connSource, false);
-            DBConnection.closeConnection(connDestination, false);
-            throw e;
+        } catch (SQLException sqle) {
+            throw new PluginException(sqle.getMessage(), sqle.getSQLState(), sqle.getErrorCode());
+        } catch (Exception e1) {
+            // clean up if required
+            try {
+                DBConnection.closeConnection(connSource);
+                DBConnection.closeConnection(connDestination);
+            } catch (CloseConnectionException e2) {
+                // bad luck ... don't worry
+            }
+
+            throw new PluginException(e1.getMessage());
         }
     }
 
@@ -303,10 +311,8 @@ public class CopyMapping extends ExecuteSkeleton {
      * DOCUMENT ME!
      *
      * @param processColumns DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
      */
-    private void initErrorLog(List processColumns) throws Exception {
+    private void initErrorLog(List processColumns) {
         Iterator itColumns = processColumns.iterator();
 
         // set the column headings for the possible error log

@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.io;
 
@@ -29,6 +29,7 @@ import org.jdom.Document;
 import org.jdom.output.XMLOutputter;
 
 import java.io.FileWriter;
+import java.io.IOException;
 
 
 /**
@@ -46,23 +47,26 @@ public final class ExportToXML {
      * @param doc DOCUMENT ME!
      * @param fileName DOCUMENT ME!
      * @param encoding DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws IOException DOCUMENT ME!
      */
     public static final void createXML(Document doc,
                                        String   fileName,
-                                       String   encoding) {
-        try {
-            // now save the document in an XML file
-            FileWriter   xml = new FileWriter(fileName);
-            XMLOutputter serializer = new XMLOutputter("   ", true, encoding);
-            serializer.setTextTrim(true);
-            serializer.output(doc, xml);
-
-            xml.flush();
-            xml.close();
-
-            logger.info(fileName + " successfully exported.");
-        } catch (Exception e) {
-            logger.error(e.toString());
+                                       String   encoding) throws IllegalArgumentException, IOException {
+        if ((doc == null) || (fileName == null) || (encoding == null) || (fileName.length() == 0)) {
+            throw new IllegalArgumentException("Missing arguments (doc, fileName or encoding) to export into XML file");
         }
+
+        // now save the document in an XML file
+        FileWriter   xml = new FileWriter(fileName);
+        XMLOutputter serializer = new XMLOutputter("   ", true, encoding);
+        serializer.setTextTrim(true);
+        serializer.output(doc, xml);
+
+        xml.flush();
+        xml.close();
+
+        logger.info(fileName + " successfully exported.");
     }
 }

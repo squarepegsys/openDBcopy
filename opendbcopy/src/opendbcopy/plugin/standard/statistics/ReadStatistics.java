@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin.standard.statistics;
 
@@ -26,9 +26,11 @@ import opendbcopy.model.ProjectModel;
 
 import opendbcopy.plugin.ExecuteSkeleton;
 
+import opendbcopy.plugin.exception.PluginException;
+
 import opendbcopy.task.TaskExecute;
 
-import org.apache.log4j.Logger;
+import java.sql.SQLException;
 
 
 /**
@@ -38,24 +40,23 @@ import org.apache.log4j.Logger;
  * @version $Revision$
  */
 public class ReadStatistics extends ExecuteSkeleton {
-    private static Logger logger = Logger.getLogger(ReadStatistics.class.getName());
-
     /**
      * Creates a new CopyMapping object.
      *
      * @param task DOCUMENT ME!
      * @param projectModel DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws PluginException DOCUMENT ME!
      */
     public ReadStatistics(TaskExecute  task,
-                          ProjectModel projectModel) {
-        try {
-            // execute unprocessed tables
-            doExecute(task, projectModel);
+                          ProjectModel projectModel) throws IllegalArgumentException, PluginException {
+        if ((task == null) || (projectModel == null)) {
+            throw new IllegalArgumentException("Missing arguments values: task=" + task + " projectModel=" + projectModel);
         }
-        // hummm ... check error log
-         catch (Exception e) {
-            logger.error(e.toString());
-        }
+
+        // execute unprocessed tables
+        doExecute(task, projectModel);
     }
 
     /**
@@ -64,11 +65,17 @@ public class ReadStatistics extends ExecuteSkeleton {
      * @param task DOCUMENT ME!
      * @param projectModel DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws PluginException DOCUMENT ME!
      */
     public final void doExecute(TaskExecute  task,
-                                ProjectModel projectModel) throws Exception {
-        StatReader.readStatistics(task, projectModel);
+                                ProjectModel projectModel) throws PluginException {
+        try {
+            StatReader.readStatistics(task, projectModel);
+        } catch (SQLException sqle) {
+            throw new PluginException(sqle.getMessage(), sqle.getSQLState(), sqle.getErrorCode());
+        } catch (Exception e) {
+            throw new PluginException(e.getMessage());
+        }
 
         task.setTaskStatus(task.done);
     }

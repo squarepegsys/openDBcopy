@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.model.typeinfo;
 
@@ -40,21 +40,22 @@ public final class TypeInfoHelper {
      *
      * @return DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
     public static final String getFormattedString(String   stringIn,
                                                   TypeInfo typeInfoOut,
-                                                  String   identifierQuoteStringOut) throws Exception {
-        if ((stringIn != null) && (typeInfoOut != null) && (identifierQuoteStringOut != null)) {
-            stringIn = stringIn.replaceAll(identifierQuoteStringOut, ESCAPE_CHARACTER + identifierQuoteStringOut);
+                                                  String   identifierQuoteStringOut) throws IllegalArgumentException {
+        if ((stringIn == null) || (typeInfoOut == null) || (identifierQuoteStringOut == null)) {
+            throw new IllegalArgumentException("Missing arguments values: stringIn=" + stringIn + " typeInfoOut=" + typeInfoOut + " identifierQuoteStringOut=" + identifierQuoteStringOut);
+        }
 
-            // add prefix and suffix if required
-            if (typeInfoOut.getLiteralPrefix() != null && typeInfoOut.getLiteralSuffix() != null)
-            	return typeInfoOut.getLiteralPrefix() + stringIn + typeInfoOut.getLiteralSuffix();
-            else
-            	return stringIn;
+        stringIn = stringIn.replaceAll(identifierQuoteStringOut, ESCAPE_CHARACTER + identifierQuoteStringOut);
+
+        // add prefix and suffix if required
+        if ((typeInfoOut.getLiteralPrefix() != null) && (typeInfoOut.getLiteralSuffix() != null)) {
+            return typeInfoOut.getLiteralPrefix() + stringIn + typeInfoOut.getLiteralSuffix();
         } else {
-            return null;
+            return stringIn;
         }
     }
 }

@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.action;
 
@@ -80,8 +80,7 @@ public class SimpleAction extends AbstractAction {
         try {
             controller.execute(operation);
         } catch (Exception e) {
-            logger.error(e.toString());
-            frame.setStatusBar(e.toString(), Level.ERROR);
+            frame.postException(e, Level.ERROR);
         }
     }
 }

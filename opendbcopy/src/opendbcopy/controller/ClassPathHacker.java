@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.controller;
 
@@ -32,10 +32,9 @@ import java.net.URLClassLoader;
 
 
 /**
- * Modify Classpath At Runtime
- * see http://forum.java.sun.com/thread.jsp?forum=32&thread=300557&tstart=0&trange=15
+ * Modify Classpath At Runtime see http://forum.java.sun.com/thread.jsp?forum=32&thread=300557&tstart=0&trange=15
  *
- * @author  antony_miguel
+ * @author antony_miguel
  * @version $Revision$
  */
 public class ClassPathHacker {

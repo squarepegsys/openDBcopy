@@ -18,9 +18,6 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
- * Revision 1.1  2004/01/09 18:10:51  iloveopensource
- * first release
  *
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui;
@@ -28,11 +25,6 @@ package opendbcopy.gui;
 import opendbcopy.config.XMLTags;
 
 import opendbcopy.controller.MainController;
-
-import opendbcopy.model.ProjectManager;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 import org.jdom.Element;
 
@@ -43,7 +35,6 @@ import java.awt.event.ActionEvent;
 
 import java.util.Iterator;
 import java.util.Observable;
-import java.util.Observer;
 
 import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
@@ -57,37 +48,24 @@ import javax.swing.border.TitledBorder;
  * @author Anthony Smith
  * @version $Revision$
  */
-public class PanelFilter extends JPanel implements Observer {
-    private static Logger  logger = Logger.getLogger(PanelFilter.class.getName());
-    private FrameMain      parentFrame;
-    private MainController controller;
-    private ProjectManager pm;
-    private GridLayout     gridLayout = new GridLayout();
-    private JPanel         panelStringFilter = new JPanel();
-    private JCheckBox      checkBoxTrim = new JCheckBox();
-    private JCheckBox      checkBoxRemoveMultipleIntermediateSpaces = new JCheckBox();
-    private JCheckBox      checkBoxSetNull = new JCheckBox();
+public class PanelFilter extends DynamicPanel {
+    private GridLayout gridLayout = new GridLayout();
+    private JPanel     panelStringFilter = new JPanel();
+    private JCheckBox  checkBoxTrim = new JCheckBox();
+    private JCheckBox  checkBoxRemoveMultipleIntermediateSpaces = new JCheckBox();
+    private JCheckBox  checkBoxSetNull = new JCheckBox();
 
     /**
      * Creates a new PanelFilter object.
      *
-     * @param parentFrame DOCUMENT ME!
      * @param controller DOCUMENT ME!
-     * @param projectManager DOCUMENT ME!
+     *
+     * @throws Exception DOCUMENT ME!
      */
-    public PanelFilter(FrameMain      parentFrame,
-                       MainController controller,
-                       ProjectManager projectManager) {
-        this.parentFrame     = parentFrame;
-        this.controller      = controller;
-        this.pm              = projectManager;
+    public PanelFilter(MainController controller) throws Exception {
+        super(controller);
 
-        try {
-            guiInit();
-        } catch (Exception e) {
-            logger.error(e.toString());
-            this.parentFrame.setStatusBar(e.toString(), Level.ERROR);
-        }
+        guiInit();
     }
 
     /**
@@ -118,8 +96,7 @@ public class PanelFilter extends JPanel implements Observer {
                 }
             }
         } catch (Exception e) {
-            logger.error(e.toString());
-            parentFrame.setStatusBar(e.toString(), Level.ERROR);
+            postException(e);
         }
     }
 
@@ -155,14 +132,14 @@ public class PanelFilter extends JPanel implements Observer {
         panelStringFilter.setLayout(null);
 
         checkBoxTrim.setText("Trim Strings (remove spaces at begin and end of string)");
-        checkBoxTrim.setBounds(new Rectangle(14, 22, 360, 23));
+        checkBoxTrim.setBounds(new Rectangle(14, 22, 500, 23));
         checkBoxTrim.addActionListener(new PanelFilter_checkBoxTrim_actionAdapter(this));
 
-        checkBoxRemoveMultipleIntermediateSpaces.setBounds(new Rectangle(14, 45, 360, 23));
+        checkBoxRemoveMultipleIntermediateSpaces.setBounds(new Rectangle(14, 45, 500, 23));
         checkBoxRemoveMultipleIntermediateSpaces.setText("Remove multiple intermediate whitespaces");
         checkBoxRemoveMultipleIntermediateSpaces.addActionListener(new PanelFilter_checkBoxRemoveMultipleIntermediateSpaces_actionAdapter(this));
 
-        checkBoxSetNull.setBounds(new Rectangle(14, 68, 360, 23));
+        checkBoxSetNull.setBounds(new Rectangle(14, 68, 500, 23));
         checkBoxSetNull.setText("Set NULL if String is empty (if column is NULLABLE)");
         checkBoxSetNull.addActionListener(new PanelFilter_checkBoxSetNull_actionAdapter(this));
 
@@ -190,8 +167,7 @@ public class PanelFilter extends JPanel implements Observer {
                 }
             }
         } catch (Exception ex) {
-            logger.error(ex.toString());
-            parentFrame.setStatusBar(ex.toString(), Level.ERROR);
+            postException(ex);
         }
     }
 
@@ -212,8 +188,7 @@ public class PanelFilter extends JPanel implements Observer {
                 }
             }
         } catch (Exception ex) {
-            logger.error(ex.toString());
-            parentFrame.setStatusBar(ex.toString(), Level.ERROR);
+            postException(ex);
         }
     }
 
@@ -234,8 +209,7 @@ public class PanelFilter extends JPanel implements Observer {
                 }
             }
         } catch (Exception ex) {
-            logger.error(ex.toString());
-            parentFrame.setStatusBar(ex.toString(), Level.ERROR);
+            postException(ex);
         }
     }
 }

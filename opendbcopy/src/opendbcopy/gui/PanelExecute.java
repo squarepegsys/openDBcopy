@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui;
 
@@ -29,12 +29,7 @@ import opendbcopy.controller.MainController;
 
 import opendbcopy.io.Reader;
 
-import opendbcopy.model.ProjectManager;
-
 import opendbcopy.task.TaskExecute;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 import org.jdom.Element;
 
@@ -50,7 +45,6 @@ import java.awt.event.ActionListener;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Observable;
-import java.util.Observer;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -69,12 +63,8 @@ import javax.swing.border.TitledBorder;
  * @author Anthony Smith
  * @version $Revision$
  */
-public class PanelExecute extends JPanel implements Observer {
+public class PanelExecute extends DynamicPanel {
     private final static int TIMER_SLOT = 50;
-    private static Logger    logger = Logger.getLogger(PanelExecute.class.getName());
-    private FrameMain        parentFrame;
-    private MainController   controller;
-    private ProjectManager   pm;
     private TaskExecute      taskExecute;
     private StringBuffer     logBuffer;
     private Timer            timer;
@@ -96,25 +86,17 @@ public class PanelExecute extends JPanel implements Observer {
     /**
      * Creates a new PanelExecute object.
      *
-     * @param parentFrame DOCUMENT ME!
      * @param controller DOCUMENT ME!
-     * @param projectManager DOCUMENT ME!
+     *
+     * @throws Exception DOCUMENT ME!
      */
-    public PanelExecute(FrameMain      parentFrame,
-                        MainController controller,
-                        ProjectManager projectManager) {
-        this.parentFrame     = parentFrame;
-        this.controller      = controller;
-        this.pm              = projectManager;
-        this.logBuffer       = new StringBuffer();
+    public PanelExecute(MainController controller) throws Exception {
+        super(controller);
 
-        try {
-            retrievePlugins();
-            guiInit();
-        } catch (Exception e) {
-            logger.error(e.toString());
-            this.parentFrame.setStatusBar(e.toString(), Level.ERROR);
-        }
+        this.logBuffer = new StringBuffer();
+
+        retrievePlugins();
+        guiInit();
     }
 
     /**
@@ -264,8 +246,7 @@ public class PanelExecute extends JPanel implements Observer {
                 }
             }
         } catch (Exception e) {
-            logger.error(e.toString());
-            parentFrame.setStatusBar(e.toString(), Level.ERROR);
+            postException(e);
         }
     }
 
@@ -288,12 +269,9 @@ public class PanelExecute extends JPanel implements Observer {
                 buttonControl.setText(OperationType.CANCEL);
                 buttonControl.setActionCommand(OperationType.CANCEL);
 
-                this.controller.execute(operation);
-
-                this.parentFrame.setStatusBar("", Level.INFO);
+                execute(operation, "execution started ...");
             } catch (Exception ex) {
-                logger.error(ex.toString());
-                this.parentFrame.setStatusBar(ex.toString(), Level.ERROR);
+                postException(ex);
             }
         }
         // Cancel
@@ -305,10 +283,9 @@ public class PanelExecute extends JPanel implements Observer {
                 buttonControl.setText(OperationType.EXECUTE);
                 buttonControl.setActionCommand(OperationType.EXECUTE);
 
-                this.controller.execute(operation);
+                execute(operation, "execution cancelled ...");
             } catch (Exception ex) {
-                logger.error(ex.toString());
-                this.parentFrame.setStatusBar(ex.toString(), Level.ERROR);
+                postException(ex);
             }
         }
     }

@@ -18,13 +18,20 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.model;
 
 import opendbcopy.config.XMLTags;
 
 import opendbcopy.connection.DBConnection;
+
+import opendbcopy.connection.exception.CloseConnectionException;
+import opendbcopy.connection.exception.DriverNotFoundException;
+import opendbcopy.connection.exception.OpenConnectionException;
+
+import opendbcopy.model.exception.MissingAttributeException;
+import opendbcopy.model.exception.MissingElementException;
 
 import opendbcopy.sql.SQL;
 
@@ -49,10 +56,20 @@ public final class Test {
      * @param projectModel DOCUMENT ME!
      * @param tableName DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws OpenConnectionException DOCUMENT ME!
+     * @throws CloseConnectionException DOCUMENT ME!
+     * @throws DriverNotFoundException DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
      */
     public static final void testTableFilter(ProjectModel projectModel,
-                                             String       tableName) throws Exception {
+                                             String       tableName) throws IllegalArgumentException, MissingAttributeException, MissingElementException, OpenConnectionException, CloseConnectionException, DriverNotFoundException, SQLException {
+        if ((projectModel == null) || (tableName == null)) {
+            throw new IllegalArgumentException("Missing arguments values: projectModel=" + projectModel + " tableName=" + tableName);
+        }
+
         String     stm = "";
 
         Connection conn = null;
@@ -84,7 +101,7 @@ public final class Test {
                 }
 
                 rs.close();
-                DBConnection.closeConnection(conn, true);
+                DBConnection.closeConnection(conn);
             }
         } catch (SQLException e) {
             if (rs != null) {
@@ -92,7 +109,7 @@ public final class Test {
             }
 
             if (conn != null) {
-                DBConnection.closeConnection(conn, false);
+                DBConnection.closeConnection(conn);
             }
 
             throw e;

@@ -18,27 +18,30 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.controller;
 
 import java.io.File;
 import java.io.IOException;
+
 import java.net.URL;
 
 
 /**
  * class description
  *
- * @author  Anthony Smith
+ * @author Anthony Smith
  * @version $Revision$
  */
 public final class ClasspathLoader {
     /**
      * DOCUMENT ME!
+     *
+     * @throws IOException DOCUMENT ME!
      */
     public static void addLibDirectoryToClasspath() throws IOException {
-        String classpath = System.getProperty("java.class.path");
+        String   classpath = System.getProperty("java.class.path");
 
         File     libDir = new File("lib");
 
@@ -46,8 +49,8 @@ public final class ClasspathLoader {
 
         for (int i = 0; i < libFiles.length; i++) {
             if (!checkIfInClassPath(classpath, libFiles[i])) {
-                if (libFiles[i].compareToIgnoreCase("CVS") != 0 && libFiles[i].compareToIgnoreCase("opendbcopy.jar") != 0) {
-                	URL newLib = new URL(libDir.toURL() + libFiles[i]);
+                if ((libFiles[i].compareToIgnoreCase("CVS") != 0) && (libFiles[i].compareToIgnoreCase("opendbcopy.jar") != 0)) {
+                    URL newLib = new URL(libDir.toURL() + libFiles[i]);
                     ClassPathHacker.addURL(newLib);
                     System.out.println("added " + newLib + " dynamically to your classpath");
                 }

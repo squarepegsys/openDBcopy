@@ -18,13 +18,17 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin.standard.statistics;
 
 import opendbcopy.config.XMLTags;
 
 import opendbcopy.model.ProjectModel;
+
+import opendbcopy.model.exception.MissingAttributeException;
+import opendbcopy.model.exception.MissingElementException;
+import opendbcopy.model.exception.UnsupportedAttributeValueException;
 
 import opendbcopy.task.TaskExecute;
 
@@ -34,6 +38,7 @@ import org.jdom.Element;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 
 import java.util.Iterator;
 import java.util.List;
@@ -54,10 +59,18 @@ public abstract class StatWriter {
      * @param task DOCUMENT ME!
      * @param projectModel DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws IOException DOCUMENT ME!
      */
     public static void writeStatisticsToFile(TaskExecute  task,
-                                             ProjectModel projectModel) throws Exception {
+                                             ProjectModel projectModel) throws IllegalArgumentException, UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, IOException {
+        if ((task == null) || (projectModel == null)) {
+            throw new IllegalArgumentException("Missing arguments values: task=" + task + " projectModel=" + projectModel);
+        }
+
         StringBuffer buffer = new StringBuffer();
         int          difference = 0;
         int          sourceRecords = 0;

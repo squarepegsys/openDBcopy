@@ -18,9 +18,6 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
- * Revision 1.1  2004/01/09 18:08:25  iloveopensource
- * first release
  *
  * --------------------------------------------------------------------------*/
 package opendbcopy.config;
@@ -101,6 +98,7 @@ public final class XMLTags {
     public static final String READ_PRIMARY_KEYS = "read_primary_keys";
     public static final String READ_FOREIGN_KEYS = "read_foreign_keys";
     public static final String READ_INDEXES = "read_indexes";
+    public static final String NUMBER = "number";
 
     // primary key attributes
     public static final String TABLE_CAT = "table_cat"; // String => table catalog (may be null)
@@ -160,7 +158,16 @@ public final class XMLTags {
     // application arguments
     public static final String ARGUMENTS = "arguments";
     public static final String RUNLEVEL = "runlevel";
-    
+
     // SQLDriver tags
     public static final String DRIVERS = "drivers";
+
+    // Working Mode
+    public static final String WORKING_MODE = "working_mode";
+    public static final String WORKING_MODES = "working_modes";
+    public static final String IDENTIFIER = "identifier";
+    public static final String TITLE = "title";
+    public static final String PANELS = "panels";
+    public static final String PANEL = "panel";
+    public static final String REGISTER_AS_OBSERVER = "register_as_observer";
 }

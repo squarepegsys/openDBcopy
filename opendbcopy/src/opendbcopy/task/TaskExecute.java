@@ -18,15 +18,18 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.task;
 
 import opendbcopy.config.XMLTags;
 
+import opendbcopy.model.ProjectManager;
 import opendbcopy.model.ProjectModel;
 
 import org.apache.log4j.Logger;
+
+import org.jdom.Document;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -45,28 +48,30 @@ import javax.swing.Timer;
  * @version $Revision$
  */
 public class TaskExecute extends Observable {
-    private static Logger logger = Logger.getLogger(TaskExecute.class.getName());
-    public final int      interrupted = -1;
-    public final int      init = 0;
-    public final int      started = 1;
-    public final int      done = 2;
-    private ProjectModel  projectModel;
-    private int           lengthOfTaskTable;
-    private int           lengthOfTaskRecord;
-    private int           currentTable;
-    private int           currentRecord;
-    private String        statMessage;
-    private int           taskStatus;
-    private SwingWorker   worker = null;
-    private Timer         timer;
+    private static Logger  logger = Logger.getLogger(TaskExecute.class.getName());
+    public final int       interrupted = -1;
+    public final int       init = 0;
+    public final int       started = 1;
+    public final int       done = 2;
+    private ProjectManager projectManager;
+    private ProjectModel   projectModel;
+    private int            lengthOfTaskTable;
+    private int            lengthOfTaskRecord;
+    private int            currentTable;
+    private int            currentRecord;
+    private String         statMessage;
+    private int            taskStatus;
+    private SwingWorker    worker = null;
+    private Timer          timer;
 
     /**
      * Creates a new TaskExecute object.
      *
-     * @param projectModel DOCUMENT ME!
+     * @param projectManager DOCUMENT ME!
      */
-    public TaskExecute(ProjectModel projectModel) {
-        this.projectModel     = projectModel;
+    public TaskExecute(ProjectManager projectManager) {
+        this.projectManager     = projectManager;
+        this.projectModel       = projectManager.getProjectModel();
 
         lengthOfTaskTable      = 0;
         lengthOfTaskRecord     = 0;
@@ -118,6 +123,15 @@ public class TaskExecute extends Observable {
         } catch (Exception e) {
             throw e;
         }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     */
+    public final Document getTypeMapping() {
+        return projectManager.getTypeMapping();
     }
 
     /**

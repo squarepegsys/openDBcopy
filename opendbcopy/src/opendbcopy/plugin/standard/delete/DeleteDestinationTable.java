@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin.standard.delete;
 
@@ -26,9 +26,13 @@ import opendbcopy.config.XMLTags;
 
 import opendbcopy.connection.DBConnection;
 
+import opendbcopy.connection.exception.CloseConnectionException;
+
 import opendbcopy.model.ProjectModel;
 
 import opendbcopy.plugin.ExecuteSkeleton;
+
+import opendbcopy.plugin.exception.PluginException;
 
 import opendbcopy.task.TaskExecute;
 
@@ -36,10 +40,8 @@ import org.apache.log4j.Logger;
 
 import org.jdom.Element;
 
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 import java.util.Iterator;
@@ -66,22 +68,20 @@ public class DeleteDestinationTable extends ExecuteSkeleton {
      *
      * @param task DOCUMENT ME!
      * @param projectModel DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws PluginException DOCUMENT ME!
      */
     public DeleteDestinationTable(TaskExecute  task,
-                                  ProjectModel projectModel) {
+                                  ProjectModel projectModel) throws IllegalArgumentException, PluginException {
+        if ((task == null) || (projectModel == null)) {
+            throw new IllegalArgumentException("Missing arguments values: task=" + task + " projectModel=" + projectModel);
+        }
+
         this.task = task;
 
-        try {
-            // get connection to destination database
-            connDestination = DBConnection.getConnection(projectModel.getDestinationConnection());
-
-            // execute unprocessed tables
-            doExecute(task, projectModel);
-        }
-        // hummm ... check error log
-         catch (Exception e) {
-            logger.error(e.toString());
-        }
+        // execute unprocessed tables
+        doExecute(task, projectModel);
     }
 
     /**
@@ -90,19 +90,20 @@ public class DeleteDestinationTable extends ExecuteSkeleton {
      * @param task DOCUMENT ME!
      * @param projectModel DOCUMENT ME!
      *
-     * @throws SocketTimeoutException DOCUMENT ME!
-     * @throws SocketException DOCUMENT ME!
-     * @throws Exception DOCUMENT ME!
+     * @throws PluginException DOCUMENT ME!
      */
     public final void doExecute(TaskExecute  task,
-                                ProjectModel projectModel) throws SocketTimeoutException, SocketException, Exception {
-        // extract the tables to copy
-        processTables = projectModel.getDestinationTablesToProcessOrdered();
-
-        // now set the number of tables that need to be copied
-        task.setLengthOfTaskTable(processTables.size());
-
+                                ProjectModel projectModel) throws PluginException {
         try {
+            // get connection to destination database
+            connDestination     = DBConnection.getConnection(projectModel.getDestinationConnection());
+
+            // extract the tables to copy
+            processTables = projectModel.getDestinationTablesToProcessOrdered();
+
+            // now set the number of tables that need to be copied
+            task.setLengthOfTaskTable(processTables.size());
+
             Iterator itProcessTables = processTables.iterator();
 
             while (!task.isInterrupted() && itProcessTables.hasNext()) {
@@ -141,7 +142,7 @@ public class DeleteDestinationTable extends ExecuteSkeleton {
                 if (processTables.size() > 0) {
                     connDestination.commit();
                     stmDestination.close();
-                    DBConnection.closeConnection(connDestination, true);
+                    DBConnection.closeConnection(connDestination);
                     logger.info(counterTables + " table(s) deleted and commited.");
                 } else {
                     logger.warn("no tables to process!");
@@ -154,12 +155,20 @@ public class DeleteDestinationTable extends ExecuteSkeleton {
                     stmDestination.close();
                 }
 
-                DBConnection.closeConnection(connDestination, false);
+                DBConnection.closeConnection(connDestination);
                 logger.info("execution cancelled by user. A Rollback has been made.");
             }
-        } catch (Exception e) {
-            DBConnection.closeConnection(connDestination, false);
-            throw e;
+        } catch (SQLException sqle) {
+            throw new PluginException(sqle.getMessage(), sqle.getSQLState(), sqle.getErrorCode());
+        } catch (Exception e1) {
+            // clean up
+            try {
+                DBConnection.closeConnection(connDestination);
+            } catch (CloseConnectionException e2) {
+                // bad luck ... don't worry
+            }
+
+            throw new PluginException(e1.getMessage());
         }
     }
 }

@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin.standard.dump;
 
@@ -26,9 +26,15 @@ import opendbcopy.config.XMLTags;
 
 import opendbcopy.connection.DBConnection;
 
+import opendbcopy.connection.exception.CloseConnectionException;
+
 import opendbcopy.model.ProjectModel;
 
+import opendbcopy.model.exception.MissingElementException;
+
 import opendbcopy.plugin.ExecuteSkeleton;
+
+import opendbcopy.plugin.exception.PluginException;
 
 import opendbcopy.task.TaskExecute;
 
@@ -41,6 +47,7 @@ import java.io.FileWriter;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 import java.util.Iterator;
@@ -78,39 +85,21 @@ public class DumpToFileDelimited extends ExecuteSkeleton {
      *
      * @param task DOCUMENT ME!
      * @param projectModel DOCUMENT ME!
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws PluginException DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
     public DumpToFileDelimited(TaskExecute  task,
-                               ProjectModel projectModel) {
-        this.task     = task;
-
-        // read the plugins configuration
-        this.conf                          = projectModel.getPlugin().getChild(XMLTags.CONF);
-        this.path                          = conf.getChild(XMLTags.PATH).getAttributeValue(XMLTags.VALUE);
-        this.fileType                      = conf.getChild(XMLTags.FILE_TYPE).getAttributeValue(XMLTags.VALUE);
-        this.delimiterOriginal             = this.conf.getChild(XMLTags.DELIMITER).getAttributeValue(XMLTags.VALUE);
-        this.delimiter                     = this.delimiterOriginal;
-        this.show_header                   = Boolean.valueOf(conf.getChild(XMLTags.SHOW_HEADER).getAttributeValue(XMLTags.VALUE)).booleanValue();
-        this.show_null_values              = Boolean.valueOf(conf.getChild("show_null_values").getAttributeValue(XMLTags.VALUE)).booleanValue();
-        this.append_file_after_records     = Integer.parseInt(conf.getChild(XMLTags.APPEND_FILE_AFTER_RECORDS).getAttributeValue(XMLTags.VALUE));
-
-        // use the system's newline character instead of \n
-        this.newLine = System.getProperty("line.separator");
-
-        if (this.conf.getChild(XMLTags.DELIMITER_POSITION).getAttributeValue(XMLTags.VALUE).compareTo("after") == 0) {
-            append_delimiter_after_data = true;
+                               ProjectModel projectModel) throws MissingElementException, PluginException {
+        if ((task == null) || (projectModel == null)) {
+            throw new IllegalArgumentException("Missing arguments values: task=" + task + " projectModel=" + projectModel);
         }
 
-        try {
-            // get connection
-            connSource = DBConnection.getConnection(projectModel.getSourceConnection());
+        this.task = task;
 
-            // execute unprocessed tables
-            doExecute(task, projectModel);
-        }
-        // hummm ... check error log
-         catch (Exception e) {
-            logger.error(e.toString());
-        }
+        // execute unprocessed tables
+        doExecute(task, projectModel);
     }
 
     /**
@@ -119,19 +108,39 @@ public class DumpToFileDelimited extends ExecuteSkeleton {
      * @param task DOCUMENT ME!
      * @param projectModel DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws PluginException DOCUMENT ME!
      */
     public final void doExecute(TaskExecute  task,
-                                ProjectModel projectModel) throws Exception {
-        // extract the tables to dump
-        List processTables = projectModel.getSourceTablesToProcessOrdered();
-
-        int  nbrTables = processTables.size();
-
-        // now set the number of tables that need to be copied
-        task.setLengthOfTaskTable(nbrTables);
-
+                                ProjectModel projectModel) throws PluginException {
         try {
+            // read the plugins configuration
+            this.conf                          = projectModel.getPlugin().getChild(XMLTags.CONF);
+            this.path                          = conf.getChild(XMLTags.PATH).getAttributeValue(XMLTags.VALUE);
+            this.fileType                      = conf.getChild(XMLTags.FILE_TYPE).getAttributeValue(XMLTags.VALUE);
+            this.delimiterOriginal             = this.conf.getChild(XMLTags.DELIMITER).getAttributeValue(XMLTags.VALUE);
+            this.delimiter                     = this.delimiterOriginal;
+            this.show_header                   = Boolean.valueOf(conf.getChild(XMLTags.SHOW_HEADER).getAttributeValue(XMLTags.VALUE)).booleanValue();
+            this.show_null_values              = Boolean.valueOf(conf.getChild("show_null_values").getAttributeValue(XMLTags.VALUE)).booleanValue();
+            this.append_file_after_records     = Integer.parseInt(conf.getChild(XMLTags.APPEND_FILE_AFTER_RECORDS).getAttributeValue(XMLTags.VALUE));
+
+            // use the system's newline character instead of \n
+            this.newLine = System.getProperty("line.separator");
+
+            if (this.conf.getChild(XMLTags.DELIMITER_POSITION).getAttributeValue(XMLTags.VALUE).compareTo("after") == 0) {
+                append_delimiter_after_data = true;
+            }
+
+            // get connection
+            connSource = DBConnection.getConnection(projectModel.getSourceConnection());
+
+            // extract the tables to dump
+            List processTables = projectModel.getSourceTablesToProcessOrdered();
+
+            int  nbrTables = processTables.size();
+
+            // now set the number of tables that need to be copied
+            task.setLengthOfTaskTable(nbrTables);
+
             stmSource = connSource.createStatement();
 
             String   stmSelect = "";
@@ -241,7 +250,7 @@ public class DumpToFileDelimited extends ExecuteSkeleton {
 
             stmSource.close();
 
-            DBConnection.closeConnection(connSource, true);
+            DBConnection.closeConnection(connSource);
 
             if (!task.isInterrupted()) {
                 logger.info(counterTables + " table(s) processed");
@@ -250,9 +259,17 @@ public class DumpToFileDelimited extends ExecuteSkeleton {
                 this.task.setTaskStatus(this.task.interrupted);
                 logger.info("interrupted by user");
             }
-        } catch (Exception e) {
-            DBConnection.closeConnection(connSource, false);
-            throw e;
+        } catch (SQLException sqle) {
+            throw new PluginException(sqle.getMessage(), sqle.getSQLState(), sqle.getErrorCode());
+        } catch (Exception e1) {
+            // clean up
+            try {
+                DBConnection.closeConnection(connSource);
+            } catch (CloseConnectionException e2) {
+                // bad luck ... don't worry
+            }
+
+            throw new PluginException(e1.getMessage());
         }
     }
 
@@ -261,9 +278,13 @@ public class DumpToFileDelimited extends ExecuteSkeleton {
      *
      * @param processColumns DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
-    private void initHeader(List processColumns) throws Exception {
+    private void initHeader(List processColumns) throws IllegalArgumentException {
+        if (processColumns == null) {
+            throw new IllegalArgumentException("Missing processColumns");
+        }
+
         recordBuffer = new StringBuffer();
 
         Iterator itProcessColumns = processColumns.iterator();
@@ -283,9 +304,13 @@ public class DumpToFileDelimited extends ExecuteSkeleton {
      *
      * @return DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
-    private String getFileName(String tableName) throws Exception {
+    private String getFileName(String tableName) throws IllegalArgumentException {
+        if (tableName == null) {
+            throw new IllegalArgumentException("Missing tableName");
+        }
+
         return path + tableName + "." + fileType;
     }
 }

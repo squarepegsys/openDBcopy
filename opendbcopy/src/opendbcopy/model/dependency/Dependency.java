@@ -18,13 +18,18 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.model.dependency;
 
 import opendbcopy.config.XMLTags;
 
 import opendbcopy.model.ProjectModel;
+
+import opendbcopy.model.exception.DependencyNotSolvableException;
+import opendbcopy.model.exception.MissingAttributeException;
+import opendbcopy.model.exception.MissingElementException;
+import opendbcopy.model.exception.UnsupportedAttributeValueException;
 
 import org.jdom.Element;
 
@@ -55,10 +60,13 @@ public class Dependency {
      * @param projectModel DOCUMENT ME!
      * @param db_element DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws DependencyNotSolvableException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
     public Dependency(ProjectModel projectModel,
-                      Element      db_element) throws Exception {
+                      Element      db_element) throws DependencyNotSolvableException, MissingAttributeException, UnsupportedAttributeValueException, MissingElementException {
         this.projectModel      = projectModel;
         this.db_element        = db_element;
         this.unsortedNodes     = new HashMap();
@@ -72,9 +80,11 @@ public class Dependency {
     /**
      * DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final void setProcessOrder() throws Exception {
+    public final void setProcessOrder() throws MissingAttributeException, UnsupportedAttributeValueException, MissingElementException {
         Node     table = null;
         Iterator itSortedTables = sortedNodes.values().iterator();
 
@@ -96,9 +106,11 @@ public class Dependency {
     /**
      * DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    private void removeOldProcessOrderAttributes() throws Exception {
+    private void removeOldProcessOrderAttributes() throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException {
         Iterator itTables;
         Element  table;
 
@@ -128,9 +140,12 @@ public class Dependency {
     /**
      * DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws DependencyNotSolvableException DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    private void traverseDependencies() throws Exception {
+    private void traverseDependencies() throws DependencyNotSolvableException, UnsupportedAttributeValueException, MissingAttributeException, MissingElementException {
         this.nbrTables = getNbrTables();
 
         addNodesToRootWithNoParentRelation();
@@ -150,7 +165,7 @@ public class Dependency {
             }
 
             if (nbrLoops == MAX_NUMBER_RECURSIONS) {
-                throw new Exception("Tried to resolve foreign key dependencies but cannot complete providing a final list of sorted tables. Check your foreign keys (referential integrity) for loops!");
+                throw new DependencyNotSolvableException(unsortedNodes, sortedNodes, nbrLoops, "Tried to resolve foreign key dependencies but cannot complete providing a final list of sorted tables. Check your foreign keys (referential integrity) for loops!");
             }
         }
     }
@@ -165,9 +180,11 @@ public class Dependency {
     /**
      * DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    private void addNodesToRootWithNoParentRelation() throws Exception {
+    private void addNodesToRootWithNoParentRelation() throws MissingAttributeException, UnsupportedAttributeValueException, MissingElementException {
         Iterator itTables = db_element.getChildren(XMLTags.TABLE).iterator();
         Element  table = null;
         String   tableName = "";
@@ -207,10 +224,8 @@ public class Dependency {
 
     /**
      * DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
      */
-    private void readUnsortedNodes() throws Exception {
+    private void readUnsortedNodes() {
         if (unsortedNodes.size() > 0) {
             Node     node = null;
             Element  table = null;
@@ -234,10 +249,8 @@ public class Dependency {
      * DOCUMENT ME!
      *
      * @return DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
      */
-    private boolean completeTheGame() throws Exception {
+    private boolean completeTheGame() {
         if (unsortedNodes.size() > 0) {
             Node     node = null;
             HashMap  parents = null;
@@ -295,10 +308,8 @@ public class Dependency {
 
     /**
      * DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
      */
-    private void removeSortedNodesFromUnsortedNodes() throws Exception {
+    private void removeSortedNodesFromUnsortedNodes() {
         Node     node = null;
         Iterator itSortedNodes = sortedNodes.values().iterator();
 
@@ -317,10 +328,8 @@ public class Dependency {
      * @param tableName DOCUMENT ME!
      *
      * @return DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
      */
-    private Element getTable(String tableName) throws Exception {
+    private Element getTable(String tableName) {
         Element  table = null;
 
         Iterator itTables = db_element.getChildren(XMLTags.TABLE).iterator();
@@ -341,9 +350,11 @@ public class Dependency {
      *
      * @return DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    private int getNbrTables() throws Exception {
+    private int getNbrTables() throws MissingAttributeException, UnsupportedAttributeValueException, MissingElementException {
         int      nbrTables = 0;
         Iterator itTables;
 
@@ -374,10 +385,8 @@ public class Dependency {
      * @param table DOCUMENT ME!
      *
      * @return DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
      */
-    private int getNbrImportedKeys(Element table) throws Exception {
+    private int getNbrImportedKeys(Element table) {
         return table.getChildren(XMLTags.IMPORTED_KEY).size();
     }
 
@@ -387,10 +396,8 @@ public class Dependency {
      * @param table DOCUMENT ME!
      *
      * @return DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
      */
-    private int getNbrExportedKeys(Element table) throws Exception {
+    private int getNbrExportedKeys(Element table) {
         return table.getChildren(XMLTags.EXPORTED_KEY).size();
     }
 }

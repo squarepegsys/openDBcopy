@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.model;
 
@@ -27,6 +27,11 @@ import opendbcopy.config.XMLTags;
 
 import opendbcopy.model.dependency.Dependency;
 import opendbcopy.model.dependency.Mapper;
+
+import opendbcopy.model.exception.DependencyNotSolvableException;
+import opendbcopy.model.exception.MissingAttributeException;
+import opendbcopy.model.exception.MissingElementException;
+import opendbcopy.model.exception.UnsupportedAttributeValueException;
 
 import org.jdom.Document;
 import org.jdom.Element;
@@ -77,14 +82,30 @@ public class ProjectModel {
     private Element  stringFilterSetNull;
     private Element  plugin;
 
-    // Constructor creating new project
-    public ProjectModel(Properties applicationProperties) {
+    /**
+     * Creates a new ProjectModel object.
+     *
+     * @param applicationProperties DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     */
+    public ProjectModel(Properties applicationProperties) throws IllegalArgumentException {
         initProject(applicationProperties);
     }
 
-    // Constructor using existing project
+    /**
+     * Creates a new ProjectModel object given an existing project.
+     *
+     * @param applicationProperties DOCUMENT ME!
+     * @param project imported project
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     */
     public ProjectModel(Properties applicationProperties,
-                        Document   project) throws Exception {
+                        Document   project) throws IllegalArgumentException, MissingElementException, MissingAttributeException, UnsupportedAttributeValueException {
         initProject(applicationProperties, project);
 
         if (getDbMode() == DUAL_MODE) {
@@ -93,65 +114,538 @@ public class ProjectModel {
     }
 
     /**
+     * tries to find further mappings for given source table makes sense if mapping has been changed manually
+     *
+     * @param sourceTableName
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final void checkForMappings(String sourceTableName) throws IllegalArgumentException, MissingElementException {
+        mapper.checkForMappings(sourceTableName);
+    }
+
+    /**
+     * delete an existing table filter
+     *
+     * @param tableName (source table)
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final void deleteTableFilter(String tableName) throws IllegalArgumentException, MissingElementException {
+        Element tableFilter = getTableFilter(tableName);
+
+        if (tableFilter != null) {
+            filter.removeContent(tableFilter);
+        }
+    }
+
+    /**
      * opendbcopy can be used in SINGLE or DUAL Database mode.
      *
      * @return 1 if dbMode = SINGLE_MODE, 2 if dbMode = DUAL_MODE
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
      */
-    public final int getDbMode() throws Exception {
-        if (root.getAttributeValue(XMLTags.DB_MODE).compareTo(XMLTags.SINGLE_DB) == 0) {
+    public final int getDbMode() throws MissingElementException, MissingAttributeException, UnsupportedAttributeValueException {
+        String dbMode = getAttributeValue(getElement(root, "root"), XMLTags.DB_MODE);
+
+        if (dbMode.compareTo(XMLTags.SINGLE_DB) == 0) {
             return SINGLE_MODE;
-        } else {
+        } else if (dbMode.compareTo(XMLTags.DUAL_DB) == 0) {
             return DUAL_MODE;
+        } else {
+            throw new UnsupportedAttributeValueException(root, XMLTags.DB_MODE);
         }
     }
 
     /**
      * DOCUMENT ME!
      *
+     * @return
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getDestinationDb() throws MissingElementException {
+        return getElement(destinationDb, "destinationDb");
+    }
+
+    /**
+     * get destination catalog name
+     *
+     * @return destination catalog name
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     */
+    public final String getDestinationCatalog() throws MissingElementException, MissingAttributeException {
+        return getAttributeValue(getElement(destinationCatalog, "destinationCatalog"), XMLTags.VALUE);
+    }
+
+    /**
+     * It may be that the catalog separator could not be read by ModelReader. If so set it to "."
+     *
      * @return DOCUMENT ME!
+     *
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final int getRunlevel() {
-        if (root.getAttributeValue(XMLTags.RUNLEVEL) != null) {
-            return Integer.parseInt(root.getAttributeValue(XMLTags.RUNLEVEL));
+    public String getDestinationCatalogSeparator() throws MissingElementException {
+        if (getDestinationMetadata().getChild(XMLTags.CATALOG_SEPARATOR) != null) {
+            return getDestinationMetadata().getChild(XMLTags.CATALOG_SEPARATOR).getAttributeValue(XMLTags.VALUE);
         } else {
-            return RUNLEVEL_GUI;
+            Element catalogSeparator = getDestinationMetadata().getChild(XMLTags.CATALOG_SEPARATOR);
+            catalogSeparator.setAttribute(XMLTags.VALUE, ".");
+
+            return getDestinationCatalogSeparator();
         }
     }
 
     /**
-     * set the database mode
+     * given a destination table and column name return column element
      *
-     * @param db_mode 1 if dbMode = SINGLE_MODE, 2 if dbMode = DUAL_MODE
+     * @param tableName (destination table)
+     * @param columnName (destination column)
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @return destination column
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final void setDbMode(int db_mode) throws Exception {
-        switch (db_mode) {
-        case SINGLE_MODE:
-            root.setAttribute(XMLTags.DB_MODE, XMLTags.SINGLE_DB);
+    public final Element getDestinationColumn(String tableName,
+                                              String columnName) throws IllegalArgumentException, MissingElementException {
+        if ((tableName == null) || (columnName == null)) {
+            throw new IllegalArgumentException("Missing arguments values: tableName=" + tableName + " columnName=" + columnName);
+        }
 
-            break;
-
-        case DUAL_MODE:
-            root.setAttribute(XMLTags.DB_MODE, XMLTags.DUAL_DB);
-
-            break;
+        if (getDestinationTable(tableName).getChildren(XMLTags.COLUMN).size() > 0) {
+            return getElement(getDestinationTable(tableName).getChildren(XMLTags.COLUMN).iterator(), columnName, XMLTags.NAME);
+        } else {
+            return null;
         }
     }
 
     /**
-     * Automatically find out which source table belongs to which destination table Same for columns
+     * gets all destination columns for a given destination table name
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @param tableName (destination table)
+     *
+     * @return List of destination columns
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final void setupMapping() throws Exception {
-        if (isSourceModelCaptured() && isDestinationModelCaptured() && !isMappingSetup()) {
-            mapper = new Mapper(this);
-            mapper.createInitialMapping();
-            mapper.findInitalMatches();
+    public final List getDestinationColumns(String tableName) throws IllegalArgumentException, MissingElementException {
+        if (tableName == null) {
+            throw new IllegalArgumentException("Missing tableName");
         }
+
+        return getDestinationTable(tableName).getChildren(XMLTags.COLUMN);
+    }
+
+    /**
+     * get destination connection element
+     *
+     * @return destination connection element
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getDestinationConnection() throws MissingElementException {
+        if (destinationConnection == null) {
+            destinationConnection = getChildElement(getElement(destinationDb, "destinationDb"), XMLTags.CONNECTION);
+        }
+
+        return getElement(destinationConnection, "destinationConnection");
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     */
+    public String getDestinationDatabaseName() throws MissingElementException, MissingAttributeException {
+        return getAttributeValue(getChildElement(getElement(getDestinationMetadata(), "destination database metadata"), XMLTags.DB_PRODUCT_NAME), XMLTags.VALUE);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getDestinationDriver() throws MissingElementException {
+        return getElement(destinationDriver, "destinationDriver");
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param destinationTableName DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getDestinationExportedKeys(String destinationTableName) throws IllegalArgumentException, MissingElementException {
+        if (destinationTableName == null) {
+            throw new IllegalArgumentException("Missing destinationTableName");
+        }
+
+        return getKeys(getDestinationTable(destinationTableName), XMLTags.EXPORTED_KEY);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param destinationTableName DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getDestinationImportedKeys(String destinationTableName) throws IllegalArgumentException, MissingElementException {
+        if (destinationTableName == null) {
+            throw new IllegalArgumentException("Missing destinationTableName");
+        }
+
+        return getKeys(getDestinationTable(destinationTableName), XMLTags.IMPORTED_KEY);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param destinationTableName DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getDestinationIndexes(String destinationTableName) throws IllegalArgumentException, MissingElementException {
+        if (destinationTableName == null) {
+            throw new IllegalArgumentException("Missing destinationTableName");
+        }
+
+        return getKeys(getDestinationTable(destinationTableName), XMLTags.INDEX);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public Element getDestinationMetadata() throws MissingElementException {
+        return getElement(destinationMetadata, "destinationMetadata");
+    }
+
+    /**
+     * get destination model element
+     *
+     * @return destination model element
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getDestinationModel() throws MissingElementException {
+        return getElement(destinationModel, "destinationModel");
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param destinationTableName DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getDestinationPrimaryKeys(String destinationTableName) throws IllegalArgumentException, MissingElementException {
+        if (destinationTableName == null) {
+            throw new IllegalArgumentException("Missing destinationTableName");
+        }
+
+        return getKeys(getDestinationTable(destinationTableName), XMLTags.PRIMARY_KEY);
+    }
+
+    /**
+     * get destination schema name
+     *
+     * @return destination schema name
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     */
+    public final String getDestinationSchema() throws MissingElementException, MissingAttributeException {
+        return getAttributeValue(getElement(destinationSchema, "destinationSchema"), XMLTags.VALUE);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getDestinationStatistics() throws MissingElementException {
+        return getElement(destinationStatistics, "destinationStatistics");
+    }
+
+    /**
+     * get statistics for destination table
+     *
+     * @param tableName (destination table)
+     *
+     * @return statistics element
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getDestinationStatisticsTable(String tableName) throws IllegalArgumentException, MissingElementException {
+        if (tableName == null) {
+            throw new IllegalArgumentException("Missing tableName");
+        }
+
+        return getElement(getElement(destinationStatistics, "destinationStatistics").getChildren(XMLTags.TABLE).iterator(), tableName, XMLTags.NAME);
+    }
+
+    /**
+     * get destination table
+     *
+     * @param tableName (destination table)
+     *
+     * @return destination table
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getDestinationTable(String tableName) throws IllegalArgumentException, MissingElementException {
+        if (tableName == null) {
+            throw new IllegalArgumentException("Missing tableName");
+        }
+
+        return getElement(getElement(destinationModel, "destinationModel").getChildren(XMLTags.TABLE).iterator(), tableName, XMLTags.NAME);
+    }
+
+    /**
+     * get destination table pattern (may contain SQL wildcards)
+     *
+     * @return destination table pattern
+     *
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final String getDestinationTablePattern() throws MissingAttributeException, MissingElementException {
+        return getAttributeValue(getElement(destinationTablePattern, "destinationTablePattern"), (XMLTags.VALUE));
+    }
+
+    /**
+     * gets all destination tables
+     *
+     * @return List of all destination tables
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getDestinationTables() throws MissingElementException {
+        return getElement(destinationModel, "destinationModel").getChildren(XMLTags.TABLE);
+    }
+
+    /**
+     * get destination tables to process ordered by processing order (based upon foreign keys)
+     *
+     * @return List of destination tables
+     *
+     * @throws DependencyNotSolvableException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getDestinationTablesToProcessOrdered() throws DependencyNotSolvableException, MissingAttributeException, UnsupportedAttributeValueException, MissingElementException {
+        return getTablesToProcessOrdered(destinationModel);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getDestinationTypeInfo() throws MissingElementException {
+        return getChildElement(getElement(destinationMetadata, "destinationMetadata"), XMLTags.TYPE_INFO);
+    }
+
+    /**
+     * get filter element (parent of all filter elements)
+     *
+     * @return filter element
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getFilter() throws MissingElementException {
+        return getElement(filter, "filter");
+    }
+
+    /**
+     * get mapping element
+     *
+     * @return mapping element
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getMapping() throws MissingElementException {
+        return getElement(mapping, "mapping");
+    }
+
+    /**
+     * get mapping column elements to process given destination table name
+     *
+     * @param destinationTableName
+     *
+     * @return List of mapping column elements
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getMappingColumnsToProcessByDestinationTable(String destinationTableName) throws IllegalArgumentException, MissingAttributeException, MissingElementException {
+        if (destinationTableName == null) {
+            throw new IllegalArgumentException("Missing destinationTableName");
+        }
+
+        return getElementsToProcess(getMappingDestinationColumns(destinationTableName).iterator());
+    }
+
+    /**
+     * gets a mapping table element given its source table name
+     *
+     * @param tableName (source table)
+     *
+     * @return mapping element
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getMappingSourceTable(String tableName) throws IllegalArgumentException, MissingElementException {
+        if (tableName == null) {
+            throw new IllegalArgumentException("Missing tableName");
+        }
+
+        return getElement(getElement(mapping, "mapping").getChildren(XMLTags.TABLE).iterator(), tableName, XMLTags.SOURCE_DB);
+    }
+
+    /**
+     * gets a mapping table element given its destination table name
+     *
+     * @param tableName (destination table)
+     *
+     * @return mapping element
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getMappingDestinationTable(String tableName) throws IllegalArgumentException, MissingElementException {
+        if (tableName == null) {
+            throw new IllegalArgumentException("Missing tableName");
+        }
+
+        return getElement(getElement(mapping, "mapping").getChildren(XMLTags.TABLE).iterator(), tableName, XMLTags.DESTINATION_DB);
+    }
+
+    /**
+     * gets all mapping table elements
+     *
+     * @return List of mapping table elements
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getMappingTables() throws MissingElementException {
+        return getElement(mapping, "mapping").getChildren(XMLTags.TABLE);
+    }
+
+    /**
+     * get mapping column element given source table and column name
+     *
+     * @param tableName source table
+     * @param columnName source column
+     *
+     * @return mapping column element
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getMappingSourceColumn(String tableName,
+                                                String columnName) throws IllegalArgumentException, MissingElementException {
+        if ((tableName == null) || (columnName == null)) {
+            throw new IllegalArgumentException("Missing arguments values: tableName=" + tableName + " columnName=" + columnName);
+        }
+
+        return getElement(getMappingSourceTable(tableName).getChildren(XMLTags.COLUMN).iterator(), columnName, XMLTags.SOURCE_DB);
+    }
+
+    /**
+     * get mapping column element given destination table and column name
+     *
+     * @param tableName destination table
+     * @param columnName destination column
+     *
+     * @return mapping column element
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getMappingDestinationColumn(String tableName,
+                                                     String columnName) throws IllegalArgumentException, MissingElementException {
+        if ((tableName == null) || (columnName == null)) {
+            throw new IllegalArgumentException("Missing arguments values: tableName=" + tableName + " columnName=" + columnName);
+        }
+
+        return getElement(getMappingDestinationTable(tableName).getChildren(XMLTags.COLUMN).iterator(), columnName, XMLTags.DESTINATION_DB);
+    }
+
+    /**
+     * get all mapping columns given its source table name
+     *
+     * @param tableName (source table)
+     *
+     * @return List of mapping column elements
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getMappingSourceColumns(String tableName) throws IllegalArgumentException, MissingElementException {
+        if (tableName == null) {
+            throw new IllegalArgumentException("Missing tableName");
+        }
+
+        return getMappingSourceTable(tableName).getChildren(XMLTags.COLUMN);
+    }
+
+    /**
+     * get all mapping columns given its destination table name
+     *
+     * @param tableName (destination table)
+     *
+     * @return List of mapping column elements
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getMappingDestinationColumns(String tableName) throws IllegalArgumentException, MissingElementException {
+        if (tableName == null) {
+            throw new IllegalArgumentException("Missing tableName");
+        }
+
+        return getMappingDestinationTable(tableName).getChildren(XMLTags.COLUMN);
     }
 
     /**
@@ -159,9 +653,9 @@ public class ProjectModel {
      *
      * @return number of source tables
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final int getNbrSourceTables() throws Exception {
+    public final int getNbrSourceTables() throws MissingElementException {
         return getSourceTables().size();
     }
 
@@ -170,124 +664,36 @@ public class ProjectModel {
      *
      * @return number of destination tables
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final int getNbrDestinationTables() throws Exception {
+    public final int getNbrDestinationTables() throws MissingElementException {
         return getDestinationTables().size();
     }
 
     /**
-     * checks if source model has already been captured
+     * get the plugin element
      *
-     * @return true or false
+     * @return plugin element
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final boolean isSourceModelCaptured() throws Exception {
-        if (sourceModel.getChildren(XMLTags.TABLE).size() > 0) {
-            return true;
-        } else {
-            return false;
-        }
+    public final Element getPlugin() throws MissingElementException {
+        return getElement(plugin, "plugin");
     }
 
     /**
-     * check if destination model has already been captured
+     * get project Document
      *
-     * @return true or false
+     * @return project Document
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final boolean isDestinationModelCaptured() throws Exception {
-        if (destinationModel.getChildren(XMLTags.TABLE).size() > 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * checks if mapping has already been setup
-     *
-     * @return true or false
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final boolean isMappingSetup() throws Exception {
-        if (mapping.getChildren(XMLTags.TABLE).size() > 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * tries to find further mappings for given source table makes sense if mapping has been changed manually
-     *
-     * @param sourceTableName
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final void checkForMappings(String sourceTableName) throws Exception {
-        mapper.checkForMappings(sourceTableName);
-    }
-
-    /**
-     * Returns unmapped columns for a given table
-     *
-     * @param tableName to get unmapped columns for
-     *
-     * @return List containing unmapped columns for this table
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final List getUnmappedColumns(String tableName) throws Exception {
-        if (getMappingTables().size() > 0) {
-            return mapper.getUnmappedColumns(tableName);
+    public final Document getProject() throws MissingElementException {
+        if (project != null) {
+            return project;
         } else {
             return null;
         }
-    }
-
-    /**
-     * get source table
-     *
-     * @param tableName (source table)
-     *
-     * @return source table if existing
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final Element getSourceTable(String tableName) throws Exception {
-        Iterator itTables = sourceModel.getChildren(XMLTags.TABLE).iterator();
-
-        return getElement(itTables, tableName, XMLTags.NAME);
-    }
-
-    /**
-     * gets all source tables
-     *
-     * @return List of source tables if existing
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final List getSourceTables() throws Exception {
-        return sourceModel.getChildren(XMLTags.TABLE);
-    }
-
-    /**
-     * get destination table
-     *
-     * @param tableName (destination table)
-     *
-     * @return destination table if existing
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final Element getDestinationTable(String tableName) throws Exception {
-        Iterator itTables = destinationModel.getChildren(XMLTags.TABLE).iterator();
-
-        return getElement(itTables, tableName, XMLTags.NAME);
     }
 
     /**
@@ -297,9 +703,15 @@ public class ProjectModel {
      *
      * @return qualified source table name
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final String getQualifiedSourceTableName(String tableName) throws Exception {
+    public final String getQualifiedSourceTableName(String tableName) throws IllegalArgumentException, MissingAttributeException, MissingElementException {
+        if (tableName == null) {
+            throw new IllegalArgumentException("Missing tableName");
+        }
+
         if (getSourceCatalog().length() > 0) {
             if (getSourceDatabaseName().compareToIgnoreCase("PostgreSQL") == 0) {
                 return tableName;
@@ -322,9 +734,15 @@ public class ProjectModel {
      *
      * @return qualified destination table name
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final String getQualifiedDestinationTableName(String tableName) throws Exception {
+    public final String getQualifiedDestinationTableName(String tableName) throws IllegalArgumentException, MissingAttributeException, MissingElementException {
+        if (tableName == null) {
+            throw new IllegalArgumentException("Missing tableName");
+        }
+
         if (getDestinationCatalog().length() > 0) {
             if (getDestinationDatabaseName().compareToIgnoreCase("PostgreSQL") == 0) {
                 return tableName;
@@ -341,14 +759,269 @@ public class ProjectModel {
     }
 
     /**
-     * gets all destination tables
+     * get root element
      *
-     * @return List of all destination tables
+     * @return root element
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final List getDestinationTables() throws Exception {
-        return destinationModel.getChildren(XMLTags.TABLE);
+    public final Element getRoot() throws MissingElementException {
+        return getElement(root, "root");
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public String getSourceDatabaseName() throws MissingAttributeException, MissingElementException {
+        return getAttributeValue(getChildElement(getElement(getSourceMetadata(), "source metadata"), XMLTags.DB_PRODUCT_NAME), XMLTags.VALUE);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getSourceDb() throws MissingElementException {
+        return getElement(sourceDb, "sourceDb");
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getSourceDriver() throws MissingElementException {
+        return getElement(sourceDriver, "sourceDriver");
+    }
+
+    /**
+     * get source catalog name
+     *
+     * @return source catalog name
+     *
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final String getSourceCatalog() throws MissingAttributeException, MissingElementException {
+        return getAttributeValue(getElement(sourceCatalog, "sourceCatalog"), XMLTags.VALUE);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public String getSourceCatalogSeparator() throws MissingElementException {
+        if (getSourceMetadata().getChild(XMLTags.CATALOG_SEPARATOR) != null) {
+            return getSourceMetadata().getChild(XMLTags.CATALOG_SEPARATOR).getAttributeValue(XMLTags.VALUE);
+        } else {
+            Element catalogSeparator = getSourceMetadata().getChild(XMLTags.CATALOG_SEPARATOR);
+            catalogSeparator.setAttribute(XMLTags.VALUE, ".");
+
+            return getSourceCatalogSeparator();
+        }
+    }
+
+    /**
+     * get mapping column elements to process given source table name
+     *
+     * @param sourceTableName
+     *
+     * @return List of mapping column elements
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getSourceColumnsToProcess(String sourceTableName) throws IllegalArgumentException, MissingAttributeException, MissingElementException {
+        if (sourceTableName == null) {
+            throw new IllegalArgumentException("Missing sourceTableName");
+        }
+
+        return getElementsToProcess(getSourceColumns(sourceTableName).iterator());
+    }
+
+    /**
+     * get source connection element
+     *
+     * @return source connection element
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getSourceConnection() throws MissingElementException {
+        if (sourceConnection == null) {
+            sourceConnection = getChildElement(getElement(sourceDb, "sourceDb"), XMLTags.CONNECTION);
+        }
+
+        return getElement(sourceConnection, "sourceConnection");
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public Element getSourceMetadata() throws MissingElementException {
+        return getElement(sourceMetadata, "sourceMetadata");
+    }
+
+    /**
+     * get source model element
+     *
+     * @return source model element
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getSourceModel() throws MissingElementException {
+        return getElement(sourceModel, "sourceModel");
+    }
+
+    /**
+     * get source statistics element
+     *
+     * @return source statistics element
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getSourceStatistics() throws MissingElementException {
+        return getElement(sourceStatistics, "sourceStatistics");
+    }
+
+    /**
+     * get source table
+     *
+     * @param tableName (source table)
+     *
+     * @return source table if existing
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getSourceTable(String tableName) throws IllegalArgumentException, MissingElementException {
+        if (tableName == null) {
+            throw new IllegalArgumentException("Missing tableName");
+        }
+
+        return getElement(getElement(sourceModel, "sourceModel").getChildren(XMLTags.TABLE).iterator(), tableName, XMLTags.NAME);
+    }
+
+    /**
+     * get source table pattern (may contain SQL wildcards)
+     *
+     * @return source table pattern
+     *
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final String getSourceTablePattern() throws MissingAttributeException, MissingElementException {
+        return getAttributeValue(getElement(sourceTablePattern, "sourceTablePattern"), XMLTags.VALUE);
+    }
+
+    /**
+     * gets all source tables
+     *
+     * @return List of source tables if existing
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getSourceTables() throws MissingElementException {
+        return getElement(sourceModel, "sourceModel").getChildren(XMLTags.TABLE);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getSourceTypeInfo() throws MissingElementException {
+        return getChildElement(getElement(sourceMetadata, "sourceMetadata"), XMLTags.TYPE_INFO);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param sourceTableName DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getSourcePrimaryKeys(String sourceTableName) throws IllegalArgumentException, MissingElementException {
+        if (sourceTableName == null) {
+            throw new IllegalArgumentException("Missing sourceTableName");
+        }
+
+        return getKeys(getSourceTable(sourceTableName), XMLTags.PRIMARY_KEY);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param sourceTableName DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getSourceImportedKeys(String sourceTableName) throws IllegalArgumentException, MissingElementException {
+        if (sourceTableName == null) {
+            throw new IllegalArgumentException("Missing sourceTableName");
+        }
+
+        return getKeys(getSourceTable(sourceTableName), XMLTags.IMPORTED_KEY);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param sourceTableName DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getSourceExportedKeys(String sourceTableName) throws IllegalArgumentException, MissingElementException {
+        if (sourceTableName == null) {
+            throw new IllegalArgumentException("Missing sourceTableName");
+        }
+
+        return getKeys(getSourceTable(sourceTableName), XMLTags.EXPORTED_KEY);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param sourceTableName DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getSourceIndexes(String sourceTableName) throws IllegalArgumentException, MissingElementException {
+        if (sourceTableName == null) {
+            throw new IllegalArgumentException("Missing sourceTableName");
+        }
+
+        return getKeys(getSourceTable(sourceTableName), XMLTags.INDEX);
     }
 
     /**
@@ -359,13 +1032,16 @@ public class ProjectModel {
      *
      * @return source column
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
     public final Element getSourceColumn(String tableName,
-                                         String columnName) throws Exception {
-        Iterator itColumns = getSourceTable(tableName).getChildren(XMLTags.COLUMN).iterator();
+                                         String columnName) throws IllegalArgumentException, MissingElementException {
+        if ((tableName == null) || (columnName == null)) {
+            throw new IllegalArgumentException("Missing arguments values: tableName=" + tableName + " columnName=" + columnName);
+        }
 
-        return getElement(itColumns, columnName, XMLTags.NAME);
+        return getElement(getSourceTable(tableName).getChildren(XMLTags.COLUMN).iterator(), columnName, XMLTags.NAME);
     }
 
     /**
@@ -375,167 +1051,27 @@ public class ProjectModel {
      *
      * @return List of source columns
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final List getSourceColumns(String tableName) throws Exception {
+    public final List getSourceColumns(String tableName) throws IllegalArgumentException, MissingElementException {
+        if (tableName == null) {
+            throw new IllegalArgumentException("Missing tableName");
+        }
+
         return getSourceTable(tableName).getChildren(XMLTags.COLUMN);
     }
 
     /**
-     * given a destination table and column name return column element
+     * get source schema name
      *
-     * @param tableName (destination table)
-     * @param columnName (destination column)
+     * @return source schema name
      *
-     * @return destination column
-     *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final Element getDestinationColumn(String tableName,
-                                              String columnName) throws Exception {
-        Iterator itColumns = getDestinationTable(tableName).getChildren(XMLTags.COLUMN).iterator();
-
-        return getElement(itColumns, columnName, XMLTags.NAME);
-    }
-
-    /**
-     * gets all destination columns for a given destination table name
-     *
-     * @param tableName (destination table)
-     *
-     * @return List of destination columns
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final List getDestinationColumns(String tableName) throws Exception {
-        return getDestinationTable(tableName).getChildren(XMLTags.COLUMN);
-    }
-
-    /**
-     * gets a mapping table element given its source table name
-     *
-     * @param tableName (source table)
-     *
-     * @return mapping element
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final Element getMappingSourceTable(String tableName) throws Exception {
-        Iterator itTables = mapping.getChildren(XMLTags.TABLE).iterator();
-
-        return getElement(itTables, tableName, XMLTags.SOURCE_DB);
-    }
-
-    /**
-     * gets a mapping table element given its destination table name
-     *
-     * @param tableName (destination table)
-     *
-     * @return mapping element
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final Element getMappingDestinationTable(String tableName) throws Exception {
-        Iterator itTables = mapping.getChildren(XMLTags.TABLE).iterator();
-
-        return getElement(itTables, tableName, XMLTags.DESTINATION_DB);
-    }
-
-    /**
-     * gets all mapping table elements
-     *
-     * @return List of mapping table elements
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final List getMappingTables() throws Exception {
-        return mapping.getChildren(XMLTags.TABLE);
-    }
-
-    /**
-     * get mapping column element given source table and column name
-     *
-     * @param tableName source table
-     * @param columnName source column
-     *
-     * @return mapping column element
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final Element getMappingSourceColumn(String tableName,
-                                                String columnName) throws Exception {
-        Iterator itColumns = getMappingSourceTable(tableName).getChildren(XMLTags.COLUMN).iterator();
-
-        return getElement(itColumns, columnName, XMLTags.SOURCE_DB);
-    }
-
-    /**
-     * get mapping column element given destination table and column name
-     *
-     * @param tableName destination table
-     * @param columnName destination column
-     *
-     * @return mapping column element
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final Element getMappingDestinationColumn(String tableName,
-                                                     String columnName) throws Exception {
-        Iterator itColumns = getMappingDestinationTable(tableName).getChildren(XMLTags.COLUMN).iterator();
-
-        return getElement(itColumns, columnName, XMLTags.DESTINATION_DB);
-    }
-
-    /**
-     * get all mapping columns given its source table name
-     *
-     * @param tableName (source table)
-     *
-     * @return List of mapping column elements
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final List getMappingSourceColumns(String tableName) throws Exception {
-        return getMappingSourceTable(tableName).getChildren(XMLTags.COLUMN);
-    }
-
-    /**
-     * get all mapping columns given its destination table name
-     *
-     * @param tableName (destination table)
-     *
-     * @return List of mapping column elements
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final List getMappingDestinationColumns(String tableName) throws Exception {
-        return getMappingDestinationTable(tableName).getChildren(XMLTags.COLUMN);
-    }
-
-    /**
-     * get all source table elements which are not yet mapped
-     *
-     * @return List of source table elements
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final List getUnmappedSourceTables() throws Exception {
-        Iterator itTables = sourceModel.getChildren(XMLTags.TABLE).iterator();
-
-        return getUnmappedElements(itTables, XMLTags.SOURCE_DB);
-    }
-
-    /**
-     * get all destination table elements which are not yet mapped
-     *
-     * @return List of destination table elements
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final List getUnmappedDestinationTables() throws Exception {
-        Iterator itTables = destinationModel.getChildren(XMLTags.TABLE).iterator();
-
-        return getUnmappedElements(itTables, XMLTags.DESTINATION_DB);
+    public final String getSourceSchema() throws MissingAttributeException, MissingElementException {
+        return getAttributeValue(getElement(sourceSchema, "sourceSchema"), XMLTags.VALUE);
     }
 
     /**
@@ -545,38 +1081,29 @@ public class ProjectModel {
      *
      * @return statistics element
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final Element getSourceStatisticsTable(String tableName) throws Exception {
-        Iterator itTables = sourceStatistics.getChildren(XMLTags.TABLE).iterator();
+    public final Element getSourceStatisticsTable(String tableName) throws IllegalArgumentException, MissingElementException {
+        if (tableName == null) {
+            throw new IllegalArgumentException("Missing tableName");
+        }
 
-        return getElement(itTables, tableName, XMLTags.NAME);
+        return getElement(sourceStatistics.getChildren(XMLTags.TABLE).iterator(), tableName, XMLTags.NAME);
     }
 
     /**
-     * get statistics for destination table
+     * get source tables to process ordered by processing order (based upon foreign keys)
      *
-     * @param tableName (destination table)
+     * @return List of source tables
      *
-     * @return statistics element
-     *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws DependencyNotSolvableException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final Element getDestinationStatisticsTable(String tableName) throws Exception {
-        Iterator itTables = destinationStatistics.getChildren(XMLTags.TABLE).iterator();
-
-        return getElement(itTables, tableName, XMLTags.NAME);
-    }
-
-    /**
-     * get all string filters
-     *
-     * @return List of string filters
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final List getStringFilters() throws Exception {
-        return filter.getChildren(XMLTags.STRING);
+    public final List getSourceTablesToProcessOrdered() throws DependencyNotSolvableException, MissingAttributeException, UnsupportedAttributeValueException, MissingElementException {
+        return getTablesToProcessOrdered(getElement(sourceModel, "sourceModel"));
     }
 
     /**
@@ -586,12 +1113,59 @@ public class ProjectModel {
      *
      * @return string filter element
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final Element getStringFilter(String filterName) throws Exception {
-        Iterator itStringFilter = getStringFilters().iterator();
+    public final Element getStringFilter(String filterName) throws IllegalArgumentException, MissingElementException {
+        if (filterName == null) {
+            throw new IllegalArgumentException("Missing filterName");
+        }
 
-        return getElement(itStringFilter, filterName, XMLTags.NAME);
+        return getElement(getStringFilters().iterator(), filterName, XMLTags.NAME);
+    }
+
+    /**
+     * get string filter removeIntermediateWhitespaces
+     *
+     * @return string filter RemoveIntermediateWhitespaces
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getStringFilterRemoveIntermediateWhitespaces() throws MissingElementException {
+        return getElement(stringFilterRemoveIntermediateWhitespaces, "stringFilterRemoveIntermediateWhitespaces");
+    }
+
+    /**
+     * get all string filters
+     *
+     * @return List of string filters
+     *
+     * @throws MissingElementException NullPointerException if element(s) not available
+     */
+    public final List getStringFilters() throws MissingElementException {
+        return getElement(filter, "filter").getChildren(XMLTags.STRING);
+    }
+
+    /**
+     * get string filter setNull
+     *
+     * @return string filter setNull
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getStringFilterSetNull() throws MissingElementException {
+        return getElement(stringFilterSetNull, "stringFilterSetNull");
+    }
+
+    /**
+     * get string filter trim
+     *
+     * @return string filter trim
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final Element getStringFilterTrim() throws MissingElementException {
+        return getElement(stringFilterTrim, "stringFilterTrim");
     }
 
     /**
@@ -599,10 +1173,10 @@ public class ProjectModel {
      *
      * @return List of table filter elements
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws MissingElementException
      */
-    public final List getTableFilters() throws Exception {
-        return filter.getChildren(XMLTags.TABLE);
+    public final List getTableFilters() throws MissingElementException {
+        return getElement(filter, "filter").getChildren(XMLTags.TABLE);
     }
 
     /**
@@ -612,47 +1186,259 @@ public class ProjectModel {
      *
      * @return table filter element
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final Element getTableFilter(String tableName) throws Exception {
-        Iterator itTableFilter = getTableFilters().iterator();
+    public final Element getTableFilter(String tableName) throws IllegalArgumentException, MissingElementException {
+        if (tableName == null) {
+            throw new IllegalArgumentException("Missing tableName");
+        }
 
-        return getElement(itTableFilter, tableName, XMLTags.NAME);
+        return getElement(getTableFilters().iterator(), tableName, XMLTags.NAME);
     }
 
     /**
-     * delete an existing table filter
+     * DOCUMENT ME!
      *
-     * @param tableName (source table)
+     * @param dataType DOCUMENT ME!
+     * @param database DOCUMENT ME!
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final void deleteTableFilter(String tableName) throws Exception {
-        Element tableFilter = getTableFilter(tableName);
+    public final Element getTypeInfoByDataType(String dataType,
+                                               String database) throws IllegalArgumentException, MissingElementException {
+        if ((dataType == null) || (database == null)) {
+            throw new IllegalArgumentException("Missing arguments values: dataType=" + dataType + " database=" + database);
+        }
 
-        if (tableFilter != null) {
-            filter.removeContent(tableFilter);
+        if (database.compareToIgnoreCase(XMLTags.SOURCE_DB) == 0) {
+            return getElement(getSourceTypeInfo().getChildren().iterator(), dataType.toUpperCase(), XMLTags.DATA_TYPE);
+        } else if (database.compareToIgnoreCase(XMLTags.DESTINATION_DB) == 0) {
+            return getElement(getDestinationTypeInfo().getChildren().iterator(), dataType.toUpperCase(), XMLTags.DATA_TYPE);
+        } else {
+            throw new IllegalArgumentException("Invalid argument database=" + database);
         }
     }
 
     /**
-     * get the plugin element
+     * DOCUMENT ME!
      *
-     * @return plugin element
+     * @param localTypeName DOCUMENT ME!
+     * @param database DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final Element getPlugin() {
-        return plugin;
+    public final Element getTypeInfoByLocalTypeName(String localTypeName,
+                                                    String database) throws IllegalArgumentException, MissingElementException {
+        if ((localTypeName == null) || (database == null)) {
+            throw new IllegalArgumentException("Missing arguments values: localTypeName=" + localTypeName + " database=" + database);
+        }
+
+        if (database.compareToIgnoreCase(XMLTags.SOURCE_DB) == 0) {
+            return getElement(getSourceTypeInfo().getChildren().iterator(), localTypeName.toUpperCase(), XMLTags.LOCAL_TYPE_NAME);
+        } else if (database.compareToIgnoreCase(XMLTags.DESTINATION_DB) == 0) {
+            return getElement(getDestinationTypeInfo().getChildren().iterator(), localTypeName.toUpperCase(), XMLTags.LOCAL_TYPE_NAME);
+        } else {
+            throw new IllegalArgumentException("Invalid argument database=" + database);
+        }
     }
 
     /**
-     * get source schema name
+     * DOCUMENT ME!
      *
-     * @return source schema name
+     * @param typeName DOCUMENT ME!
+     * @param database DOCUMENT ME!
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final String getSourceSchema() throws Exception {
-        return sourceSchema.getAttributeValue(XMLTags.VALUE);
+    public final Element getTypeInfoByTypeName(String typeName,
+                                               String database) throws IllegalArgumentException, MissingElementException {
+        if ((typeName == null) || (database == null)) {
+            throw new IllegalArgumentException("Missing arguments values: typeName=" + typeName + " database=" + database);
+        }
+
+        if (database.compareToIgnoreCase(XMLTags.SOURCE_DB) == 0) {
+            return getElement(getSourceTypeInfo().getChildren().iterator(), typeName.toUpperCase(), XMLTags.TYPE_NAME);
+        } else if (database.compareToIgnoreCase(XMLTags.DESTINATION_DB) == 0) {
+            return getElement(getDestinationTypeInfo().getChildren().iterator(), typeName.toUpperCase(), XMLTags.TYPE_NAME);
+        } else {
+            throw new IllegalArgumentException("Invalid argument database=" + database);
+        }
+    }
+
+    /**
+     * Returns unmapped columns for a given table
+     *
+     * @param tableName to get unmapped columns for
+     *
+     * @return List containing unmapped columns for this table
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getUnmappedColumns(String tableName) throws IllegalArgumentException, MissingElementException {
+        if (tableName == null) {
+            throw new IllegalArgumentException("Missing tableName");
+        }
+
+        if (getMappingTables().size() > 0) {
+            return mapper.getUnmappedColumns(tableName);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * get all source table elements which are not yet mapped
+     *
+     * @return List of source table elements
+     *
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getUnmappedSourceTables() throws MissingAttributeException, MissingElementException {
+        return getUnmappedElements(getElement(sourceModel, "sourceModel").getChildren(XMLTags.TABLE).iterator(), XMLTags.SOURCE_DB);
+    }
+
+    /**
+     * get all destination table elements which are not yet mapped
+     *
+     * @return List of destination table elements
+     *
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final List getUnmappedDestinationTables() throws MissingAttributeException, MissingElementException {
+        return getUnmappedElements(getElement(destinationModel, "destinationModel").getChildren(XMLTags.TABLE).iterator(), XMLTags.DESTINATION_DB);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final int getRunlevel() throws MissingAttributeException, UnsupportedAttributeValueException, MissingElementException {
+        String value = getAttributeValue(getElement(root, "root"), XMLTags.RUNLEVEL);
+
+        if (value != null) {
+            int runlevel = Integer.parseInt(value);
+
+            if ((runlevel == RUNLEVEL_GUI) || (runlevel == RUNLEVEL_SHELL)) {
+                return runlevel;
+            } else {
+                throw new UnsupportedAttributeValueException(root, XMLTags.RUNLEVEL);
+            }
+        } else {
+            return RUNLEVEL_GUI;
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final String getWorkingMode() throws MissingAttributeException, MissingElementException {
+        return getAttributeValue(getElement(root, "root"), XMLTags.WORKING_MODE);
+    }
+
+    /**
+     * set the database mode
+     *
+     * @param db_mode 1 if dbMode = SINGLE_MODE, 2 if dbMode = DUAL_MODE
+     *
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     */
+    public final void setDbMode(int db_mode) throws UnsupportedAttributeValueException {
+        if ((db_mode == 1) || (db_mode == 2)) {
+            switch (db_mode) {
+            case SINGLE_MODE:
+                root.setAttribute(XMLTags.DB_MODE, XMLTags.SINGLE_DB);
+
+                break;
+
+            case DUAL_MODE:
+                root.setAttribute(XMLTags.DB_MODE, XMLTags.DUAL_DB);
+
+                break;
+            }
+        } else {
+            throw new UnsupportedAttributeValueException(root, XMLTags.DB_MODE);
+        }
+    }
+
+    /**
+     * Automatically find out which source table belongs to which destination table Same for columns
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final void setupMapping() throws MissingElementException {
+        if (isSourceModelCaptured() && isDestinationModelCaptured() && !isMappingSetup()) {
+            mapper = new Mapper(this);
+            mapper.createInitialMapping();
+            mapper.findInitalMatches();
+        }
+    }
+
+    /**
+     * checks if source model has already been captured
+     *
+     * @return true or false
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final boolean isSourceModelCaptured() throws MissingElementException {
+        if (getElement(sourceModel, "sourceModel").getChildren(XMLTags.TABLE).size() > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * check if destination model has already been captured
+     *
+     * @return true or false
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final boolean isDestinationModelCaptured() throws MissingElementException {
+        if (getElement(destinationModel, "destinationModel").getChildren(XMLTags.TABLE).size() > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * checks if mapping has already been setup
+     *
+     * @return true or false
+     *
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    public final boolean isMappingSetup() throws MissingElementException {
+        if (getElement(mapping, "mapping").getChildren(XMLTags.TABLE).size() > 0) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -660,23 +1446,15 @@ public class ProjectModel {
      *
      * @param schemaName schema name
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final void setSourceSchema(String schemaName) throws Exception {
-        if (schemaName != null) {
-            sourceSchema.setAttribute(XMLTags.VALUE, schemaName);
+    public final void setSourceSchema(String schemaName) throws IllegalArgumentException, MissingElementException {
+        if (schemaName == null) {
+            throw new IllegalArgumentException("Missing schemaName");
         }
-    }
 
-    /**
-     * get destination schema name
-     *
-     * @return destination schema name
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final String getDestinationSchema() throws Exception {
-        return destinationSchema.getAttributeValue(XMLTags.VALUE);
+        getElement(sourceSchema, "sourceSchema").setAttribute(XMLTags.VALUE, schemaName);
     }
 
     /**
@@ -684,23 +1462,15 @@ public class ProjectModel {
      *
      * @param schemaName schema name
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final void setDestinationSchema(String schemaName) throws Exception {
-        if (schemaName != null) {
-            destinationSchema.setAttribute(XMLTags.VALUE, schemaName);
+    public final void setDestinationSchema(String schemaName) throws IllegalArgumentException, MissingElementException {
+        if (schemaName == null) {
+            throw new IllegalArgumentException("Missing schemaName");
         }
-    }
 
-    /**
-     * get source catalog name
-     *
-     * @return source catalog name
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final String getSourceCatalog() throws Exception {
-        return sourceCatalog.getAttributeValue(XMLTags.VALUE);
+        getElement(destinationSchema, "destinationSchema").setAttribute(XMLTags.VALUE, schemaName);
     }
 
     /**
@@ -708,23 +1478,15 @@ public class ProjectModel {
      *
      * @param catalogName source
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final void setSourceCatalog(String catalogName) throws Exception {
-        if (catalogName != null) {
-            sourceCatalog.setAttribute(XMLTags.VALUE, catalogName);
+    public final void setSourceCatalog(String catalogName) throws IllegalArgumentException, MissingElementException {
+        if (catalogName == null) {
+            throw new IllegalArgumentException("Missing catalogName");
         }
-    }
 
-    /**
-     * get destination catalog name
-     *
-     * @return destination catalog name
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final String getDestinationCatalog() throws Exception {
-        return destinationCatalog.getAttributeValue(XMLTags.VALUE);
+        getElement(sourceCatalog, "sourceCatalog").setAttribute(XMLTags.VALUE, catalogName);
     }
 
     /**
@@ -732,34 +1494,15 @@ public class ProjectModel {
      *
      * @param catalogName destination
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final void setDestinationCatalog(String catalogName) throws Exception {
-        if (catalogName != null) {
-            destinationCatalog.setAttribute(XMLTags.VALUE, catalogName);
+    public final void setDestinationCatalog(String catalogName) throws IllegalArgumentException, MissingElementException {
+        if (catalogName == null) {
+            throw new IllegalArgumentException("Missing catalogName");
         }
-    }
 
-    /**
-     * get source table pattern (may contain SQL wildcards)
-     *
-     * @return source table pattern
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final String getSourceTablePattern() throws Exception {
-        return sourceTablePattern.getAttributeValue(XMLTags.VALUE);
-    }
-
-    /**
-     * get destination table pattern (may contain SQL wildcards)
-     *
-     * @return destination table pattern
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final String getDestinationTablePattern() throws Exception {
-        return destinationTablePattern.getAttributeValue(XMLTags.VALUE);
+        getElement(destinationCatalog, "destinationCatalog").setAttribute(XMLTags.VALUE, catalogName);
     }
 
     /**
@@ -767,13 +1510,18 @@ public class ProjectModel {
      *
      * @param tablePattern source table
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final void setSourceTablePattern(String tablePattern) throws Exception {
+    public final void setSourceTablePattern(String tablePattern) throws IllegalArgumentException, MissingElementException {
+        if (tablePattern == null) {
+            throw new IllegalArgumentException("Missing tablePattern");
+        }
+
         if (tablePattern.length() > 0) {
-            sourceTablePattern.setAttribute(XMLTags.TABLE_PATTERN, tablePattern);
+            getElement(sourceTablePattern, "sourceTablePattern").setAttribute(XMLTags.TABLE_PATTERN, tablePattern);
         } else {
-            sourceTablePattern.setAttribute(XMLTags.TABLE_PATTERN, "%");
+            getElement(sourceTablePattern, "sourceTablePattern").setAttribute(XMLTags.TABLE_PATTERN, "%");
         }
     }
 
@@ -782,66 +1530,19 @@ public class ProjectModel {
      *
      * @param tablePattern destination table
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final void setDestinationTablePattern(String tablePattern) throws Exception {
-        if (tablePattern.length() > 0) {
-            destinationTablePattern.setAttribute(XMLTags.TABLE_PATTERN, tablePattern);
-        } else {
-            destinationTablePattern.setAttribute(XMLTags.TABLE_PATTERN, "%");
+    public final void setDestinationTablePattern(String tablePattern) throws IllegalArgumentException, MissingElementException {
+        if (tablePattern == null) {
+            throw new IllegalArgumentException("Missing tablePattern");
         }
-    }
 
-    /**
-     * get source tables to process ordered by processing order (based upon foreign keys)
-     *
-     * @return List of source tables
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final List getSourceTablesToProcessOrdered() throws Exception {
-        return getTablesToProcessOrdered(sourceModel);
-    }
-
-    /**
-     * get destination tables to process ordered by processing order (based upon foreign keys)
-     *
-     * @return List of destination tables
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final List getDestinationTablesToProcessOrdered() throws Exception {
-        return getTablesToProcessOrdered(destinationModel);
-    }
-
-    /**
-     * get mapping column elements to process given source table name
-     *
-     * @param sourceTableName
-     *
-     * @return List of mapping column elements
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final List getSourceColumnsToProcess(String sourceTableName) throws Exception {
-        Iterator itSourceColumns = getSourceColumns(sourceTableName).iterator();
-
-        return getElementsToProcess(itSourceColumns);
-    }
-
-    /**
-     * get mapping column elements to process given destination table name
-     *
-     * @param destinationTableName
-     *
-     * @return List of mapping column elements
-     *
-     * @throws Exception NullPointerException if element(s) not available
-     */
-    public final List getMappingColumnsToProcessByDestinationTable(String destinationTableName) throws Exception {
-        Iterator itMappingColumns = getMappingDestinationColumns(destinationTableName).iterator();
-
-        return getElementsToProcess(itMappingColumns);
+        if (tablePattern.length() > 0) {
+            getElement(destinationTablePattern, "destinationTablePattern").setAttribute(XMLTags.TABLE_PATTERN, tablePattern);
+        } else {
+            getElement(destinationTablePattern, "destinationTablePattern").setAttribute(XMLTags.TABLE_PATTERN, "%");
+        }
     }
 
     /**
@@ -850,10 +1551,15 @@ public class ProjectModel {
      * @param element to set or reset
      * @param process true or false
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
     public final void setElementProcess(Element element,
-                                        boolean process) throws Exception {
+                                        boolean process) throws IllegalArgumentException, MissingElementException {
+        if (element == null) {
+            throw new IllegalArgumentException("Missing element");
+        }
+
         element.setAttribute(XMLTags.PROCESS, Boolean.toString(process));
     }
 
@@ -863,10 +1569,15 @@ public class ProjectModel {
      * @param element to set or reset
      * @param processed true or false
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
     public final void setElementProcessed(Element element,
-                                          boolean processed) throws Exception {
+                                          boolean processed) throws IllegalArgumentException, MissingElementException {
+        if (element == null) {
+            throw new IllegalArgumentException("Missing element");
+        }
+
         element.setAttribute(XMLTags.PROCESSED, Boolean.toString(processed));
     }
 
@@ -876,10 +1587,15 @@ public class ProjectModel {
      * @param elements DOCUMENT ME!
      * @param process DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
     public final void setElementsProcessRecursively(Element elements,
-                                                    boolean process) throws Exception {
+                                                    boolean process) throws IllegalArgumentException, MissingElementException {
+        if (elements == null) {
+            throw new IllegalArgumentException("Missing elements");
+        }
+
         Iterator itElements = elements.getChildren().iterator();
 
         while (itElements.hasNext()) {
@@ -898,10 +1614,15 @@ public class ProjectModel {
      * @param elements DOCUMENT ME!
      * @param processed DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
     public final void setElementsProcessedRecursively(Element elements,
-                                                      boolean processed) throws Exception {
+                                                      boolean processed) throws IllegalArgumentException, MissingElementException {
+        if (elements == null) {
+            throw new IllegalArgumentException("Missing elements");
+        }
+
         Iterator itElements = elements.getChildren().iterator();
 
         while (itElements.hasNext()) {
@@ -918,8 +1639,15 @@ public class ProjectModel {
      * set the plugin element
      *
      * @param element plugin
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final void setPlugin(Element element) {
+    public final void setPlugin(Element element) throws IllegalArgumentException, MissingElementException {
+        if (element == null) {
+            throw new IllegalArgumentException("Missing element");
+        }
+
         Element newPlugin = (Element) element.clone();
 
         if (plugin == null) {
@@ -931,224 +1659,32 @@ public class ProjectModel {
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @param typeName DOCUMENT ME!
-     * @param database DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
-     */
-    public final Element getTypeInfoByTypeName(String typeName,
-                                               String database) throws Exception {
-        Iterator itTypeInfo;
-
-        if (database.compareToIgnoreCase(XMLTags.SOURCE_DB) == 0) {
-            itTypeInfo = getSourceTypeInfo().getChildren().iterator();
-        } else {
-            itTypeInfo = getDestinationTypeInfo().getChildren().iterator();
-        }
-
-        return getElement(itTypeInfo, typeName.toUpperCase(), XMLTags.TYPE_NAME);
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param localTypeName DOCUMENT ME!
-     * @param database DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
-     */
-    public final Element getTypeInfoByLocalTypeName(String localTypeName,
-                                                    String database) throws Exception {
-        Iterator itTypeInfo;
-
-        if (database.compareToIgnoreCase(XMLTags.SOURCE_DB) == 0) {
-            itTypeInfo = getSourceTypeInfo().getChildren().iterator();
-        } else {
-            itTypeInfo = getDestinationTypeInfo().getChildren().iterator();
-        }
-
-        return getElement(itTypeInfo, localTypeName.toUpperCase(), XMLTags.LOCAL_TYPE_NAME);
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param dataType DOCUMENT ME!
-     * @param database DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     *
-     * @throws Exception DOCUMENT ME!
-     */
-    public final Element getTypeInfoByDataType(String dataType,
-                                               String database) throws Exception {
-        Iterator itTypeInfo;
-
-        if (database.compareToIgnoreCase(XMLTags.SOURCE_DB) == 0) {
-            itTypeInfo = getSourceTypeInfo().getChildren().iterator();
-        } else {
-            itTypeInfo = getDestinationTypeInfo().getChildren().iterator();
-        }
-
-        return getElement(itTypeInfo, dataType, XMLTags.DATA_TYPE);
-    }
-
-    /**
-     * get destination connection element
-     *
-     * @return destination connection element
-     */
-    public final Element getDestinationConnection() {
-        return destinationConnection;
-    }
-
-    /**
-     * get destination model element
-     *
-     * @return destination model element
-     */
-    public final Element getDestinationModel() {
-        return destinationModel;
-    }
-
-    /**
-     * get filter element (parent of all filter elements)
-     *
-     * @return filter element
-     */
-    public final Element getFilter() {
-        return filter;
-    }
-
-    /**
-     * get mapping element
-     *
-     * @return mapping element
-     */
-    public final Element getMapping() {
-        return mapping;
-    }
-
-    /**
-     * get project Document
-     *
-     * @return project Document
-     */
-    public final Document getProject() {
-        return project;
-    }
-
-    /**
-     * get root element
-     *
-     * @return root element
-     */
-    public final Element getRoot() {
-        return root;
-    }
-
-    /**
-     * get source connection element
-     *
-     * @return source connection element
-     */
-    public final Element getSourceConnection() {
-        return sourceConnection;
-    }
-
-    /**
-     * get source model element
-     *
-     * @return source model element
-     */
-    public final Element getSourceModel() {
-        return sourceModel;
-    }
-
-    /**
-     * get source statistics element
-     *
-     * @return source statistics element
-     */
-    public final Element getSourceStatistics() {
-        return sourceStatistics;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     */
-    public final Element getDestinationStatistics() {
-        return destinationStatistics;
-    }
-
-    /**
-     * get string filter removeIntermediateWhitespaces
-     *
-     * @return string filter RemoveIntermediateWhitespaces
-     */
-    public final Element getStringFilterRemoveIntermediateWhitespaces() {
-        return stringFilterRemoveIntermediateWhitespaces;
-    }
-
-    /**
-     * get string filter setNull
-     *
-     * @return string filter setNull
-     */
-    public final Element getStringFilterSetNull() {
-        return stringFilterSetNull;
-    }
-
-    /**
-     * get string filter trim
-     *
-     * @return string filter trim
-     */
-    public final Element getStringFilterTrim() {
-        return stringFilterTrim;
-    }
-
-    /**
      * set source statistics element
      *
      * @param element
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public final void setSourceStatistics(Element element) {
+    public final void setSourceStatistics(Element element) throws IllegalArgumentException {
+        if (element == null) {
+            throw new IllegalArgumentException("Missing element");
+        }
+
         sourceStatistics = element;
     }
 
     /**
      * DOCUMENT ME!
      *
-     * @return
-     */
-    public final Element getDestinationDb() {
-        return destinationDb;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return
-     */
-    public final Element getSourceDb() {
-        return sourceDb;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
      * @param element
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public final void setDestinationModel(Element element) {
+    public final void setDestinationModel(Element element) throws IllegalArgumentException {
+        if (element == null) {
+            throw new IllegalArgumentException("Missing element");
+        }
+
         destinationModel = element;
     }
 
@@ -1156,56 +1692,75 @@ public class ProjectModel {
      * DOCUMENT ME!
      *
      * @param element
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public final void setSourceModel(Element element) {
+    public final void setSourceModel(Element element) throws IllegalArgumentException {
+        if (element == null) {
+            throw new IllegalArgumentException("Missing element");
+        }
+
         sourceModel = element;
     }
 
     /**
      * DOCUMENT ME!
      *
-     * @return
+     * @param element
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public final Element getDestinationDriver() {
-        return destinationDriver;
+    public void setDestinationMetadata(Element element) throws IllegalArgumentException {
+        if (element == null) {
+            throw new IllegalArgumentException("Missing element");
+        }
+
+        destinationMetadata = element;
     }
 
     /**
      * DOCUMENT ME!
      *
-     * @return
+     * @param element
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
-    public final Element getSourceDriver() {
-        return sourceDriver;
+    public void setSourceMetadata(Element element) throws IllegalArgumentException {
+        if (element == null) {
+            throw new IllegalArgumentException("Missing element");
+        }
+
+        sourceMetadata = element;
     }
 
     /**
      * DOCUMENT ME!
      *
-     * @return
-     */
-    public final Element getDestinationTypeInfo() {
-        return destinationMetadata.getChild(XMLTags.TYPE_INFO);
-    }
-
-    /**
-     * DOCUMENT ME!
+     * @param value DOCUMENT ME!
      *
-     * @return
+     * @throws MissingElementException DOCUMENT ME!
      */
-    public final Element getSourceTypeInfo() {
-        return sourceMetadata.getChild(XMLTags.TYPE_INFO);
+    public void setWorkingMode(String value) throws MissingElementException {
+        getElement(root, "root").setAttribute(XMLTags.WORKING_MODE, value);
     }
 
     /**
      * create a new project
+     *
+     * @param ap DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
-    private void initProject(Properties applicationProperties) {
+    private void initProject(Properties ap) throws IllegalArgumentException {
+        if ((ap == null) || (ap.getProperty(APM.APPLICATION_NAME) == null) || (ap.getProperty(APM.APPLICATION_VERSION) == null) || (ap.getProperty(APM.APPLICATION_WEBSITE) == null)) {
+            throw new IllegalArgumentException("Missing application name, version or website in application properties");
+        }
+
         root = new Element(XMLTags.PROJECT);
         root.setAttribute(XMLTags.DB_MODE, XMLTags.DUAL_DB);
-        root.setAttribute(APM.APPLICATION_NAME, applicationProperties.getProperty(APM.APPLICATION_NAME));
-        root.setAttribute(APM.APPLICATION_VERSION, applicationProperties.getProperty(APM.APPLICATION_VERSION));
-        root.setAttribute(APM.APPLICATION_WEBSITE, applicationProperties.getProperty(APM.APPLICATION_WEBSITE));
+        root.setAttribute(APM.APPLICATION_NAME, ap.getProperty(APM.APPLICATION_NAME));
+        root.setAttribute(APM.APPLICATION_VERSION, ap.getProperty(APM.APPLICATION_VERSION));
+        root.setAttribute(APM.APPLICATION_WEBSITE, ap.getProperty(APM.APPLICATION_WEBSITE));
 
         project     = new Document(root);
 
@@ -1239,41 +1794,39 @@ public class ProjectModel {
 
         root.addContent(sourceDb);
 
-        if (root.getAttributeValue(XMLTags.DB_MODE).compareTo(XMLTags.DUAL_DB) == 0) {
-            destinationDb     = new Element(XMLTags.DESTINATION_DB);
+        destinationDb     = new Element(XMLTags.DESTINATION_DB);
 
-            destinationDriver       = new Element(XMLTags.DRIVER);
-            destinationMetadata     = new Element(XMLTags.METADATA);
+        destinationDriver       = new Element(XMLTags.DRIVER);
+        destinationMetadata     = new Element(XMLTags.METADATA);
 
-            destinationConnection     = new Element(XMLTags.CONNECTION);
+        destinationConnection     = new Element(XMLTags.CONNECTION);
 
-            destinationCatalog          = new Element(XMLTags.CATALOG);
-            destinationSchema           = new Element(XMLTags.SCHEMA);
-            destinationTablePattern     = new Element(XMLTags.TABLE_PATTERN);
+        destinationCatalog          = new Element(XMLTags.CATALOG);
+        destinationSchema           = new Element(XMLTags.SCHEMA);
+        destinationTablePattern     = new Element(XMLTags.TABLE_PATTERN);
 
-            destinationCatalog.setAttribute(XMLTags.VALUE, "");
-            destinationSchema.setAttribute(XMLTags.VALUE, "%");
-            destinationTablePattern.setAttribute(XMLTags.VALUE, "%");
+        destinationCatalog.setAttribute(XMLTags.VALUE, "");
+        destinationSchema.setAttribute(XMLTags.VALUE, "%");
+        destinationTablePattern.setAttribute(XMLTags.VALUE, "%");
 
-            destinationModel     = new Element(XMLTags.MODEL);
+        destinationModel     = new Element(XMLTags.MODEL);
 
-            destinationStatistics = new Element(XMLTags.STATISTICS);
+        destinationStatistics = new Element(XMLTags.STATISTICS);
 
-            destinationDb.addContent(destinationDriver);
-            destinationDb.addContent(destinationMetadata);
+        destinationDb.addContent(destinationDriver);
+        destinationDb.addContent(destinationMetadata);
 
-            destinationDb.addContent(destinationConnection);
-            destinationDb.addContent(destinationCatalog);
-            destinationDb.addContent(destinationSchema);
-            destinationDb.addContent(destinationTablePattern);
-            destinationDb.addContent(destinationModel);
-            destinationDb.addContent(destinationStatistics);
+        destinationDb.addContent(destinationConnection);
+        destinationDb.addContent(destinationCatalog);
+        destinationDb.addContent(destinationSchema);
+        destinationDb.addContent(destinationTablePattern);
+        destinationDb.addContent(destinationModel);
+        destinationDb.addContent(destinationStatistics);
 
-            root.addContent(destinationDb);
+        root.addContent(destinationDb);
 
-            mapping = new Element(XMLTags.MAPPING);
-            root.addContent(mapping);
-        }
+        mapping = new Element(XMLTags.MAPPING);
+        root.addContent(mapping);
 
         filter = new Element(XMLTags.FILTER);
 
@@ -1299,56 +1852,66 @@ public class ProjectModel {
     /**
      * init Project using given project Document (Import of project)
      *
+     * @param ap DOCUMENT ME!
      * @param importedProject Document
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    private void initProject(Properties applicationProperties,
-                             Document   importedProject) throws Exception {
+    private void initProject(Properties ap,
+                             Document   importedProject) throws IllegalArgumentException, MissingElementException {
+        if ((ap == null) || (importedProject == null)) {
+            throw new IllegalArgumentException("Missing arguments to initialise project given: applicationProperties=" + ap + " importedProject=" + importedProject);
+        }
+
+        if ((importedProject.getRootElement() == null) || (importedProject.getRootElement().getAttributeValue(XMLTags.DB_MODE) == null)) {
+            throw new MissingElementException(this, "root element not available or missing attribute db_mode");
+        }
+
         project     = new Document(importedProject.getRootElement().detach());
         root        = project.getRootElement();
 
-        sourceDb               = root.getChild(XMLTags.SOURCE_DB);
-        sourceDriver           = sourceDb.getChild(XMLTags.DRIVER);
-        sourceMetadata         = sourceDb.getChild(XMLTags.METADATA);
-        sourceConnection       = sourceDb.getChild(XMLTags.CONNECTION);
-        sourceCatalog          = sourceDb.getChild(XMLTags.CATALOG);
-        sourceSchema           = sourceDb.getChild(XMLTags.SCHEMA);
-        sourceTablePattern     = sourceDb.getChild(XMLTags.TABLE_PATTERN);
-        sourceModel            = sourceDb.getChild(XMLTags.MODEL);
+        sourceDb               = getChildElement(root, XMLTags.SOURCE_DB);
+        sourceDriver           = getChildElement(sourceDb, XMLTags.DRIVER);
+        sourceMetadata         = getChildElement(sourceDb, XMLTags.METADATA);
+        sourceConnection       = getChildElement(sourceDb, XMLTags.CONNECTION);
+        sourceCatalog          = getChildElement(sourceDb, XMLTags.CATALOG);
+        sourceSchema           = getChildElement(sourceDb, XMLTags.SCHEMA);
+        sourceTablePattern     = getChildElement(sourceDb, XMLTags.TABLE_PATTERN);
+        sourceModel            = getChildElement(sourceDb, XMLTags.MODEL);
 
         if (sourceDb.getChild(XMLTags.STATISTICS) != null) {
-            sourceStatistics = sourceDb.getChild(XMLTags.STATISTICS);
+            sourceStatistics = getChildElement(sourceDb, XMLTags.STATISTICS);
         } else {
             sourceStatistics = new Element(XMLTags.STATISTICS);
             sourceDb.addContent(sourceStatistics);
         }
 
-        if (root.getAttributeValue(XMLTags.DB_MODE) == null) {
-            root.setAttribute(XMLTags.DB_MODE, XMLTags.DUAL_DB);
-        }
-
         if (root.getAttributeValue(XMLTags.DB_MODE).compareTo(XMLTags.DUAL_DB) == 0) {
-            destinationDb               = root.getChild(XMLTags.DESTINATION_DB);
-            destinationDriver           = root.getChild(XMLTags.DRIVER);
-            destinationMetadata         = destinationDb.getChild(XMLTags.METADATA);
-            destinationConnection       = destinationDb.getChild(XMLTags.CONNECTION);
-            destinationCatalog          = destinationDb.getChild(XMLTags.CATALOG);
-            destinationSchema           = destinationDb.getChild(XMLTags.SCHEMA);
-            destinationTablePattern     = destinationDb.getChild(XMLTags.TABLE_PATTERN);
-            destinationModel            = destinationDb.getChild(XMLTags.MODEL);
+            destinationDb = getChildElement(root, XMLTags.DESTINATION_DB);
 
-            if (destinationDb.getChild(XMLTags.STATISTICS) != null) {
-                destinationStatistics = destinationDb.getChild(XMLTags.STATISTICS);
-            } else {
-                destinationStatistics = new Element(XMLTags.STATISTICS);
-                destinationDb.addContent(destinationStatistics);
+            // check if already there, else do not import
+            if (destinationDb.getChildren().size() > 0) {
+                destinationDriver           = getChildElement(destinationDb, XMLTags.DRIVER);
+                destinationMetadata         = getChildElement(destinationDb, XMLTags.METADATA);
+                destinationConnection       = getChildElement(destinationDb, XMLTags.CONNECTION);
+                destinationCatalog          = getChildElement(destinationDb, XMLTags.CATALOG);
+                destinationSchema           = getChildElement(destinationDb, XMLTags.SCHEMA);
+                destinationTablePattern     = getChildElement(destinationDb, XMLTags.TABLE_PATTERN);
+                destinationModel            = getChildElement(destinationDb, XMLTags.MODEL);
+
+                if (destinationDb.getChild(XMLTags.STATISTICS) != null) {
+                    destinationStatistics = getChildElement(destinationDb, XMLTags.STATISTICS);
+                } else {
+                    destinationStatistics = new Element(XMLTags.STATISTICS);
+                    destinationDb.addContent(destinationStatistics);
+                }
             }
 
-            mapping = root.getChild(XMLTags.MAPPING);
+            mapping = getChildElement(root, XMLTags.MAPPING);
         }
 
-        filter                                        = root.getChild(XMLTags.FILTER);
+        filter                                        = getChildElement(root, XMLTags.FILTER);
         stringFilterTrim                              = getStringFilter(XMLTags.TRIM);
         stringFilterRemoveIntermediateWhitespaces     = getStringFilter(XMLTags.REMOVE_INTERMEDIATE_WHITESPACES);
         stringFilterSetNull                           = getStringFilter(XMLTags.SET_NULL);
@@ -1367,11 +1930,15 @@ public class ProjectModel {
      *
      * @return DOCUMENT ME!
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
     private Element getElement(Iterator iterator,
                                String   elementName,
-                               String   attributeName) throws Exception {
+                               String   attributeName) throws IllegalArgumentException {
+        if ((iterator == null) || (elementName == null) || (attributeName == null)) {
+            throw new IllegalArgumentException("Missing arguments to get Element (given: iterator=" + iterator + " elementName=" + elementName + " attributeName=" + attributeName);
+        }
+
         Element element = null;
 
         while (iterator.hasNext()) {
@@ -1386,22 +1953,98 @@ public class ProjectModel {
     }
 
     /**
+     * DOCUMENT ME!
+     *
+     * @param element DOCUMENT ME!
+     * @param elementName DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     */
+    private Element getElement(Element element,
+                               String  elementName) throws IllegalArgumentException {
+        if ((element == null) || (elementName == null)) {
+            throw new IllegalArgumentException("Missing arguments values: element=" + element + " elementName=" + elementName);
+        }
+
+        return element;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param parent DOCUMENT ME!
+     * @param childElementName DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     */
+    private Element getChildElement(Element parent,
+                                    String  childElementName) throws IllegalArgumentException, MissingElementException {
+        if ((parent == null) || (childElementName == null)) {
+            throw new IllegalArgumentException("Missing arguments values: parent=" + parent + " childElementName=" + childElementName);
+        }
+
+        Element element = parent.getChild(childElementName);
+
+        if (element == null) {
+            throw new MissingElementException(this, "childElementName");
+        }
+
+        return element;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param element DOCUMENT ME!
+     * @param attributeName DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     */
+    private String getAttributeValue(Element element,
+                                     String  attributeName) throws IllegalArgumentException, MissingAttributeException {
+        if ((element == null) || (attributeName == null)) {
+            throw new IllegalArgumentException("Missing element or attributeName values: element=" + element + " attributeName=" + attributeName);
+        }
+
+        String value = element.getAttributeValue(attributeName);
+
+        if (value == null) {
+            throw new MissingAttributeException(element, attributeName);
+        }
+
+        return value;
+    }
+
+    /**
      * get all elements to process
      *
      * @param iterator (of all source table or mapping table elements)
      *
      * @return List of elements to be processed
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
      */
-    private List getElementsToProcess(Iterator iterator) throws Exception {
+    private List getElementsToProcess(Iterator iterator) throws IllegalArgumentException, MissingAttributeException {
+        if (iterator == null) {
+            throw new IllegalArgumentException("Missing iterator");
+        }
+
         Vector  process = new Vector();
         Element element = null;
 
         while (iterator.hasNext()) {
             element = (Element) iterator.next();
 
-            if (element.getAttributeValue(XMLTags.PROCESS).compareTo("true") == 0) {
+            if (getAttributeValue(element, XMLTags.PROCESS).compareTo("true") == 0) {
                 process.add(element);
             }
         }
@@ -1410,15 +2053,38 @@ public class ProjectModel {
     }
 
     /**
+     * DOCUMENT ME!
+     *
+     * @param table DOCUMENT ME!
+     * @param tagType DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     */
+    private final List getKeys(Element table,
+                               String  tagType) throws IllegalArgumentException {
+        if ((table == null) || (tagType == null)) {
+            throw new IllegalArgumentException("Missing arguments values: table=" + table + " tagType=" + tagType);
+        }
+
+        return table.getChildren(tagType);
+    }
+
+    /**
      * set or reset tag PROCESSED given an iterator
      *
      * @param iterator (source table or mapping table iterator)
      * @param processed true or false
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
     private void setProcessed(Iterator iterator,
-                              boolean  processed) throws Exception {
+                              boolean  processed) throws IllegalArgumentException {
+        if (iterator == null) {
+            throw new IllegalArgumentException("Missing iterator");
+        }
+
         Element element = null;
 
         while (iterator.hasNext()) {
@@ -1434,9 +2100,17 @@ public class ProjectModel {
      *
      * @return List of elements to be processed
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws DependencyNotSolvableException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
-    private List getTablesToProcessOrdered(Element db_element) throws Exception {
+    private List getTablesToProcessOrdered(Element db_element) throws IllegalArgumentException, DependencyNotSolvableException, MissingAttributeException, UnsupportedAttributeValueException, MissingElementException {
+        if (db_element == null) {
+            throw new IllegalArgumentException("Missing db_element");
+        }
+
         Dependency dependency = new Dependency(this, db_element);
         dependency.setProcessOrder();
 
@@ -1493,10 +2167,16 @@ public class ProjectModel {
      *
      * @return list of unmapped table elements
      *
-     * @throws Exception NullPointerException if element(s) not available
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
     private List getUnmappedElements(Iterator iteratorTable,
-                                     String   attributeName) throws Exception {
+                                     String   attributeName) throws IllegalArgumentException, MissingAttributeException, MissingElementException {
+        if ((iteratorTable == null) || (attributeName == null)) {
+            throw new IllegalArgumentException("Missing arguments values iteratorTable=" + iteratorTable + " attributeName=" + attributeName);
+        }
+
         Vector  unmappedElements = new Vector();
         Element element = null;
         String  elementName = "";
@@ -1505,7 +2185,7 @@ public class ProjectModel {
         while (iteratorTable.hasNext()) {
             mapped          = false;
             element         = (Element) iteratorTable.next();
-            elementName     = element.getAttributeValue(XMLTags.NAME);
+            elementName     = getAttributeValue(element, XMLTags.NAME);
 
             Iterator itMapping = getMappingTables().iterator();
 
@@ -1524,77 +2204,5 @@ public class ProjectModel {
         }
 
         return unmappedElements;
-    }
-
-    /**
-     * @return
-     */
-    public Element getDestinationMetadata() {
-        return destinationMetadata;
-    }
-
-    /**
-     * @return
-     */
-    public Element getSourceMetadata() {
-        return sourceMetadata;
-    }
-
-    /**
-     * @param element
-     */
-    public void setDestinationMetadata(Element element) {
-        destinationMetadata = element;
-    }
-
-    /**
-     * @param element
-     */
-    public void setSourceMetadata(Element element) {
-        sourceMetadata = element;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     */
-    public String getSourceDatabaseName() {
-        return getSourceMetadata().getChild(XMLTags.DB_PRODUCT_NAME).getAttributeValue(XMLTags.VALUE);
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     */
-    public String getDestinationDatabaseName() {
-        return getDestinationMetadata().getChild(XMLTags.DB_PRODUCT_NAME).getAttributeValue(XMLTags.VALUE);
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     */
-    public String getSourceCatalogSeparator() {
-        if (getSourceMetadata().getChild(XMLTags.CATALOG_SEPARATOR) != null) {
-            return getSourceMetadata().getChild(XMLTags.CATALOG_SEPARATOR).getAttributeValue(XMLTags.VALUE);
-        } else {
-            return ".";
-        }
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     */
-    public String getDestinationCatalogSeparator() {
-        if (getDestinationMetadata().getChild(XMLTags.CATALOG_SEPARATOR) != null) {
-            return getDestinationMetadata().getChild(XMLTags.CATALOG_SEPARATOR).getAttributeValue(XMLTags.VALUE);
-        } else {
-            return ".";
-        }
     }
 }

@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.controller;
 
@@ -28,6 +28,9 @@ import opendbcopy.io.ImportFromXML;
 
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.JDOMException;
+
+import java.io.IOException;
 
 import java.util.StringTokenizer;
 
@@ -46,9 +49,11 @@ public final class Arguments {
      *
      * @return DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws JDOMException DOCUMENT ME!
+     * @throws JDOMException DOCUMENT ME!
+     * @throws IOException DOCUMENT ME!
      */
-    public static final Document process(String[] args) throws Exception {
+    public static final Document process(String[] args) throws IllegalArgumentException, JDOMException, IOException {
         Element arguments = new Element("arguments");
         Element argument = null;
 
@@ -59,7 +64,7 @@ public final class Arguments {
                 if (argument != null) {
                     arguments.addContent(argument);
                 } else {
-                    throw new Exception("only pairs of variable=value are allowed!");
+                    throw new IllegalArgumentException("only pairs of variable=value are allowed!");
                 }
             }
 
@@ -138,9 +143,9 @@ public final class Arguments {
      *
      * @return DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
-    private static Element processArgument(String argument) throws Exception {
+    private static Element processArgument(String argument) throws IllegalArgumentException {
         Element         element = null;
         StringTokenizer st = new StringTokenizer(argument, "=");
 
@@ -159,7 +164,7 @@ public final class Arguments {
             }
 
             if (counter > 1) {
-                throw new Exception("only pairs of variable=value are allowed!");
+                throw new IllegalArgumentException("only pairs of variable=value are allowed!");
             }
 
             counter++;

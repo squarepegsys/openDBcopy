@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.plugin.standard.statistics;
 
@@ -26,7 +26,14 @@ import opendbcopy.config.XMLTags;
 
 import opendbcopy.connection.DBConnection;
 
+import opendbcopy.connection.exception.DriverNotFoundException;
+import opendbcopy.connection.exception.OpenConnectionException;
+
 import opendbcopy.model.ProjectModel;
+
+import opendbcopy.model.exception.MissingAttributeException;
+import opendbcopy.model.exception.MissingElementException;
+import opendbcopy.model.exception.UnsupportedAttributeValueException;
 
 import opendbcopy.plugin.ExecuteSkeleton;
 
@@ -37,6 +44,7 @@ import org.apache.log4j.Logger;
 import org.jdom.Element;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 import java.util.Date;
@@ -58,10 +66,21 @@ public abstract class StatReader {
      * @param task DOCUMENT ME!
      * @param projectModel DOCUMENT ME!
      *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws OpenConnectionException DOCUMENT ME!
+     * @throws DriverNotFoundException DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
      * @throws Exception DOCUMENT ME!
      */
     public static void readStatistics(TaskExecute  task,
-                                      ProjectModel projectModel) throws Exception {
+                                      ProjectModel projectModel) throws IllegalArgumentException, UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, OpenConnectionException, DriverNotFoundException, SQLException, Exception {
+        if ((task == null) || (projectModel == null)) {
+            throw new IllegalArgumentException("Missing arguments values: task=" + task + " projectModel=" + projectModel);
+        }
+
         // source db
         readStatisticsForDb(task, projectModel, projectModel.getSourceDb(), projectModel.getSourceStatistics());
 
@@ -79,12 +98,22 @@ public abstract class StatReader {
      * @param db_element DOCUMENT ME!
      * @param statistics DOCUMENT ME!
      *
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws OpenConnectionException DOCUMENT ME!
+     * @throws DriverNotFoundException DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
      * @throws Exception DOCUMENT ME!
      */
     public static void readStatisticsForDb(TaskExecute  task,
                                            ProjectModel projectModel,
                                            Element      db_element,
-                                           Element      statistics) throws Exception {
+                                           Element      statistics) throws IllegalArgumentException, MissingAttributeException, MissingElementException, OpenConnectionException, DriverNotFoundException, SQLException, Exception {
+        if ((task == null) || (projectModel == null) || (db_element == null) || (statistics == null)) {
+            throw new IllegalArgumentException("Missing arguments values: task=" + task + " projectModel=" + projectModel + " db_element=" + db_element + " statistics=" + statistics);
+        }
+
         // remove former statistics if existing
         if (statistics.getChildren().size() > 0) {
             statistics.removeChildren(XMLTags.TABLE);

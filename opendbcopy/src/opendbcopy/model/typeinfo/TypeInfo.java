@@ -18,11 +18,14 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.model.typeinfo;
 
 import opendbcopy.config.XMLTags;
+
+import opendbcopy.model.exception.MissingAttributeException;
+import opendbcopy.model.exception.UnsupportedAttributeValueException;
 
 import org.jdom.Element;
 
@@ -48,25 +51,55 @@ public class TypeInfo {
      *
      * @param element DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
      */
-    public TypeInfo(Element element) throws Exception {
+    public TypeInfo(Element element) throws IllegalArgumentException, UnsupportedAttributeValueException, MissingAttributeException {
+        if (element == null) {
+            throw new IllegalArgumentException("Missing element");
+        }
+
         if (element != null) {
+            if (element.getAttributeValue(XMLTags.DATA_TYPE) == null) {
+                throw new MissingAttributeException(element, XMLTags.DATA_TYPE);
+            }
+
+            if (element.getAttributeValue(XMLTags.PRECISION) == null) {
+                throw new MissingAttributeException(element, XMLTags.PRECISION);
+            }
+
+            if (element.getAttributeValue(XMLTags.NULLABLE) == null) {
+                throw new MissingAttributeException(element, XMLTags.NULLABLE);
+            }
+
+            if (element.getAttributeValue(XMLTags.CASE_SENSITIVE) == null) {
+                throw new MissingAttributeException(element, XMLTags.CASE_SENSITIVE);
+            }
+
             typeName          = element.getAttributeValue(XMLTags.TYPE_NAME);
             localTypeName     = element.getAttributeValue(XMLTags.LOCAL_TYPE_NAME);
             literalPrefix     = element.getAttributeValue(XMLTags.LITERAL_PREFIX);
             literalSuffix     = element.getAttributeValue(XMLTags.LITERAL_SUFFIX);
-            dataType          = Integer.parseInt(element.getAttributeValue(XMLTags.DATA_TYPE));
-            precision         = Integer.parseInt(element.getAttributeValue(XMLTags.PRECISION));
+
+            try {
+                dataType      = Integer.parseInt(element.getAttributeValue(XMLTags.DATA_TYPE));
+                precision     = Integer.parseInt(element.getAttributeValue(XMLTags.PRECISION));
+            } catch (NumberFormatException e) {
+                throw new UnsupportedAttributeValueException(element, XMLTags.DATA_TYPE + " and " + XMLTags.PRECISION + " must be numeric");
+            }
+
             nullable          = Boolean.valueOf(element.getAttributeValue(XMLTags.NULLABLE)).booleanValue();
             caseSensitive     = Boolean.valueOf(element.getAttributeValue(XMLTags.CASE_SENSITIVE)).booleanValue();
-            
+
             // check values that are null
-            if (literalPrefix.compareToIgnoreCase("null") == 0)
-            	literalPrefix = null;
-            	
-            if (literalSuffix.compareToIgnoreCase("null") == 0)
-            	literalSuffix = null;
+            if (literalPrefix.compareToIgnoreCase("null") == 0) {
+                literalPrefix = null;
+            }
+
+            if (literalSuffix.compareToIgnoreCase("null") == 0) {
+                literalSuffix = null;
+            }
         }
     }
 

@@ -18,13 +18,15 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.io;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 
 import java.util.Properties;
 
@@ -44,10 +46,16 @@ public final class PropertiesToFile {
      *
      * @return DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws FileNotFoundException DOCUMENT ME!
+     * @throws IOException DOCUMENT ME!
      */
     public static final String exportPropertiesToFile(Properties p,
-                                                      String     fileName) throws Exception {
+                                                      String     fileName) throws IllegalArgumentException, FileNotFoundException, IOException {
+        if ((p == null) || (fileName == null) || (fileName.length() == 0)) {
+            throw new IllegalArgumentException("missing Properties or fileName to export");
+        }
+
         File             outputFile = new File(fileName);
         FileOutputStream myFileOutputStream = new FileOutputStream(outputFile);
         p.store(myFileOutputStream, null);
@@ -63,9 +71,15 @@ public final class PropertiesToFile {
      *
      * @return DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws FileNotFoundException DOCUMENT ME!
+     * @throws IOException DOCUMENT ME!
      */
-    public static final Properties importPropertiesFromFile(String fileName) throws Exception {
+    public static final Properties importPropertiesFromFile(String fileName) throws IllegalArgumentException, FileNotFoundException, IOException {
+        if ((fileName == null) || (fileName.length() == 0)) {
+            throw new IllegalArgumentException("missing fileName for properties file to import");
+        }
+
         Properties      p = new Properties();
 
         File            inputFile = new File(fileName);

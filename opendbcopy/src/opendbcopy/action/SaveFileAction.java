@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.action;
 
@@ -50,6 +50,7 @@ public class SaveFileAction extends AbstractAction {
     private opendbcopy.controller.MainController controller;
     private opendbcopy.gui.FrameMain             frame;
     private Element                              operation;
+    private DialogFile dialogFile;
 
     /**
      * Creates a new SaveFileAction object.
@@ -71,6 +72,7 @@ public class SaveFileAction extends AbstractAction {
 
         this.controller     = controller;
         this.frame          = frame;
+        this.dialogFile = frame.getDialogFile();
 
         this.setEnabled(false);
     }
@@ -81,19 +83,14 @@ public class SaveFileAction extends AbstractAction {
      * @param evt DOCUMENT ME!
      */
     public void actionPerformed(ActionEvent evt) {
-        DialogFile dialogFile = new DialogFile(frame, operation.getAttributeValue(XMLTags.NAME), operation.getAttributeValue(XMLTags.FILE_TYPE));
-
-        operation.setAttribute(XMLTags.FILE, dialogFile.saveDialog());
+        operation.setAttribute(XMLTags.FILE, dialogFile.saveDialog(operation.getAttributeValue(XMLTags.NAME), operation.getAttributeValue(XMLTags.FILE_TYPE)));
 
         if (operation.getAttributeValue(XMLTags.FILE).length() > 0) {
             try {
                 controller.execute(operation);
             } catch (Exception e) {
-                logger.error(e.toString());
-                frame.setStatusBar(e.toString(), Level.ERROR);
+                frame.postException(e, Level.ERROR);
             }
         }
-
-        dialogFile = null;
     }
 }

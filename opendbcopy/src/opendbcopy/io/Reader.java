@@ -18,13 +18,15 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.io;
 
 import opendbcopy.config.FileCharacter;
 
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 
 
 /**
@@ -41,9 +43,15 @@ public final class Reader {
      *
      * @return DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws FileNotFoundException DOCUMENT ME!
+     * @throws IOException DOCUMENT ME!
      */
-    public static final StringBuffer read(String fileName) throws Exception {
+    public static final StringBuffer read(String fileName) throws IllegalArgumentException, FileNotFoundException, IOException {
+        if ((fileName == null) || (fileName.length() == 0)) {
+            throw new IllegalArgumentException("Missing fileName");
+        }
+
         StringBuffer stringBuffer = new StringBuffer();
         char[]       cbuf = null;
 

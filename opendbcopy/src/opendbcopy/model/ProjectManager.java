@@ -18,7 +18,7 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.model;
 
@@ -28,15 +28,28 @@ import opendbcopy.config.XMLTags;
 
 import opendbcopy.connection.DBConnection;
 
+import opendbcopy.connection.exception.CloseConnectionException;
+import opendbcopy.connection.exception.DriverNotFoundException;
+import opendbcopy.connection.exception.OpenConnectionException;
+
 import opendbcopy.controller.MainController;
 
 import opendbcopy.io.ExportToXML;
 import opendbcopy.io.ImportFromXML;
 
+import opendbcopy.model.exception.MissingAttributeException;
+import opendbcopy.model.exception.MissingElementException;
+import opendbcopy.model.exception.UnsupportedAttributeValueException;
+
 import opendbcopy.task.TaskExecute;
 
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.JDOMException;
+
+import java.io.IOException;
+
+import java.sql.SQLException;
 
 import java.util.Observable;
 import java.util.Vector;
@@ -53,6 +66,7 @@ public class ProjectManager extends Observable {
     private ProjectModel   projectModel;
     private TaskExecute    taskExecute;
     private Document       plugins;
+    private Document       typeMapping;
     private Document       drivers;
     private Vector         operationsExecuted;
     private boolean        source_db_connection_successful = false;
@@ -63,12 +77,22 @@ public class ProjectManager extends Observable {
      *
      * @param controller DOCUMENT ME!
      * @param plugins DOCUMENT ME!
+     * @param typeMapping DOCUMENT ME!
+     * @param drivers DOCUMENT ME!
+     *
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
     public ProjectManager(MainController controller,
                           Document       plugins,
-                          Document       drivers) {
+                          Document       typeMapping,
+                          Document       drivers) throws IllegalArgumentException {
+        if ((controller == null) || (plugins == null) || (typeMapping == null) || (drivers == null)) {
+            throw new IllegalArgumentException("Missing arguments values: controller=" + controller + " plugins=" + plugins + " typeMapping=" + typeMapping + " drivers=" + drivers);
+        }
+
         this.controller             = controller;
         this.plugins                = plugins;
+        this.typeMapping            = typeMapping;
         this.drivers                = drivers;
         this.projectModel           = new ProjectModel(controller.getApplicationProperties());
         this.operationsExecuted     = new Vector();
@@ -79,16 +103,27 @@ public class ProjectManager extends Observable {
      *
      * @param controller DOCUMENT ME!
      * @param plugins DOCUMENT ME!
+     * @param typeMapping DOCUMENT ME!
+     * @param drivers DOCUMENT ME!
      * @param project DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws IllegalArgumentException DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
      */
     public ProjectManager(MainController controller,
                           Document       plugins,
+                          Document       typeMapping,
                           Document       drivers,
-                          Document       project) throws Exception {
+                          Document       project) throws IllegalArgumentException, UnsupportedAttributeValueException, MissingAttributeException, MissingElementException {
+        if ((controller == null) || (plugins == null) || (typeMapping == null) || (drivers == null) || (project == null)) {
+            throw new IllegalArgumentException("Missing arguments values: controller=" + controller + " plugins=" + plugins + " typeMapping=" + typeMapping + " drivers=" + drivers + " project=" + project);
+        }
+
         this.controller             = controller;
         this.plugins                = plugins;
+        this.typeMapping            = typeMapping;
         this.drivers                = drivers;
         this.projectModel           = new ProjectModel(controller.getApplicationProperties(), project);
         this.operationsExecuted     = new Vector();
@@ -110,9 +145,18 @@ public class ProjectManager extends Observable {
      *
      * @param operation DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws DriverNotFoundException DOCUMENT ME!
+     * @throws OpenConnectionException DOCUMENT ME!
+     * @throws CloseConnectionException DOCUMENT ME!
+     * @throws JDOMException DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
+     * @throws IOException DOCUMENT ME!
+     * @throws Exception should only be thrown by plugins
      */
-    public final void execute(Element operation) throws Exception {
+    public final void execute(Element operation) throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, JDOMException, SQLException, IOException, Exception {
         String operationString = operation.getAttributeValue(XMLTags.NAME);
         operationsExecuted.add(operationString);
 
@@ -200,13 +244,13 @@ public class ProjectManager extends Observable {
                 }
             }
 
-            taskExecute = new TaskExecute(projectModel);
+            taskExecute = new TaskExecute(this);
 
             if (projectModel.getRunlevel() == projectModel.RUNLEVEL_GUI) {
                 // not very nice software design!
-                this.controller.getFrame().getPanelExecute().setTaskExecute(taskExecute);
-                taskExecute.addObserver(this.controller.getFrame().getPanelExecute());
-                this.controller.getFrame().setSelectedTabIndex(5);
+                //                this.controller.getFrame().getPanelExecute().setTaskExecute(taskExecute);
+                //                taskExecute.addObserver(this.controller.getFrame().getPanelExecute());
+                //                this.controller.getFrame().setSelectedTabIndex(5);
             }
 
             taskExecute.go();
@@ -222,9 +266,15 @@ public class ProjectManager extends Observable {
     /**
      * DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
+     * @throws UnsupportedAttributeValueException DOCUMENT ME!
+     * @throws MissingAttributeException DOCUMENT ME!
+     * @throws MissingElementException DOCUMENT ME!
+     * @throws DriverNotFoundException DOCUMENT ME!
+     * @throws OpenConnectionException DOCUMENT ME!
+     * @throws CloseConnectionException DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
      */
-    private void readDatabaseMetadata() throws Exception {
+    private void readDatabaseMetadata() throws UnsupportedAttributeValueException, MissingAttributeException, MissingElementException, DriverNotFoundException, OpenConnectionException, CloseConnectionException, SQLException {
         if (projectModel.getDbMode() == projectModel.DUAL_MODE) {
             if ((projectModel.getSourceConnection().getAttributes().size() > 0) && (projectModel.getDestinationConnection().getAttributes().size() > 0)) {
                 if ((projectModel.getSourceMetadata().getChildren().size() == 0) && (projectModel.getDestinationMetadata().getChildren().size() == 0)) {
@@ -300,6 +350,15 @@ public class ProjectManager extends Observable {
      */
     public final Document getPlugins() {
         return this.plugins;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return DOCUMENT ME!
+     */
+    public final Document getTypeMapping() {
+        return this.typeMapping;
     }
 
     /**

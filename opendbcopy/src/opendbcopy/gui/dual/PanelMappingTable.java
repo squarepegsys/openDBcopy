@@ -18,21 +18,18 @@
  * ----------------------------------------------------------------------------
  * TITLE $Id$
  * ---------------------------------------------------------------------------
- * $Log$
+ *
  * --------------------------------------------------------------------------*/
-package opendbcopy.gui;
+package opendbcopy.gui.dual;
 
 import opendbcopy.config.XMLTags;
 
 import opendbcopy.controller.MainController;
 
-import opendbcopy.model.ProjectManager;
+import opendbcopy.gui.DynamicPanel;
 
 import opendbcopy.swing.JTableX;
 import opendbcopy.swing.RowEditorModel;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 import org.jdom.Element;
 
@@ -44,7 +41,6 @@ import java.awt.event.ActionEvent;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Observable;
-import java.util.Observer;
 import java.util.Vector;
 
 import javax.swing.DefaultCellEditor;
@@ -64,57 +60,40 @@ import javax.swing.table.TableColumn;
  * @author Anthony Smith
  * @version $Revision$
  */
-public class PanelMappingTable extends JPanel implements Observer {
-    private static Logger             logger = Logger.getLogger(PanelMappingTable.class.getName());
-    private FrameMain                 parentFrame;
-    private MainController            controller;
-    private ProjectManager            pm;
-    private Object[][]                dataMapping;
-    private Object[][]                dataProcess;
-    private RowEditorModel            rm;
-    private DefaultCellEditor         dce;
-    private boolean                   select_all = false;
-    private BorderLayout              borderLayout = new BorderLayout();
-    private BorderLayout              borderLayoutPanelMain = new BorderLayout();
-    private JPanel                    panelOptions = new JPanel();
-    private JPanel                    panelControl = new JPanel();
-    private JPanel                    panelMain = new JPanel();
-    private JPanel                    panelTables = null;
-    private JPanel                    panelMappingTable = null;
-    private JPanel                    panelProcessTable = null;
-    private JButton                   buttonSelect = new JButton();
-    private JScrollPane               scrollPane = new JScrollPane();
-    private JTableX                   tableMapping = null;
-    private JTableX                   tableProcessDualDb = null;
-    private JTableX                   tableProcessSingleDb = null;
-    private MappingTableModel         mappingTableModel = null;
-    private ProcessTableDualDbModel   processTableDualDbModel = null;
-    private ProcessTableSingleDbModel processTableSingleDbModel = null;
-    private Vector                    destinationTablesComboBoxValues = new Vector();
+public class PanelMappingTable extends DynamicPanel {
+    private Object[][]        dataMapping;
+    private Object[][]        dataProcess;
+    private RowEditorModel    rm;
+    private DefaultCellEditor dce;
+    private boolean           select_all = false;
+    private BorderLayout      borderLayout = new BorderLayout();
+    private BorderLayout      borderLayoutPanelMain = new BorderLayout();
+    private JPanel            panelOptions = new JPanel();
+    private JPanel            panelControl = new JPanel();
+    private JPanel            panelMain = new JPanel();
+    private JPanel            panelTables = null;
+    private JPanel            panelMappingTable = null;
+    private JPanel            panelProcessTable = null;
+    private JButton           buttonSelect = new JButton();
+    private JScrollPane       scrollPane = new JScrollPane();
+    private JTableX           tableMapping = null;
+    private JTableX           tableProcess = null;
+    private MappingTableModel mappingTableModel = null;
+    private ProcessTableModel processTableModel = null;
+    private Vector            destinationTablesComboBoxValues = new Vector();
 
     /**
      * Creates a new PanelMappingTable object.
      *
-     * @param parentFrame DOCUMENT ME!
      * @param controller DOCUMENT ME!
-     * @param projectManager DOCUMENT ME!
+     *
+     * @throws Exception DOCUMENT ME!
      */
-    public PanelMappingTable(FrameMain      parentFrame,
-                             MainController controller,
-                             ProjectManager projectManager) {
-        this.parentFrame     = parentFrame;
-        this.controller      = controller;
-        this.pm              = projectManager;
+    public PanelMappingTable(MainController controller) throws Exception {
+        super(controller);
 
-        // create a RowEditorModel... this is used to hold the extra
-        // information that is needed to deal with row specific editors
         rm = new RowEditorModel();
-
-        try {
-            guiInit();
-        } catch (Exception e) {
-            logger.error(e.toString());
-        }
+        guiInit();
     }
 
     /**
@@ -150,88 +129,45 @@ public class PanelMappingTable extends JPanel implements Observer {
      */
     public final void initTable() {
         try {
-            // single db_mode
-            if (pm.getProjectModel().getDbMode() == pm.getProjectModel().SINGLE_MODE) {
-                if (pm.getProjectModel().isSourceModelCaptured()) {
-                    try {
-                        panelMain.remove(scrollPane);
+            if (pm.getProjectModel().isMappingSetup()) {
+                try {
+                    panelTables.remove(panelMappingTable);
+                    panelTables.remove(panelProcessTable);
 
-                        processTableSingleDbModel = new ProcessTableSingleDbModel();
+                    mappingTableModel     = new MappingTableModel();
+                    processTableModel     = new ProcessTableModel();
 
-                        initSingleDbTableData();
+                    initMappingTableData();
 
-                        tableProcessSingleDb = new JTableX(processTableSingleDbModel);
+                    tableMapping     = new JTableX(mappingTableModel);
+                    tableProcess     = new JTableX(processTableModel);
 
-                        // Set up column sizes for two columns
-                        initColumnSizesProcessTable(tableProcessSingleDb);
+                    // Set up column sizes for two columns
+                    initColumnSizesMappingTable(tableMapping);
 
-                        panelProcessTable = new JPanel();
-                        panelProcessTable.setLayout(new BorderLayout());
-                        panelProcessTable.add(tableProcessSingleDb.getTableHeader(), BorderLayout.PAGE_START);
-                        panelProcessTable.add(tableProcessSingleDb, BorderLayout.CENTER);
+                    // tell the JTableX which RowEditorModel we are using
+                    tableMapping.setRowEditorModel(rm);
 
-                        panelTables = new JPanel();
-                        panelTables.setLayout(new BorderLayout());
+                    panelMappingTable = new JPanel();
+                    panelMappingTable.setLayout(new BorderLayout());
+                    panelMappingTable.add(tableMapping.getTableHeader(), BorderLayout.PAGE_START);
+                    panelMappingTable.add(tableMapping, BorderLayout.CENTER);
 
-                        panelTables.add(panelProcessTable, BorderLayout.CENTER);
+                    panelProcessTable = new JPanel();
+                    panelProcessTable.setLayout(new BorderLayout());
+                    panelProcessTable.add(tableProcess.getTableHeader(), BorderLayout.PAGE_START);
+                    panelProcessTable.add(tableProcess, BorderLayout.CENTER);
 
-                        scrollPane = new JScrollPane(panelTables);
+                    panelTables.add(panelMappingTable, BorderLayout.CENTER);
+                    panelTables.add(panelProcessTable, BorderLayout.EAST);
 
-                        panelMain.add(scrollPane, BorderLayout.CENTER);
-                    } catch (Exception e) {
-                        logger.error(e.toString());
-                        this.parentFrame.setStatusBar(e.toString(), Level.ERROR);
-                    }
-                }
-            }
-            // dual db_mode
-            else {
-                if (pm.getProjectModel().isMappingSetup()) {
-                    try {
-                        panelMain.remove(scrollPane);
-
-                        mappingTableModel           = new MappingTableModel();
-                        processTableDualDbModel     = new ProcessTableDualDbModel();
-
-                        initMappingTableData();
-
-                        tableMapping           = new JTableX(mappingTableModel);
-                        tableProcessDualDb     = new JTableX(processTableDualDbModel);
-
-                        // Set up column sizes for two columns
-                        initColumnSizesMappingTable(tableMapping);
-
-                        // tell the JTableX which RowEditorModel we are using
-                        tableMapping.setRowEditorModel(rm);
-
-                        panelMappingTable = new JPanel();
-                        panelMappingTable.setLayout(new BorderLayout());
-                        panelMappingTable.add(tableMapping.getTableHeader(), BorderLayout.PAGE_START);
-                        panelMappingTable.add(tableMapping, BorderLayout.CENTER);
-
-                        panelProcessTable = new JPanel();
-                        panelProcessTable.setLayout(new BorderLayout());
-                        panelProcessTable.add(tableProcessDualDb.getTableHeader(), BorderLayout.PAGE_START);
-                        panelProcessTable.add(tableProcessDualDb, BorderLayout.CENTER);
-
-                        panelTables = new JPanel();
-                        panelTables.setLayout(new BorderLayout());
-
-                        panelTables.add(panelMappingTable, BorderLayout.CENTER);
-                        panelTables.add(panelProcessTable, BorderLayout.EAST);
-
-                        scrollPane = new JScrollPane(panelTables);
-
-                        panelMain.add(scrollPane, BorderLayout.CENTER);
-                    } catch (Exception e) {
-                        logger.error(e.toString());
-                        this.parentFrame.setStatusBar(e.toString(), Level.ERROR);
-                    }
+                    panelTables.updateUI();
+                } catch (Exception e) {
+                    postException(e);
                 }
             }
         } catch (Exception e) {
-            logger.error(e.toString());
-            parentFrame.setStatusBar(e.toString(), Level.ERROR);
+            postException(e);
         }
     }
 
@@ -251,7 +187,7 @@ public class PanelMappingTable extends JPanel implements Observer {
             dataMapping[row][1]     = new String("");
         }
 
-        for (int row = 0; row < processTableDualDbModel.getRowCount(); row++) {
+        for (int row = 0; row < processTableModel.getRowCount(); row++) {
             dataProcess[row][0] = new Boolean(false);
         }
 
@@ -261,15 +197,15 @@ public class PanelMappingTable extends JPanel implements Observer {
 
         while (itMappingTables.hasNext()) {
             Element tableMapping = (Element) itMappingTables.next();
-            dataMapping[row][0]     = tableMapping.getAttributeValue(XMLTags.SOURCE_DB);
+            dataMapping[row][0] = tableMapping.getAttributeValue(XMLTags.SOURCE_DB);
 
             // create a new JComboBox and editor for this row
             JComboBox combo = getDestinationTableComboBox(tableMapping.getAttributeValue(XMLTags.DESTINATION_DB));
             dce = new DefaultCellEditor(combo);
             rm.addEditorForRow(row, dce);
-            
+
             // set default selected item
-            dataMapping[row][1] = combo.getSelectedItem();
+            dataMapping[row][1]     = combo.getSelectedItem();
 
             dataProcess[row][0] = new Boolean(tableMapping.getAttributeValue(XMLTags.PROCESS));
             row++;
@@ -302,50 +238,12 @@ public class PanelMappingTable extends JPanel implements Observer {
     /**
      * DOCUMENT ME!
      *
-     * @throws Exception DOCUMENT ME!
-     */
-    private void initSingleDbTableData() throws Exception {
-        int nbrSourceTables = 0;
-
-        nbrSourceTables     = pm.getProjectModel().getNbrSourceTables();
-
-        dataProcess = new Object[nbrSourceTables][2];
-
-        for (int row = 0; row < processTableSingleDbModel.getRowCount(); row++) {
-            dataProcess[row][0]     = new String("");
-            dataProcess[row][1]     = new Boolean(true);
-        }
-
-        Iterator itSourceTables = pm.getProjectModel().getSourceTables().iterator();
-
-        int      row = 0;
-
-        while (itSourceTables.hasNext()) {
-            Element table = (Element) itSourceTables.next();
-            dataProcess[row][0] = table.getAttributeValue(XMLTags.NAME);
-
-            if (table.getAttributeValue(XMLTags.PROCESS) != null) {
-                dataProcess[row][1] = new Boolean(table.getAttributeValue(XMLTags.PROCESS));
-            } else {
-                pm.getProjectModel().setElementProcess(table, true);
-                dataProcess[row][1] = new Boolean(true);
-            }
-
-            row++;
-        }
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param unmappedTables DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
+     * @param tables DOCUMENT ME!
      */
     private void createComboBoxVector(List tables) {
         if (destinationTablesComboBoxValues.size() == 0) {
             // add empty element
-        	destinationTablesComboBoxValues.add("");
+            destinationTablesComboBoxValues.add("");
 
             if (tables.size() > 0) {
                 Iterator itTables = tables.iterator();
@@ -459,35 +357,22 @@ public class PanelMappingTable extends JPanel implements Observer {
     void buttonSelect_actionPerformed(ActionEvent e) {
         try {
             if (!select_all) {
-                if (pm.getProjectModel().getDbMode() == pm.getProjectModel().SINGLE_MODE) {
-                    for (int row = 0; row < processTableSingleDbModel.getRowCount(); row++) {
-                        processTableSingleDbModel.setValueAt(new Boolean(false), row, 1);
-                    }
-                } else {
-                    for (int row = 0; row < processTableDualDbModel.getRowCount(); row++) {
-                        processTableDualDbModel.setValueAt(new Boolean(false), row, 0);
-                    }
+                for (int row = 0; row < processTableModel.getRowCount(); row++) {
+                    processTableModel.setValueAt(new Boolean(false), row, 0);
                 }
 
                 buttonSelect.setText("Select All");
                 select_all = true;
             } else {
-                if (pm.getProjectModel().getDbMode() == pm.getProjectModel().SINGLE_MODE) {
-                    for (int row = 0; row < processTableSingleDbModel.getRowCount(); row++) {
-                        processTableSingleDbModel.setValueAt(new Boolean(true), row, 1);
-                    }
-                } else {
-                    for (int row = 0; row < processTableDualDbModel.getRowCount(); row++) {
-                        processTableDualDbModel.setValueAt(new Boolean(true), row, 0);
-                    }
+                for (int row = 0; row < processTableModel.getRowCount(); row++) {
+                    processTableModel.setValueAt(new Boolean(true), row, 0);
                 }
 
                 buttonSelect.setText("Deselect All");
                 select_all = false;
             }
         } catch (Exception ex) {
-            logger.error(ex.toString());
-            parentFrame.setStatusBar(ex.toString(), Level.ERROR);
+            postException(ex);
         }
     }
 
@@ -589,25 +474,23 @@ public class PanelMappingTable extends JPanel implements Observer {
                         mapping_table.setAttribute(XMLTags.MAPPED, "true");
 
                         // Set the process option automatically
-                        processTableDualDbModel.setValueAt(new Boolean(true), row, 0);
+                        processTableModel.setValueAt(new Boolean(true), row, 0);
 
                         // check for column mappings
                         pm.getProjectModel().checkForMappings((String) dataMapping[row][col - 1]);
                     }
                 } catch (Exception e) {
-                    logger.error(e.toString());
-                    parentFrame.setStatusBar(e.toString(), Level.ERROR);
+                    postException(e);
                 }
             } else {
                 // Set the process option automatically
-                processTableDualDbModel.setValueAt(new Boolean(false), row, 0);
+                processTableModel.setValueAt(new Boolean(false), row, 0);
 
                 try {
                     mapping_table = pm.getProjectModel().getMappingSourceTable((String) dataMapping[row][col - 1]);
                     mapping_table.setAttribute(XMLTags.MAPPED, "false");
                 } catch (Exception e) {
-                    logger.error(e.toString());
-                    parentFrame.setStatusBar(e.toString(), Level.ERROR);
+                    postException(e);
                 }
             }
 
@@ -621,7 +504,7 @@ public class PanelMappingTable extends JPanel implements Observer {
      * @author Anthony Smith
      * @version $Revision$
      */
-    class ProcessTableDualDbModel extends AbstractTableModel {
+    class ProcessTableModel extends AbstractTableModel {
         private String[]      columnNames = { "Process" };
         public final Object[] longValues = { new Boolean(false) };
 
@@ -697,7 +580,7 @@ public class PanelMappingTable extends JPanel implements Observer {
                     }
                 }
             } catch (Exception e) {
-                logger.error(e.toString());
+                postException(e);
             }
 
             fireTableCellUpdated(row, col);
@@ -799,7 +682,7 @@ public class PanelMappingTable extends JPanel implements Observer {
                     }
                 }
             } catch (Exception e) {
-                logger.error(e.toString());
+                postException(e);
             }
 
             fireTableCellUpdated(row, col);
