@@ -50,14 +50,16 @@ import org.jdom.Element;
 
 
 /**
- * class description
+ * Copies records of selected source tables and columns into selected destination tables. If the underlying 
+ * RDBMS supports Referential Integrity Constraints, the order of tables to process is respected. If possible
+ * errors shall be logged, those are logged into comma separated value files.
  *
  * @author Anthony Smith
  * @version $Revision$
  */
 public class CopyMappingPlugin extends DynamicPluginThread {
     private static final String            fileType = "csv";
-    private DatabaseModel     model;
+    private DatabaseModel     model; // this plugin's model
     private Connection        connSource;
     private Connection        connDestination;
     private Statement         stmSource;
@@ -93,19 +95,23 @@ public class CopyMappingPlugin extends DynamicPluginThread {
      */
     public CopyMappingPlugin(MainController controller,
                              Model          baseModel) throws PluginException {
-        super(controller, baseModel);
+        // Call the super constructor
+    	super(controller, baseModel);
+    	
+    	// cast the super base model into a specific database model
         this.model = (DatabaseModel) baseModel;
     }
 
     /**
-     * DOCUMENT ME!
+     * Read configuration and setup database connections
      *
      * @throws PluginException DOCUMENT ME!
      */
     protected final void setUp() throws PluginException {
-        newLine = MainController.lineSep;
+        // set the new line character as this differs from OS to OS
+    	newLine = MainController.lineSep;
 
-        // read the plugin configuration
+        // get the plugin configuration
         Element conf = model.getConf();
 
         if (conf == null) {
@@ -113,8 +119,10 @@ public class CopyMappingPlugin extends DynamicPluginThread {
         }
 
         try {
+        	// set the output path selected by user
             outputPath = new File(conf.getChild(XMLTags.DIR).getAttributeValue(XMLTags.VALUE));
 
+            // create the output directory if it does not yet exist
             if (!outputPath.exists()) {
                 boolean mkDirOk = outputPath.mkdir();
 
@@ -123,6 +131,7 @@ public class CopyMappingPlugin extends DynamicPluginThread {
                 }
             }
 
+            // shall errors be logged?
             log_error                     = Boolean.valueOf(conf.getChild(XMLTags.LOG_ERROR).getAttributeValue(XMLTags.VALUE)).booleanValue();
 
             if (log_error) {
@@ -158,7 +167,8 @@ public class CopyMappingPlugin extends DynamicPluginThread {
     }
 
     /**
-     * DOCUMENT ME!
+     * Copies records of selected source tables and columns into selected destination tables. 
+     * If requested and occuring, errors are logged
      *
      * @throws PluginException DOCUMENT ME!
      */
@@ -182,10 +192,12 @@ public class CopyMappingPlugin extends DynamicPluginThread {
                 sourceTableName          = tableProcess.getAttributeValue(XMLTags.SOURCE_DB);
                 destinationTableName     = tableProcess.getAttributeValue(XMLTags.DESTINATION_DB);
 
+                // file name for error logs
                 if (log_error) {
                     fileName = destinationTableName + "_ERRORS" + "." + fileType;
                 }
 
+                // get the columns to process
                 processColumns = model.getMappingColumnsToProcessByDestinationTable(destinationTableName);
 
                 // setting record counter to minimum of progress bar
@@ -195,10 +207,10 @@ public class CopyMappingPlugin extends DynamicPluginThread {
                 // Reading number of records for progress bar
                 model.setLengthProgressRecord(Helper.getNumberOfRecordsFiltered(stmSource, model, XMLTags.SOURCE_DB, sourceTableName));
 
-                // get Select Statement
+                // get Select Statement for source model
                 stmSelect     = Helper.getSelectStatement(model, sourceTableName, XMLTags.SOURCE_DB, processColumns);
 
-                // get Insert Statement
+                // get Insert Statement for destination model
                 stmInsert     = Helper.getInsertPreparedStatement(model.getQualifiedDestinationTableName(destinationTableName), processColumns);
 
                 pstmtDestination = connDestination.prepareStatement(stmInsert);
@@ -208,10 +220,12 @@ public class CopyMappingPlugin extends DynamicPluginThread {
                 // Execute SELECT
                 rs = stmSource.executeQuery(stmSelect);
 
+                // do some logging
                 model.setProgressMessage("Copying " + model.getQualifiedSourceTableName(sourceTableName) + " into " + model.getQualifiedDestinationTableName(destinationTableName) + " ...");
 
                 logger.info("Copying " + model.getQualifiedSourceTableName(sourceTableName) + " into " + model.getQualifiedDestinationTableName(destinationTableName) + " ...");
 
+                // while there are more records to process and the process is not interrupted by the user
                 while (!isInterrupted() && rs.next()) {
                     colCounter     = 1;
 
@@ -277,7 +291,10 @@ public class CopyMappingPlugin extends DynamicPluginThread {
                 }
 
                 if (!isInterrupted()) {
+                	// commit INSERTs. Commit behaviour depends on RDBMS used
                     connDestination.commit();
+                    
+                    // close the result set
                     rs.close();
                     logger.info(counterRecords + " records inserted into table " + destinationTableName);
                     counterRecords = 0;
@@ -289,7 +306,10 @@ public class CopyMappingPlugin extends DynamicPluginThread {
                     // set processed
                     tableProcess.setAttribute(XMLTags.PROCESSED, "true");
                 } else {
+                	// rollback insert in case the user interrupts the process
                     connDestination.rollback();
+                    
+                    // close the result set
                     rs.close();
                     counterRecords = 0;
                 }
@@ -313,6 +333,7 @@ public class CopyMappingPlugin extends DynamicPluginThread {
             stmSource.close();
             pstmtDestination.close();
 
+            // close database connections
             DBConnection.closeConnection(connSource);
             DBConnection.closeConnection(connDestination);
 
@@ -344,7 +365,7 @@ public class CopyMappingPlugin extends DynamicPluginThread {
     }
 
     /**
-     * DOCUMENT ME!
+     * If global string filters were selected by user, those are applied using this method
      *
      * @param in DOCUMENT ME!
      * @param returnNullWhenEmpty DOCUMENT ME!
@@ -371,7 +392,7 @@ public class CopyMappingPlugin extends DynamicPluginThread {
     }
 
     /**
-     * DOCUMENT ME!
+     * Called to write a nice row header of column names in possible error logs
      *
      * @param processColumns DOCUMENT ME!
      */
