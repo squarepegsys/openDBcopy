@@ -35,17 +35,17 @@
 						built up using Webserver and Application Server Clusters, all running on Linux. The database
 						itself on AIX5.2.
 						<br/><br/>
-						I hope you see what I want to show you. A database migration is normally not just copying tables.
+						I hope you can see what I want to show you. A database migration is normally not just copying tables.
 						This includes changes of the application ... and therewith changes of the database schemas.
 						<br/><br/>
-						So I was looking for a database migration utility which was able to fulfill my special requirements.
+						So I began looking for a database migration utility which was able to fulfill my special requirements.
 						It became obvious that I either have to develop a lot of PL/SQL transformation scripts or develop
 						a new utility - opendbcopy.
 						<br/><br/>
-						I first tried to use Oracle's Migration Workbench, which, on the first glance, looks brilliant. But, but, but ...
+						I first tried to use Oracle's Migration Workbench, which, at first glance, looks brilliant. But, but, but ...
 						soon I got an answer from their staff that this migration workbench does not support DB2 on OS390. I tried
 						out several other ways ... such as migrating into MS SQL first and then into Oracle ... and a lot of other nightmare
-						scenarios. However, none of these ways solved my migration requirements elegant enough.
+						scenarios. However, none of these ways solved my migration requirements elegantly enough.
 						<br/><br/>
 						Even if you have a migration tool that can copy data from DB2 to Oracle, you still need to modify your data 
 						according to the new requirements.
@@ -56,7 +56,7 @@
 						Two weeks later a front end and further features were implemented, so that I was a able to make a 
 						first successful database migration.
 						<br/><br/>
-						At the end of 2003 we made the final migration. I was quite happy that I have developed opendbcopy
+						At the end of 2003 we made the final migration. I was quite happy that I had developed opendbcopy
 						to avoid too much repeated work. Think about how much manpower you need if you choose the 
 						conventional way ... extracting data into files, convert the files, write loading and transformation scripts.
 						<br/><br/>
@@ -66,7 +66,7 @@
 						opendbcopy comes with a handful of plugins which can be configured using the plugins.xml. See the 
 						plugins section for more details.
 						<br/><br/>
-						Special requirements can easily be developed. See the developers section for more details.
+						Special requirements can easily be developed. See the <a href="developer-manual.html">developer manual</a> for more details.
 						<br/><br/>
 					</p>
 				</subsection>
@@ -83,7 +83,7 @@
 							<li>Repeat above steps whenever you need a further test migration ...</li>
 						</ul>
 						<br/><br/>
-						So far I did not tell anything about generating the new database DDL. In my eyes this is something
+						So far I have said nothing about generating the new database DDL. In my eyes this is something
 						which requires interaction. It would be very simple using opendbcopy or other migration utilities
 						to create the CREATE TABLE scripts plain ... but ... have you ever seen a utility, commercial or not, which
 						was able to do this for any database system without errors and optimal settings? Next to the CREATE TABLE
@@ -92,6 +92,13 @@
 						I hope to be able to provide soon a plugin which
 						is able to do part of this list. If you have any ideas please tell me. An idea I have is creating XDOCLET classes
 						with hibernate tags ... and then generate Hibernate mapping files automatically as well as the required DDL.
+					</p>
+				</subsection>
+
+				<subsection name="About the opendbcopy logo">
+					<p>
+						An "open" tin is a silent protest against these commercial database symbols looking like "closed" oil 
+						barrels ;-)
 					</p>
 				</subsection>
 

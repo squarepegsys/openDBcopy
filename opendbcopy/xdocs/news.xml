@@ -7,7 +7,7 @@
     <body>
         <section name="News">
         	<p>
-				This page informs about release news and planned features.
+				This page gives information about release news and planned features.
 				
 				<subsection name="Release News">
 					<table width="100%">
@@ -15,6 +15,10 @@
 							<th>Date</th>
 							<th>Message</th>
 						</tr>
+						<tr>
+							<td>20.01.2004</td>
+							<td>Bugfixes for PostgreSQL and Linux start script start.sh</td>
+						</tr>								
 						<tr>
 							<td>09.01.2004</td>
 							<td>First release of opendbcopy binaries, sources and documentation</td>

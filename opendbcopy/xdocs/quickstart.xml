@@ -14,7 +14,7 @@
 				<p>
 					Download the latest binary distribution <a href="download.html">here</a>.
 					<br/><br/>
-					If you have not yet downloaded the required JDBC database drivers for your migration, please do so.
+					If you have not yet downloaded the required JDBC database drivers for your migration, please do so now.
 					Try using the vendor's JDBC driver instead of jdbc:odbc driver. Ensure that your JDBC drivers
 					are set in the CLASSPATH or within the /lib directory of opendbcopy.
 				</p>
@@ -23,7 +23,7 @@
 				<p>
 					Install the binary distribution using the following command:
 					<br/><br/>
-					<b>java -jar opendbcopy-xx.jar</b> (substitute xx with version number you have downloaded)
+					<b>java -jar opendbcopy-xx-install.jar</b> (substitute xx with version number you have downloaded)
 					<br/><br/>
 					A setup wizard will guide you through the installation.
 				</p>
