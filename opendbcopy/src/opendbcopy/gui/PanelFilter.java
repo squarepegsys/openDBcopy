@@ -19,6 +19,9 @@
  * TITLE $Id$
  * ---------------------------------------------------------------------------
  * $Log$
+ * Revision 1.1  2004/01/09 18:10:51  iloveopensource
+ * first release
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui;
 
@@ -241,7 +244,7 @@ public class PanelFilter extends JPanel implements Observer {
 /**
  * class description
  *
- * @author rhu
+ * @author Anthony Smith
  * @version $Revision$
  */
 class PanelFilter_checkBoxTrim_actionAdapter implements java.awt.event.ActionListener {
@@ -299,7 +302,7 @@ class PanelFilter_checkBoxRemoveMultipleIntermediateSpaces_actionAdapter impleme
 /**
  * class description
  *
- * @author rhu
+ * @author Anthony Smith
  * @version $Revision$
  */
 class PanelFilter_checkBoxSetNull_actionAdapter implements java.awt.event.ActionListener {

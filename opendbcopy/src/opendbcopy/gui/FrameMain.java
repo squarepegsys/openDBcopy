@@ -19,6 +19,9 @@
  * TITLE $Id$
  * ---------------------------------------------------------------------------
  * $Log$
+ * Revision 1.1  2004/01/09 18:10:51  iloveopensource
+ * first release
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui;
 
@@ -59,7 +62,7 @@ import javax.swing.JTextPane;
 /**
  * class description
  *
- * @author rhu
+ * @author Anthony Smith
  * @version $Revision$
  */
 public class FrameMain extends JFrame implements Observer {
@@ -508,7 +511,7 @@ public class FrameMain extends JFrame implements Observer {
 /**
  * class description
  *
- * @author rhu
+ * @author Anthony Smith
  * @version $Revision$
  */
 class FrameMain_buttonNext_actionAdapter implements java.awt.event.ActionListener {

@@ -19,6 +19,9 @@
  * TITLE $Id$
  * ---------------------------------------------------------------------------
  * $Log$
+ * Revision 1.1  2004/01/09 18:10:51  iloveopensource
+ * first release
+ *
  * --------------------------------------------------------------------------*/
 package opendbcopy.gui;
 
@@ -737,7 +740,7 @@ public class PanelMappingColumn extends JPanel implements Observer {
     /**
      * class description
      *
-     * @author rhu
+     * @author Anthony Smith
      * @version $Revision$
      */
     class MappingColumnModel extends AbstractTableModel {
@@ -854,7 +857,7 @@ public class PanelMappingColumn extends JPanel implements Observer {
     /**
      * class description
      *
-     * @author rhu
+     * @author Anthony Smith
      * @version $Revision$
      */
     class ProcessColumnDualDbModel extends AbstractTableModel {
@@ -956,7 +959,7 @@ public class PanelMappingColumn extends JPanel implements Observer {
     /**
      * class description
      *
-     * @author rhu
+     * @author Anthony Smith
      * @version $Revision$
      */
     class ProcessColumnSingleDbModel extends AbstractTableModel {
@@ -1064,7 +1067,7 @@ public class PanelMappingColumn extends JPanel implements Observer {
 /**
  * class description
  *
- * @author rhu
+ * @author Anthony Smith
  * @version $Revision$
  */
 class PanelMappingColumn_buttonApplyTestFilter_actionAdapter implements java.awt.event.ActionListener {
@@ -1093,7 +1096,7 @@ class PanelMappingColumn_buttonApplyTestFilter_actionAdapter implements java.awt
 /**
  * class description
  *
- * @author rhu
+ * @author Anthony Smith
  * @version $Revision$
  */
 class PanelMappingColumn_checkBoxProcess_actionAdapter implements java.awt.event.ActionListener {
@@ -1122,7 +1125,7 @@ class PanelMappingColumn_checkBoxProcess_actionAdapter implements java.awt.event
 /**
  * class description
  *
- * @author rhu
+ * @author Anthony Smith
  * @version $Revision$
  */
 class PanelMappingColumn_buttonDeleteFilter_actionAdapter implements java.awt.event.ActionListener {
